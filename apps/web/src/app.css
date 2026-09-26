@@ -1,0 +1,183 @@
+/* Design-Tokens – hell und dunkel */
+:root {
+	--grund: #f6f4ec;
+	--flaeche: #ffffff;
+	--flaeche-2: #eef0e6;
+	--text: #1d2a20;
+	--text-2: #5a6a5d;
+	--linie: #d9ddcf;
+	--gruen: #2e6b34;
+	--gruen-hell: #e3efdf;
+	--gruen-text: #ffffff;
+	--weizen: #d9a520;
+	--weizen-hell: #fbf1d3;
+	--richtig: #2f8a3e;
+	--richtig-hell: #e2f3e4;
+	--falsch: #c2412d;
+	--falsch-hell: #fbe5e0;
+	--fokus: #1f5fbf;
+	--schatten: 0 1px 2px rgb(0 0 0 / 6%), 0 4px 12px rgb(0 0 0 / 6%);
+	--radius: 14px;
+	--radius-klein: 10px;
+	color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		--grund: #121a14;
+		--flaeche: #1b261e;
+		--flaeche-2: #223026;
+		--text: #e8eee6;
+		--text-2: #a3b3a5;
+		--linie: #33443a;
+		--gruen: #5fae66;
+		--gruen-hell: #23392a;
+		--gruen-text: #0e1a11;
+		--weizen: #e9bd4a;
+		--weizen-hell: #3a321a;
+		--richtig: #6cc27a;
+		--richtig-hell: #1f3a25;
+		--falsch: #ef7a64;
+		--falsch-hell: #45241e;
+		--fokus: #8ab4ff;
+		--schatten: 0 1px 2px rgb(0 0 0 / 30%), 0 4px 12px rgb(0 0 0 / 25%);
+		color-scheme: dark;
+	}
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html {
+	-webkit-text-size-adjust: 100%;
+}
+
+body {
+	margin: 0;
+	background: var(--grund);
+	color: var(--text);
+	font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+	font-size: 16px;
+	line-height: 1.5;
+}
+
+h1,
+h2,
+h3 {
+	line-height: 1.2;
+	margin: 0 0 0.5em;
+}
+
+h1 {
+	font-size: 1.6rem;
+}
+
+h2 {
+	font-size: 1.15rem;
+}
+
+a {
+	color: var(--gruen);
+}
+
+:focus-visible {
+	outline: 3px solid var(--fokus);
+	outline-offset: 2px;
+}
+
+/* Knöpfe */
+.knopf {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5em;
+	min-height: 48px;
+	padding: 0.7em 1.2em;
+	border: 0;
+	border-radius: var(--radius-klein);
+	background: var(--gruen);
+	color: var(--gruen-text);
+	font: inherit;
+	font-weight: 600;
+	text-decoration: none;
+	cursor: pointer;
+	transition: filter 0.15s, transform 0.05s;
+}
+
+@media (hover: hover) {
+	.knopf:hover {
+		filter: brightness(1.08);
+	}
+}
+
+.knopf:active {
+	transform: translateY(1px);
+}
+
+.knopf:disabled {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+
+.knopf.breit {
+	width: 100%;
+}
+
+.knopf.zweitrangig {
+	background: var(--flaeche-2);
+	color: var(--text);
+}
+
+.knopf.gefahr {
+	background: transparent;
+	color: var(--falsch);
+	border: 1px solid currentColor;
+}
+
+/* Karten und Formulare */
+.karte {
+	background: var(--flaeche);
+	border-radius: var(--radius);
+	box-shadow: var(--schatten);
+	padding: 1.1rem;
+}
+
+.formular {
+	display: grid;
+	gap: 1rem;
+}
+
+.hinweis {
+	color: var(--text-2);
+	font-size: 0.92rem;
+}
+
+.fehlermeldung {
+	background: var(--falsch-hell);
+	color: var(--falsch);
+	border-radius: var(--radius-klein);
+	padding: 0.7em 0.9em;
+	margin: 0;
+	font-weight: 500;
+}
+
+.nur-screenreader {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		transition-duration: 0.01ms !important;
+	}
+}

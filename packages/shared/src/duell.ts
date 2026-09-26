@@ -112,3 +112,10 @@ export interface AntwortErgebnis {
   rundeFertig: boolean;
   status: DuellStatus;
 }
+
+/** GET /api/duels/einladung/:code – wer lädt zu welchem Duell ein */
+export interface EinladungsVorschau {
+  duelId: number;
+  kategorie: DuellKategorie;
+  von: DuellSpieler;
+}

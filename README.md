@@ -41,6 +41,7 @@ Produktion. Der Browser spricht also immer nur mit einer Domain.
 | `bun run check` | Typecheck aller Pakete (tsc / svelte-check) |
 | `bun run test` | Tests in `apps/api`; Integrationstests laufen nur mit `TEST_DATABASE_URL` (Test-DB wird geleert) |
 | `bun run build` | Produktions-Build des Frontends |
+| `bun run test:e2e` | Playwright-Tests: zwei Spieler spielen ein Duell durch die echte Oberfläche (braucht `TEST_DATABASE_URL`, startet API + Web selbst) |
 | `bun run db:generate` / `db:migrate` | Migration aus dem Schema erzeugen / anwenden |
 | `bun run db:seed` | Abzeichen einspielen (mehrfach ausführbar) |
 | `bun run fragen:pruefen` / `fragen:import` | Fragenkatalog prüfen / importieren, siehe [`fragen/README.md`](fragen/README.md) |
@@ -145,8 +146,11 @@ könnten Clients ihre IP für die Rate-Limits fälschen.
 
 ## Status
 
-Backend für den Duell-Flow steht (Schritte 1–4 in `docs/architektur.md`).
-Als Nächstes: Frontend-Screens.
+Duell-Flow steht Ende-zu-Ende, Backend und Oberfläche (Schritte 1–5 in
+`docs/architektur.md`). Screens: Anmelden/Registrieren/Passwort vergessen,
+Übersicht, neues Duell (Benutzername oder Einladungslink), Einladung annehmen,
+Frage mit Timer, Frage-für-Frage-Vergleich, Profil. Als Nächstes: PWA
+(Manifest, Service Worker), danach Rangliste, Freunde, Statistik, Abzeichen.
 
 ## Offene Punkte
 

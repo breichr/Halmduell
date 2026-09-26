@@ -18,6 +18,7 @@
     "db:migrate": "bun --filter @halmduell/api db:migrate",
     "db:seed": "bun --filter @halmduell/api db:seed",
     "fragen:import": "bun --filter @halmduell/api fragen:import",
-    "fragen:pruefen": "bun --filter @halmduell/api fragen:pruefen"
+    "fragen:pruefen": "bun --filter @halmduell/api fragen:pruefen",
+    "test:e2e": "bun --filter @halmduell/web test:e2e"
   }
 }

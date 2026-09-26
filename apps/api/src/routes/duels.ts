@@ -12,6 +12,7 @@ import {
   type DuellDetails,
   type DuellSpieler,
   type DuellUebersicht,
+  type EinladungsVorschau,
   type GestellteFrage,
   type NeuesDuell,
 } from '@halmduell/shared';
@@ -160,6 +161,18 @@ duelsRoute.post('/', async (c) => {
     );
     return c.json(baueUebersicht(duel!, ich, gegnerSpieler, []) satisfies DuellUebersicht, 201);
   });
+});
+
+// Vorschau einer Einladung (für die Seite, die der Einladungslink öffnet)
+duelsRoute.get('/einladung/:code', async (c) => {
+  const code = beitretenSchema.safeParse({ code: c.req.param('code') });
+  if (!code.success) return c.json(fehler('Ungültiger Einladungscode'), 400);
+
+  const [duel] = await db.select().from(duels)
+    .where(and(eq(duels.einladungsCode, code.data.code), isNull(duels.spielerBId)));
+  if (!duel || !istLaufend(duel)) return c.json(fehler('Einladung nicht gefunden oder schon angenommen'), 404);
+  const von = (await ladeSpieler(db, [duel.spielerAId])).get(duel.spielerAId)!;
+  return c.json({ duelId: duel.id, kategorie: duel.kategorie, von } satisfies EinladungsVorschau);
 });
 
 // Einladung annehmen: der Beitretende wird Spieler B
