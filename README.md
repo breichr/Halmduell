@@ -27,12 +27,14 @@ bun install
 cp .env.example apps/api/.env   # DATABASE_URL, JWT_SECRET, TEST_DATABASE_URL
 bun run db:up                   # PostgreSQL per docker compose starten
 bun run db:migrate              # Tabellen anlegen
-bun run db:seed                 # Abzeichen + Beispielfragen
+bun run db:seed                 # Abzeichen
+bun run fragen:import           # Fragen aus fragen/fragen.csv
 bun run dev                     # API (:3000) und Web (:5173) mit Hot Reload
 ```
 
-Das Frontend leitet `/api/*` im Dev-Modus an die API weiter (siehe
-`apps/web/vite.config.ts`).
+Der Web-Server reicht `/api/*` an die API weiter (`apps/web/src/hooks.server.ts`,
+Ziel über `API_URL`, Standard `http://localhost:3000`) – im Dev-Modus wie in
+Produktion. Der Browser spricht also immer nur mit einer Domain.
 
 | Befehl | Zweck |
 |---|---|
@@ -40,7 +42,8 @@ Das Frontend leitet `/api/*` im Dev-Modus an die API weiter (siehe
 | `bun run test` | Tests in `apps/api`; Integrationstests laufen nur mit `TEST_DATABASE_URL` (Test-DB wird geleert) |
 | `bun run build` | Produktions-Build des Frontends |
 | `bun run db:generate` / `db:migrate` | Migration aus dem Schema erzeugen / anwenden |
-| `bun run db:seed` | Abzeichen und Beispielfragen einspielen (mehrfach ausführbar) |
+| `bun run db:seed` | Abzeichen einspielen (mehrfach ausführbar) |
+| `bun run fragen:pruefen` / `fragen:import` | Fragenkatalog prüfen / importieren, siehe [`fragen/README.md`](fragen/README.md) |
 | `docker compose up --build` | kompletter Stack in Containern (Web :3001, API :3000) |
 
 ## API-Authentifizierung
@@ -68,8 +71,7 @@ erhöhen sie und machen alte Tokens sofort ungültig.
 Fehlversuche werden je IP + Konto (10 / 15 min) und je IP (50 / 15 min)
 begrenzt – eine fremde IP kann niemanden aussperren.
 
-In Produktion auf Coolify setzen: `JWT_SECRET` (geheim) und `TRUST_PROXY=true`,
-damit die Client-IP aus `X-Forwarded-For` des Proxys gelesen wird.
+Einrichtung in Produktion: siehe [Deployment](#deployment-coolify).
 
 ## Duell-API
 
@@ -96,9 +98,30 @@ Wertung. Die API prüft das alle 10 Minuten und zusätzlich bei jedem Zug.
 **Fragenauswahl:** bevorzugt Fragen, die keiner der beiden Spieler schon
 hatte; `gemischt` verteilt die 6 Fragen reihum auf alle Kategorien.
 
+**Saisons:** Kalenderquartale (Q1 = 1.1.–31.3. usw.), Wechsel um Mitternacht
+deutscher Zeit; Saison 1 = Q1 2026. `saisonBezeichnung()` in
+`packages/shared` liefert den Anzeigenamen („Q3 2026“).
+
 **K-Faktor:** 40 für die ersten 20 Duelle eines Spielers in einer Kategorie
 (über alle Saisons gezählt), danach 20.
 Request- und Response-Typen liegen in `packages/shared/src/duell.ts`.
+
+## Deployment (Coolify)
+
+Eine Domain für alles: Nur der **Web**-Service bekommt eine öffentliche
+Domain; er reicht `/api/*` intern an den **API**-Service weiter. Die API
+selbst braucht keine Domain.
+
+| Service | Dockerfile | Umgebungsvariablen |
+|---|---|---|
+| PostgreSQL | Coolify-Datenbank | – |
+| API | `Dockerfile.api` | `DATABASE_URL`, `JWT_SECRET` (geheim, `openssl rand -base64 48`), `TRUST_PROXY=true` |
+| Web | `Dockerfile.web` | `API_URL` (interne Adresse der API, z. B. `http://<api-service>:3000`), `ORIGIN` (öffentliche URL, z. B. `https://halmduell.example`) |
+
+Beim Start wendet die API ausstehende Migrationen an und importiert
+`fragen/fragen.csv`. `TRUST_PROXY=true` ist richtig, solange die API nur über
+den Web-Service erreichbar ist (keine eigene öffentliche Domain) – sonst
+könnten Clients ihre IP für die Rate-Limits fälschen.
 
 ## Status
 
@@ -107,13 +130,8 @@ Als Nächstes: Frontend-Screens.
 
 ## Offene Punkte
 
-Noch zu entscheiden:
-
-- Start von Saison 1 (aktuell fest Q1 2026, `apps/api/src/services/saison.ts`)
-- Fragen-Pool: wer erstellt und prüft die Fragen fachlich? (bisher 6
-  Beispielfragen – Kategorie-Duelle brauchen je ≥ 6 freigegebene Fragen)
-- Routing auf Coolify: eine Domain mit `/api` → API-Container oder getrennte
-  Domains
+- Fragenkatalog füllen (`fragen/fragen.csv`, kuratiert): bisher 6
+  Beispielfragen – Kategorie-Duelle brauchen je ≥ 6 freigegebene Fragen
 
 Bewusst später:
 

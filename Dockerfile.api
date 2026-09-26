@@ -11,9 +11,11 @@ RUN bun install --frozen-lockfile --production --filter @halmduell/api
 COPY tsconfig.base.json ./
 COPY packages/shared packages/shared
 COPY apps/api apps/api
+# Fragenkatalog – wird beim Start importiert
+COPY fragen fragen
 
 ENV NODE_ENV=production
 EXPOSE 3000
 WORKDIR /app/apps/api
-# Wendet ausstehende Migrationen an und startet danach die API
+# Migrationen anwenden, fragen/fragen.csv importieren, API starten
 CMD ["bun", "run", "start"]

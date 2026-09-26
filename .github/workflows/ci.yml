@@ -43,6 +43,8 @@ jobs:
             git status --porcelain src/db/migrations
             exit 1
           fi
+      - name: Fragenkatalog prüfen
+        run: bun run fragen:pruefen
       - name: Tests (inkl. Integrationstests gegen Postgres)
         run: bun run test
       - name: Frontend-Build
@@ -54,5 +56,14 @@ jobs:
       - uses: actions/checkout@v4
       - name: API-Image bauen
         run: docker build -f Dockerfile.api -t halmduell-api .
+      - name: Zeitzonendaten im Image (Saisonwechsel um Mitternacht deutscher Zeit)
+        run: |
+          docker run --rm halmduell-api bun -e "
+            const { aktuelleSaison } = await import('@halmduell/shared');
+            const vorher = aktuelleSaison(new Date('2026-06-30T21:59:00Z'));
+            const nachher = aktuelleSaison(new Date('2026-06-30T22:00:00Z'));
+            if (vorher !== 2 || nachher !== 3) { console.error('Saison falsch:', vorher, nachher); process.exit(1); }
+            console.log('Europe/Berlin ok');
+          "
       - name: Web-Image bauen
         run: docker build -f Dockerfile.web -t halmduell-web .

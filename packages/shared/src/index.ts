@@ -3,3 +3,4 @@
 export * from './konstanten';
 export * from './auth';
 export * from './duell';
+export * from './saison';

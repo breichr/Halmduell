@@ -1,9 +1,8 @@
 import { and, eq, sql } from 'drizzle-orm';
-import type { DuellWertung, RatingKategorie } from '@halmduell/shared';
+import { aktuelleSaison, type DuellWertung, type RatingKategorie } from '@halmduell/shared';
 import { duels, duelAnswers, ratings } from '../db/schema';
 import type { Tx } from '../db/types';
 import { saisonalerSoftReset, START_RATING, updateElo } from './elo';
-import { aktuelleSaison } from './saison';
 
 type Ergebnis = 0 | 0.5 | 1;
 type Duell = typeof duels.$inferSelect;

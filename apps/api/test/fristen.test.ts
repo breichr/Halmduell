@@ -98,7 +98,7 @@ describe.skipIf(!mitDatenbank)('K-Faktor über alle Saisons', () => {
     await leereDatenbank();
     const [neu, erfahren] = [await neuerUser('neu'), await neuerUser('erfahren')];
     await erstelleFragen(6, 'wissen');
-    const { aktuelleSaison } = await import('../src/services/saison');
+    const { aktuelleSaison } = await import('@halmduell/shared');
     // 25 Duelle in der Vorsaison, Rating 1000 → Soft-Reset bleibt 1000
     await sqlAusfuehren(sql`insert into ratings values (${erfahren.id}, 'gesamt', ${aktuelleSaison() - 1}, 1000, 25)`);
 

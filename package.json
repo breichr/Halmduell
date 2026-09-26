@@ -2,7 +2,10 @@
   "name": "halmduell",
   "private": true,
   "type": "module",
-  "workspaces": ["apps/*", "packages/*"],
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "dev": "bun --filter './apps/*' dev",
     "dev:api": "bun --filter @halmduell/api dev",
@@ -13,6 +16,8 @@
     "db:up": "docker compose up -d db",
     "db:generate": "bun --filter @halmduell/api db:generate",
     "db:migrate": "bun --filter @halmduell/api db:migrate",
-    "db:seed": "bun --filter @halmduell/api db:seed"
+    "db:seed": "bun --filter @halmduell/api db:seed",
+    "fragen:import": "bun --filter @halmduell/api fragen:import",
+    "fragen:pruefen": "bun --filter @halmduell/api fragen:pruefen"
   }
 }

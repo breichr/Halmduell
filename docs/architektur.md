@@ -12,7 +12,7 @@
 | Auth | JWT im httpOnly-Cookie (hono/jwt), Passwörter mit argon2id (Bun.password) | leichtgewichtig, kein Vendor-Lock-in |
 | Notifications | Web Push | reicht für asynchrones Spiel, kein WebSocket-Server nötig |
 | Bilder-Storage | Wikimedia-Referenzen (extern), später ggf. MinIO für Community-Uploads | spart initialen Storage-Aufwand |
-| Deployment | Coolify (Docker-Container) | bereits vorhandene Infrastruktur |
+| Deployment | Coolify (Docker-Container), eine Domain – Web reicht `/api/*` an die API weiter | bereits vorhandene Infrastruktur |
 
 ## Projektstruktur (Monorepo, Bun-Workspaces)
 
@@ -76,9 +76,11 @@ halmduell/
 
 ## Deployment auf Coolify
 
-Zwei separate Container: Frontend (SvelteKit-Adapter, statisch oder Node-
-Adapter) und Backend (Bun-Prozess mit Hono), plus PostgreSQL als eigener
-Coolify-Service. Beide unabhängig deploybar.
+Zwei separate Container: Frontend (SvelteKit mit Node-Adapter, läuft auf Bun)
+und Backend (Bun-Prozess mit Hono), plus PostgreSQL als eigener
+Coolify-Service. Beide unabhängig deploybar. Nur das Frontend ist öffentlich
+erreichbar und reicht `/api/*` intern an das Backend weiter – eine Domain,
+kein CORS. Details und Umgebungsvariablen: README, Abschnitt „Deployment“.
 
 ## Nächste Implementierungsschritte
 

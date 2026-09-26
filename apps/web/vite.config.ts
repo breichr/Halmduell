@@ -13,11 +13,6 @@ export default defineConfig({
 			// Node-Adapter: läuft als eigener Container auf Coolify (mit Bun)
 			adapter: adapter()
 		})
-	],
-	server: {
-		// Lokal: API-Aufrufe an das Hono-Backend weiterreichen
-		proxy: {
-			'/api': process.env.API_URL ?? 'http://localhost:3000'
-		}
-	}
+	]
+	// /api/* wird in src/hooks.server.ts an die API weitergereicht (dev und Produktion)
 });

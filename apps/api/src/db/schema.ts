@@ -53,6 +53,8 @@ export const users = pgTable('users', {
 
 export const questions = pgTable('questions', {
   id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
+  // stabiler Schlüssel aus fragen/fragen.csv (NULL bei später eingereichten Community-Fragen)
+  code: varchar('code', { length: 40 }).unique(),
   kategorie: varchar('kategorie', { length: 20 }).$type<FragenKategorie>().notNull(),
   typ: varchar('typ', { length: 10 }).$type<FrageTyp>().notNull(),
   frageText: text('frage_text').notNull(),

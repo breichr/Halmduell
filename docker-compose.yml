@@ -26,6 +26,8 @@ services:
       DATABASE_URL: postgres://halmduell:halmduell@db:5432/halmduell
       PORT: 3000
       JWT_SECRET: nur-fuer-lokale-entwicklung-bitte-aendern-1234567890
+      # Aufrufe kommen nur über den Web-Container, der X-Forwarded-For setzt
+      TRUST_PROXY: "true"
     ports:
       - "3000:3000"
     depends_on:
@@ -39,6 +41,7 @@ services:
     environment:
       PORT: 3001
       ORIGIN: http://localhost:3001
+      API_URL: http://api:3000
     ports:
       - "3001:3001"
     depends_on:
