@@ -12,6 +12,7 @@
     "test": "bun --filter '*' test",
     "db:up": "docker compose up -d db",
     "db:generate": "bun --filter @halmduell/api db:generate",
-    "db:migrate": "bun --filter @halmduell/api db:migrate"
+    "db:migrate": "bun --filter @halmduell/api db:migrate",
+    "db:seed": "bun --filter @halmduell/api db:seed"
   }
 }

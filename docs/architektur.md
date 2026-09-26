@@ -83,8 +83,8 @@ Coolify-Service. Beide unabhängig deploybar.
 ## Nächste Implementierungsschritte
 
 1. ~~Monorepo-Grundgerüst anlegen (Bun-Workspaces, siehe Struktur oben)~~ ✓
-2. `apps/api/src/db/schema.ts` einspielen, Migrationen generieren
-   (`bunx drizzle-kit generate` / `migrate`)
+2. ~~`apps/api/src/db/schema.ts` einspielen, Migrationen generieren
+   (`bunx drizzle-kit generate` / `migrate`)~~ ✓
 3. Basis-Auth (JWT) implementieren
 4. Duell-Flow (Erstellen → Beantworten → Abschluss inkl. ELO-Update) als
    erste vertikale Funktionsscheibe umsetzen

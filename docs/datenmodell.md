@@ -1,112 +1,58 @@
 # Datenmodell: Halmduell
 
-Referenz-Schema in SQL (die produktive Umsetzung liegt als Drizzle-ORM-
-Definition unter `apps/api/src/db/schema.ts`).
+Maßgeblich ist das Drizzle-Schema in `apps/api/src/db/schema.ts`; das daraus
+erzeugte SQL liegt unter `apps/api/src/db/migrations/`. Erlaubte Werte für
+Kategorien und Status kommen aus `packages/shared` und werden zusätzlich per
+CHECK-Constraint in der Datenbank abgesichert.
 
-```sql
--- Nutzer
-CREATE TABLE users (
-    id INT PRIMARY KEY,
-    username VARCHAR(50),
-    created_at TIMESTAMP
-);
+## Tabellen
 
--- Fragen-Pool
-CREATE TABLE questions (
-    id INT PRIMARY KEY,
-    kategorie VARCHAR(20),        -- 'kulturen', 'schaedlinge', 'krankheiten', 'wissen'
-    typ VARCHAR(10),               -- 'bild' oder 'text'
-    frage_text TEXT,
-    bild_url VARCHAR(255),         -- NULL bei reinen Wissensfragen
-    bild_quelle VARCHAR(255),      -- Attribution (z. B. "Wikimedia Commons, CC-BY-SA, Autor XY")
-    schwierigkeit SMALLINT,        -- 1-5
-    erklaerung TEXT,               -- Feedback-Text nach Beantwortung
-    status VARCHAR(20),            -- 'entwurf', 'eingereicht', 'freigegeben', 'abgelehnt'
-    eingereicht_von INT REFERENCES users(id) ON DELETE SET NULL
-);
+| Tabelle | Schlüssel | Inhalt |
+|---|---|---|
+| `users` | `id` | Spieler, `username` eindeutig |
+| `questions` | `id` | Frage mit `kategorie` (`kulturen`, `schaedlinge`, `krankheiten`, `wissen`), `typ` (`bild`/`text`), Bild-URL + Attribution, `schwierigkeit` 1–5, `erklaerung`, `status` (`entwurf`, `eingereicht`, `freigegeben`, `abgelehnt`), `eingereicht_von` |
+| `answer_options` | `id` | Antwortoptionen je Frage, `ist_richtig` |
+| `duels` | `id` | Duell zwischen `spieler_a_id` und `spieler_b_id`, `kategorie` (zusätzlich `gemischt`), `status` (`wartet_a`, `wartet_b`, `abgeschlossen`), `gewertet_at` nach dem ELO-Update |
+| `duel_questions` | `duel_id`, `reihenfolge` | die 6 Fragen eines Duells (für beide Spieler identisch) |
+| `duel_answers` | `duel_id`, `user_id`, `question_id` | Antwort je Spieler und Frage, `antwortzeit_ms`, `ist_richtig`; `answer_option_id` ist leer, wenn der Timer abgelaufen ist |
+| `ratings` | `user_id`, `kategorie`, `saison` | ELO je Kategorie (`gesamt`, `kulturen`, `schaedlinge`, `krankheiten`, `wissen`) und Saison (fortlaufend, quartalsweise, Saison 1 = Q1 2026), `duelle_gespielt` |
+| `friendships` | `user_id`, `friend_id` | Freundschaft, `status` (`angefragt`, `bestaetigt`) |
+| `achievements` | `id` | Abzeichen, eindeutiger `key` (z. B. `schaedling_experte`) |
+| `user_achievements` | `user_id`, `achievement_id` | erreichte Abzeichen mit Zeitpunkt |
 
--- Antwortoptionen je Frage
-CREATE TABLE answer_options (
-    id INT PRIMARY KEY,
-    question_id INT REFERENCES questions(id) ON DELETE CASCADE,
-    text VARCHAR(100),
-    ist_richtig BOOLEAN
-);
+## Regeln in der Datenbank
 
--- Ein Duell zwischen zwei Spielern
-CREATE TABLE duels (
-    id INT PRIMARY KEY,
-    spieler_a_id INT REFERENCES users(id),
-    spieler_b_id INT REFERENCES users(id),
-    kategorie VARCHAR(20),         -- 'kulturen', 'schaedlinge', 'krankheiten', 'wissen', 'gemischt'
-    status VARCHAR(20),            -- 'wartet_a', 'wartet_b', 'abgeschlossen'
-    erstellt_at TIMESTAMP,
-    abgeschlossen_at TIMESTAMP,
-    gewertet_at TIMESTAMP          -- gesetzt nach ELO-Update, verhindert doppelte Wertung
-);
+- Erlaubte Werte für alle Kategorie- und Status-Spalten (CHECK)
+- `schwierigkeit` 1–5, `reihenfolge` 1–6
+- Bildfragen brauchen eine `bild_url`
+- höchstens eine richtige Antwortoption pro Frage
+- dieselbe Frage höchstens einmal pro Duell
+- kein Duell und keine Freundschaft mit sich selbst
+- Löschen eines Duells löscht dessen Fragen und Antworten, Löschen einer Frage
+  deren Antwortoptionen; Löschen eines Users setzt `eingereicht_von` auf NULL
+- Zeitstempel mit Zeitzone (`timestamptz`)
 
--- Die 6 Fragen, die zu einem Duell gehören (für beide Spieler identisch)
-CREATE TABLE duel_questions (
-    duel_id INT REFERENCES duels(id) ON DELETE CASCADE,
-    question_id INT REFERENCES questions(id),
-    reihenfolge SMALLINT,
-    PRIMARY KEY (duel_id, reihenfolge)
-);
+Indizes gibt es für die Hauptabfragen: laufende Duelle eines Spielers,
+Fragenauswahl je Kategorie, Bestenliste je Kategorie und Saison,
+Freundesliste, Trefferquote je Spieler.
 
--- Antworten je Spieler und Frage
-CREATE TABLE duel_answers (
-    duel_id INT REFERENCES duels(id) ON DELETE CASCADE,
-    user_id INT REFERENCES users(id),
-    question_id INT REFERENCES questions(id),
-    answer_option_id INT REFERENCES answer_options(id),
-    antwortzeit_ms INT,             -- für Zeitbonus
-    ist_richtig BOOLEAN,
-    PRIMARY KEY (duel_id, user_id, question_id)
-);
+## Schema ändern
 
--- Ratings (ELO), pro Kategorie und Saison getrennt
-CREATE TABLE ratings (
-    user_id INT REFERENCES users(id),
-    kategorie VARCHAR(20),          -- 'gesamt', 'kulturen', 'schaedlinge', 'krankheiten', 'wissen'
-                                    -- ('gemischt'-Duelle zählen nur für 'gesamt')
-    saison INT,                     -- fortlaufend, quartalsweise (Saison 1 = Q1 2026)
-    rating INT DEFAULT 1000,
-    duelle_gespielt INT DEFAULT 0,
-    PRIMARY KEY (user_id, kategorie, saison)
-);
-
--- Freundschaften
-CREATE TABLE friendships (
-    user_id INT REFERENCES users(id),
-    friend_id INT REFERENCES users(id),
-    status VARCHAR(20),      -- 'angefragt', 'bestaetigt'
-    erstellt_at TIMESTAMP,
-    PRIMARY KEY (user_id, friend_id)
-);
-
--- Abzeichen
-CREATE TABLE achievements (
-    id INT PRIMARY KEY,
-    key VARCHAR(50),        -- 'schaedling_experte', 'saison_top10'
-    titel VARCHAR(100),
-    beschreibung TEXT,
-    icon VARCHAR(50)
-);
-
-CREATE TABLE user_achievements (
-    user_id INT REFERENCES users(id),
-    achievement_id INT REFERENCES achievements(id),
-    erreicht_at TIMESTAMP,
-    PRIMARY KEY (user_id, achievement_id)
-);
+```sh
+# 1. apps/api/src/db/schema.ts anpassen
+bun run db:generate   # neue Migration unter apps/api/src/db/migrations erzeugen
+bun run db:migrate    # lokal anwenden (in Produktion beim Start des API-Containers)
 ```
+
+Bestehende Migrationen nicht nachträglich ändern, sondern immer eine neue
+erzeugen.
 
 ## Ablauf im Zusammenspiel
 
 1. Duell erstellen → `duels`-Zeile + 6 (zufällige oder kategoriegefilterte)
    Fragen in `duel_questions`.
-2. Spieler A beantwortet → 6 Zeilen in `duel_answers`, Status wechselt zu
-   `wartet_b`.
+2. Spieler A beantwortet → 6 Zeilen in `duel_answers` (bei abgelaufenem
+   Timer ohne `answer_option_id`), Status wechselt zu `wartet_b`.
 3. Spieler B beantwortet → weitere 6 Zeilen, Status wird `abgeschlossen`.
 4. Bei Abschluss (in einer Transaktion): Punkte summieren, ELO-Update für
    `gesamt` und – außer bei `gemischt` – für die Duell-Kategorie berechnen,

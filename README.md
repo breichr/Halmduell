@@ -13,7 +13,7 @@ Ein grüner Grashüpfer/Heuschrecke, sitzt auf einem Getreidehalm (Wortspiel:
 
 - `docs/konzept.md` – Spielprinzip, Spielablauf, UX/Screens, Ranking-System
 - `docs/architektur.md` – Tech-Stack, Projektstruktur, Deployment
-- `docs/datenmodell.md` – Entitäten und Beziehungen (Überblick zum Schema)
+- `docs/datenmodell.md` – Tabellen, Datenbank-Regeln, Schema-Änderungen
 - `apps/api/src/db/schema.ts` – Drizzle-ORM-Schema (produktionsreif einsetzbar)
 - `apps/api/src/services/elo.ts` – ELO-Rating-Logik
 - `apps/api/src/routes/duels.ts` – Beispiel-Route für Duell-Abschluss
@@ -26,6 +26,8 @@ Voraussetzungen: [Bun](https://bun.sh) ≥ 1.3, Docker (für PostgreSQL).
 bun install
 cp .env.example apps/api/.env   # DATABASE_URL für API und drizzle-kit
 bun run db:up                   # PostgreSQL per docker compose starten
+bun run db:migrate              # Tabellen anlegen
+bun run db:seed                 # Abzeichen + Beispielfragen
 bun run dev                     # API (:3000) und Web (:5173) mit Hot Reload
 ```
 
@@ -37,13 +39,14 @@ Das Frontend leitet `/api/*` im Dev-Modus an die API weiter (siehe
 | `bun run check` | Typecheck aller Pakete (tsc / svelte-check) |
 | `bun run test` | Unit-Tests (`bun test` in `apps/api`) |
 | `bun run build` | Produktions-Build des Frontends |
-| `bun run db:generate` / `db:migrate` | Drizzle-Migrationen erzeugen / anwenden |
+| `bun run db:generate` / `db:migrate` | Migration aus dem Schema erzeugen / anwenden |
+| `bun run db:seed` | Abzeichen und Beispielfragen einspielen (mehrfach ausführbar) |
 | `docker compose up --build` | kompletter Stack in Containern (Web :3001, API :3000) |
 
 ## Status
 
-Monorepo-Grundgerüst steht (Schritt 1 in `docs/architektur.md`). Als Nächstes:
-Datenbank-Migrationen, Auth, Duell-Flow.
+Monorepo-Grundgerüst und Datenbank-Migrationen stehen (Schritte 1–2 in
+`docs/architektur.md`). Als Nächstes: Auth, Duell-Flow.
 
 ## Offene Punkte (bewusst noch nicht entschieden)
 

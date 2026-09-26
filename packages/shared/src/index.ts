@@ -10,10 +10,17 @@ export type DuellKategorie = (typeof DUELL_KATEGORIEN)[number];
 export const RATING_KATEGORIEN = ['gesamt', ...FRAGEN_KATEGORIEN] as const;
 export type RatingKategorie = (typeof RATING_KATEGORIEN)[number];
 
-export type FrageTyp = 'bild' | 'text';
-export type FrageStatus = 'entwurf' | 'eingereicht' | 'freigegeben' | 'abgelehnt';
-export type DuellStatus = 'wartet_a' | 'wartet_b' | 'abgeschlossen';
-export type FreundschaftStatus = 'angefragt' | 'bestaetigt';
+export const FRAGE_TYPEN = ['bild', 'text'] as const;
+export type FrageTyp = (typeof FRAGE_TYPEN)[number];
+
+export const FRAGE_STATUS = ['entwurf', 'eingereicht', 'freigegeben', 'abgelehnt'] as const;
+export type FrageStatus = (typeof FRAGE_STATUS)[number];
+
+export const DUELL_STATUS = ['wartet_a', 'wartet_b', 'abgeschlossen'] as const;
+export type DuellStatus = (typeof DUELL_STATUS)[number];
+
+export const FREUNDSCHAFT_STATUS = ['angefragt', 'bestaetigt'] as const;
+export type FreundschaftStatus = (typeof FREUNDSCHAFT_STATUS)[number];
 export type Liga = 'Bronze' | 'Silber' | 'Gold' | 'Platin' | 'Meister';
 
 /** Antwort von POST /api/duels/:id/complete */

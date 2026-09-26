@@ -2,5 +2,5 @@
 **/.svelte-kit
 **/build
 .git
-.env
-.env.*
+**/.env
+**/.env.*
