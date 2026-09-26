@@ -68,7 +68,9 @@ Attribution wird automatisch im Quiz eingeblendet ("Bild: Name, CC-BY-SA").
 - **ELO als Kern-Rating** (Start 1000), zusätzlich sichtbare
   **Liga-Einteilung** (Bronze/Silber/Gold/Platin/Meister) für Greifbarkeit.
 - **Separates Rating pro Kategorie** (`gesamt`, `kulturen`, `schaedlinge`,
-  `krankheiten`) – passt zur Statistik-Ansicht.
+  `krankheiten`, `wissen`) – passt zur Statistik-Ansicht. Jedes Duell zählt
+  für `gesamt` und zusätzlich für seine Kategorie; `gemischt`-Duelle zählen
+  nur für `gesamt`.
 - **Saisonale Resets** (z. B. alle 3 Monate) mit Bestenlisten-Archiv; Soft-
   Reset-Formel statt hartem Reset auf 1000, damit gute Spieler nicht komplett
   bei null anfangen:
