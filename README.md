@@ -56,13 +56,30 @@ nichts speichern, der Browser schickt das Cookie bei `/api/*` automatisch mit.
 | `POST /api/auth/logout` | Cookie löschen |
 | `GET /api/auth/me` | aktueller User, sonst 401 |
 
-Alle Duell-Endpunkte erfordern eine Anmeldung. In Produktion `JWT_SECRET`
-als geheime Umgebungsvariable in Coolify setzen.
+In Produktion `JWT_SECRET` als geheime Umgebungsvariable in Coolify setzen.
+
+## Duell-API
+
+Alle Endpunkte erfordern eine Anmeldung.
+
+| Endpunkt | Zweck |
+|---|---|
+| `GET /api/duels` | Dashboard: laufende + letzte 20 abgeschlossene Duelle, „du bist dran“ zuerst |
+| `POST /api/duels` | `{ kategorie, gegner? }` → Duell gegen User (Name) oder offen mit Einladungscode |
+| `POST /api/duels/beitreten` | `{ code }` → Einladung annehmen, man wird Spieler B |
+| `GET /api/duels/:id` | Details + Frage-für-Frage-Vergleich |
+| `GET /api/duels/:id/frage` | aktuelle Frage (startet den 15-s-Timer, Neuladen setzt ihn nicht zurück) |
+| `POST /api/duels/:id/antwort` | `{ frageId, antwortId \| null }` → Ergebnis, Lösung, Erklärung |
+
+Ablauf: A beantwortet 6 Fragen, dann B dieselben 6. Nach Bs letzter Antwort
+wird das Duell automatisch gewertet (ELO). Lösungen und Antworten des Gegners
+sieht man erst, nachdem man die jeweilige Frage selbst beantwortet hat.
+Request- und Response-Typen liegen in `packages/shared/src/duell.ts`.
 
 ## Status
 
-Monorepo-Grundgerüst, Datenbank-Migrationen und Basis-Auth stehen (Schritte
-1–3 in `docs/architektur.md`). Als Nächstes: Duell-Flow.
+Backend für den Duell-Flow steht (Schritte 1–4 in `docs/architektur.md`).
+Als Nächstes: Frontend-Screens.
 
 ## Offene Punkte (bewusst noch nicht entschieden)
 

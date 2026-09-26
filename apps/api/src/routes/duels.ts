@@ -1,104 +1,329 @@
 import { Hono } from 'hono';
+import { and, asc, desc, eq, inArray, isNotNull, isNull, ne, or, sql } from 'drizzle-orm';
+import {
+  ANTWORTZEIT_MS,
+  FRAGEN_PRO_DUELL,
+  antwortSchema,
+  beitretenSchema,
+  feldFehler,
+  neuesDuellSchema,
+  type AntwortErgebnis,
+  type ApiFehler,
+  type DuellDetails,
+  type DuellSpieler,
+  type DuellUebersicht,
+  type GestellteFrage,
+} from '@halmduell/shared';
 import { db } from '../db/client';
-import type { DuellWertung, RatingKategorie } from '@halmduell/shared';
-import { duels, duelAnswers, ratings } from '../db/schema';
-import { eq, and, sql } from 'drizzle-orm';
-import { updateElo, saisonalerSoftReset, START_RATING } from '../services/elo';
-import { aktuelleSaison } from '../services/saison';
+import { answerOptions, duelAnswers, duelQuestions, duels, questions, users } from '../db/schema';
+import type { Tx } from '../db/types';
 import { requireAuth, type AuthEnv } from '../middleware/auth';
+import {
+  antwortStand,
+  baueUebersicht,
+  erzeugeEinladungsCode,
+  istAmZug,
+  istTeilnehmer,
+  mischeAntworten,
+  sortiereFuerDashboard,
+} from '../services/duell';
+import { werteDuell } from '../services/wertung';
 
-type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
-type Ergebnis = 0 | 0.5 | 1;
+/** Toleranz für die Netzwerklaufzeit zwischen Anzeige der Frage und Eintreffen der Antwort */
+const ZEIT_TOLERANZ_MS = 2_000;
+/** Wie viele abgeschlossene Duelle das Dashboard zeigt (laufende immer alle) */
+const ABGESCHLOSSENE_IM_DASHBOARD = 20;
+
+type Duell = typeof duels.$inferSelect;
+
+const fehler = (error: string): ApiFehler => ({ error });
+const leseJson = (req: Request) => req.json().catch(() => null);
+
+function parseId(roh: string): number | null {
+  const id = Number(roh);
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
+
+async function ladeSpieler(tx: Tx | typeof db, ids: number[]): Promise<Map<number, DuellSpieler>> {
+  if (ids.length === 0) return new Map();
+  const zeilen = await tx.select({ id: users.id, username: users.username }).from(users).where(inArray(users.id, ids));
+  return new Map(zeilen.map((u) => [u.id, u]));
+}
+
+function gegnerId(duel: Duell, userId: number): number | null {
+  return duel.spielerAId === userId ? duel.spielerBId : duel.spielerAId;
+}
+
+/** Duell laden und sperren; liefert eine Fehlerantwort, wenn es fehlt oder der User nicht mitspielt */
+async function ladeEigenesDuell(tx: Tx, duelId: number, userId: number) {
+  const [duel] = await tx.select().from(duels).where(eq(duels.id, duelId)).for('update');
+  if (!duel) return { fehler: fehler('Duell nicht gefunden'), status: 404 as const };
+  if (!istTeilnehmer(duel, userId)) return { fehler: fehler('Kein Teilnehmer dieses Duells'), status: 403 as const };
+  return { duel };
+}
 
 export const duelsRoute = new Hono<AuthEnv>();
 
 duelsRoute.use(requireAuth);
 
-/**
- * Liest das Rating der laufenden Saison (Zeile wird bis Transaktionsende gesperrt).
- * Gibt es noch keins, startet der Spieler mit dem Soft-Reset seines Vorsaison-Ratings.
- */
-async function ladeRating(tx: Tx, userId: number, kategorie: RatingKategorie, saison: number) {
-  const [aktuell] = await tx.select().from(ratings)
-    .where(and(eq(ratings.userId, userId), eq(ratings.kategorie, kategorie), eq(ratings.saison, saison)))
-    .for('update');
-  if (aktuell) return { rating: aktuell.rating, duelleGespielt: aktuell.duelleGespielt };
+// Dashboard: alle laufenden Duelle + die letzten abgeschlossenen
+duelsRoute.get('/', async (c) => {
+  const ich = c.var.userId;
+  const beteiligt = or(eq(duels.spielerAId, ich), eq(duels.spielerBId, ich));
+  const laufend = await db.select().from(duels)
+    .where(and(beteiligt, ne(duels.status, 'abgeschlossen')));
+  const abgeschlossen = await db.select().from(duels)
+    .where(and(beteiligt, eq(duels.status, 'abgeschlossen')))
+    .orderBy(desc(duels.abgeschlossenAt))
+    .limit(ABGESCHLOSSENE_IM_DASHBOARD);
+  const liste = [...laufend, ...abgeschlossen];
+  if (liste.length === 0) return c.json([] satisfies DuellUebersicht[]);
 
-  const [vorsaison] = await tx.select().from(ratings)
-    .where(and(eq(ratings.userId, userId), eq(ratings.kategorie, kategorie), eq(ratings.saison, saison - 1)));
-  return {
-    rating: vorsaison ? saisonalerSoftReset(vorsaison.rating) : START_RATING,
-    duelleGespielt: 0,
-  };
-}
+  const antworten = await db.select().from(duelAnswers)
+    .where(and(inArray(duelAnswers.duelId, liste.map((d) => d.id)), isNotNull(duelAnswers.istRichtig)));
+  const spieler = await ladeSpieler(db, liste.map((d) => gegnerId(d, ich)).filter((id): id is number => id !== null));
 
-async function speichereRating(tx: Tx, userId: number, kategorie: RatingKategorie, saison: number, rating: number) {
-  await tx.insert(ratings).values({
-    userId,
-    kategorie,
-    saison,
-    rating,
-    duelleGespielt: 1,
-  }).onConflictDoUpdate({
-    target: [ratings.userId, ratings.kategorie, ratings.saison],
-    set: { rating, duelleGespielt: sql`${ratings.duelleGespielt} + 1` },
+  const uebersicht = liste.map((d) => {
+    const gid = gegnerId(d, ich);
+    return baueUebersicht(d, ich, gid === null ? null : spieler.get(gid) ?? null, antworten.filter((a) => a.duelId === d.id));
   });
-}
+  return c.json(uebersicht.sort(sortiereFuerDashboard) satisfies DuellUebersicht[]);
+});
 
-duelsRoute.post('/:id/complete', async (c) => {
-  const duelId = Number(c.req.param('id'));
-  if (!Number.isInteger(duelId)) return c.json({ error: 'Ungültige Duell-ID' }, 400);
+// Neues Duell: gegen einen User (per Name) oder offen mit Einladungscode
+duelsRoute.post('/', async (c) => {
+  const eingabe = neuesDuellSchema.safeParse(await leseJson(c.req.raw));
+  if (!eingabe.success) {
+    return c.json({ error: 'Ungültige Eingabe', felder: feldFehler(eingabe.error) } satisfies ApiFehler, 400);
+  }
+  const { kategorie, gegner } = eingabe.data;
+  const ich = c.var.userId;
 
   return db.transaction(async (tx) => {
-    // Duell sperren, damit parallele Aufrufe nicht doppelt werten
-    const [duel] = await tx.select().from(duels).where(eq(duels.id, duelId)).for('update');
-    if (!duel) return c.json({ error: 'Duell nicht gefunden' }, 404);
-    if (c.var.userId !== duel.spielerAId && c.var.userId !== duel.spielerBId) {
-      return c.json({ error: 'Kein Teilnehmer dieses Duells' }, 403);
-    }
-    if (duel.status !== 'abgeschlossen') {
-      return c.json({ error: 'Duell noch nicht von beiden Seiten beantwortet' }, 400);
-    }
-    if (duel.gewertetAt) return c.json({ error: 'Duell wurde bereits gewertet' }, 409);
-
-    const antwortenA = await tx.select().from(duelAnswers)
-      .where(and(eq(duelAnswers.duelId, duelId), eq(duelAnswers.userId, duel.spielerAId)));
-    const antwortenB = await tx.select().from(duelAnswers)
-      .where(and(eq(duelAnswers.duelId, duelId), eq(duelAnswers.userId, duel.spielerBId)));
-
-    const punkteA = antwortenA.filter((a) => a.istRichtig).length;
-    const punkteB = antwortenB.filter((a) => a.istRichtig).length;
-
-    const ergebnisA: Ergebnis = punkteA > punkteB ? 1 : punkteA < punkteB ? 0 : 0.5;
-    const ergebnisB = (1 - ergebnisA) as Ergebnis;
-
-    const saison = aktuelleSaison();
-    // 'gesamt' wird immer gewertet, die Duell-Kategorie zusätzlich (außer bei 'gemischt')
-    const kategorien: RatingKategorie[] = duel.kategorie === 'gemischt' ? ['gesamt'] : ['gesamt', duel.kategorie];
-    // Zeilen immer in derselben Reihenfolge (nach User-ID) sperren, um Deadlocks zu vermeiden
-    const aZuerst = duel.spielerAId < duel.spielerBId;
-
-    const neueRatings: DuellWertung['ratings'] = {};
-    for (const kategorie of kategorien) {
-      let altA, altB;
-      if (aZuerst) {
-        altA = await ladeRating(tx, duel.spielerAId, kategorie, saison);
-        altB = await ladeRating(tx, duel.spielerBId, kategorie, saison);
-      } else {
-        altB = await ladeRating(tx, duel.spielerBId, kategorie, saison);
-        altA = await ladeRating(tx, duel.spielerAId, kategorie, saison);
-      }
-
-      const neuA = updateElo(altA.rating, altB.rating, ergebnisA, altA.duelleGespielt);
-      const neuB = updateElo(altB.rating, altA.rating, ergebnisB, altB.duelleGespielt);
-
-      await speichereRating(tx, duel.spielerAId, kategorie, saison, neuA);
-      await speichereRating(tx, duel.spielerBId, kategorie, saison, neuB);
-      neueRatings[kategorie] = { a: neuA, b: neuB };
+    let gegnerSpieler: DuellSpieler | null = null;
+    if (gegner) {
+      const [gefunden] = await tx.select({ id: users.id, username: users.username }).from(users)
+        .where(eq(sql`lower(${users.username})`, gegner.toLowerCase()));
+      if (!gefunden) return c.json(fehler('Gegner nicht gefunden'), 404);
+      if (gefunden.id === ich) return c.json(fehler('Du kannst dich nicht selbst herausfordern'), 400);
+      gegnerSpieler = gefunden;
     }
 
-    await tx.update(duels).set({ gewertetAt: new Date() }).where(eq(duels.id, duelId));
+    const fragen = await tx.select({ id: questions.id }).from(questions)
+      .where(and(
+        eq(questions.status, 'freigegeben'),
+        kategorie === 'gemischt' ? undefined : eq(questions.kategorie, kategorie),
+      ))
+      .orderBy(sql`random()`)
+      .limit(FRAGEN_PRO_DUELL);
+    if (fragen.length < FRAGEN_PRO_DUELL) return c.json(fehler('Nicht genug Fragen in dieser Kategorie'), 409);
 
-    return c.json({ punkteA, punkteB, saison, ratings: neueRatings } satisfies DuellWertung);
+    const [duel] = await tx.insert(duels).values({
+      spielerAId: ich,
+      spielerBId: gegnerSpieler?.id ?? null,
+      kategorie,
+      einladungsCode: gegnerSpieler ? null : erzeugeEinladungsCode(),
+    }).returning();
+    await tx.insert(duelQuestions).values(
+      fragen.map((f, i) => ({ duelId: duel!.id, questionId: f.id, reihenfolge: i + 1 })),
+    );
+    return c.json(baueUebersicht(duel!, ich, gegnerSpieler, []) satisfies DuellUebersicht, 201);
+  });
+});
+
+// Einladung annehmen: der Beitretende wird Spieler B
+duelsRoute.post('/beitreten', async (c) => {
+  const eingabe = beitretenSchema.safeParse(await leseJson(c.req.raw));
+  if (!eingabe.success) return c.json(fehler('Ungültiger Einladungscode'), 400);
+  const ich = c.var.userId;
+
+  return db.transaction(async (tx) => {
+    const [duel] = await tx.select().from(duels)
+      .where(and(eq(duels.einladungsCode, eingabe.data.code), isNull(duels.spielerBId)))
+      .for('update');
+    if (!duel) return c.json(fehler('Einladung nicht gefunden oder schon angenommen'), 404);
+    if (duel.spielerAId === ich) return c.json(fehler('Das ist deine eigene Einladung'), 400);
+
+    const [aktualisiert] = await tx.update(duels)
+      .set({ spielerBId: ich, einladungsCode: null })
+      .where(eq(duels.id, duel.id))
+      .returning();
+    const spieler = await ladeSpieler(tx, [duel.spielerAId]);
+    const antworten = await tx.select().from(duelAnswers).where(eq(duelAnswers.duelId, duel.id));
+    return c.json(baueUebersicht(aktualisiert!, ich, spieler.get(duel.spielerAId) ?? null, antworten) satisfies DuellUebersicht);
+  });
+});
+
+// Details + Frage-für-Frage-Vergleich
+duelsRoute.get('/:id', async (c) => {
+  const duelId = parseId(c.req.param('id'));
+  if (duelId === null) return c.json(fehler('Ungültige Duell-ID'), 400);
+  const ich = c.var.userId;
+
+  const [duel] = await db.select().from(duels).where(eq(duels.id, duelId));
+  if (!duel) return c.json(fehler('Duell nicht gefunden'), 404);
+  if (!istTeilnehmer(duel, ich)) return c.json(fehler('Kein Teilnehmer dieses Duells'), 403);
+
+  const fragen = await db.select({
+    reihenfolge: duelQuestions.reihenfolge,
+    id: questions.id,
+    typ: questions.typ,
+    frageText: questions.frageText,
+    bildUrl: questions.bildUrl,
+    bildQuelle: questions.bildQuelle,
+    erklaerung: questions.erklaerung,
+  }).from(duelQuestions)
+    .innerJoin(questions, eq(questions.id, duelQuestions.questionId))
+    .where(eq(duelQuestions.duelId, duelId))
+    .orderBy(asc(duelQuestions.reihenfolge));
+  const richtige = await db.select({ id: answerOptions.id, questionId: answerOptions.questionId, text: answerOptions.text })
+    .from(answerOptions)
+    .where(and(inArray(answerOptions.questionId, fragen.map((f) => f.id)), eq(answerOptions.istRichtig, true)));
+  const antworten = await db.select().from(duelAnswers).where(eq(duelAnswers.duelId, duelId));
+
+  const gid = gegnerId(duel, ich);
+  const gegner = gid === null ? null : (await ladeSpieler(db, [gid])).get(gid) ?? null;
+
+  const details: DuellDetails = {
+    ...baueUebersicht(duel, ich, gegner, antworten),
+    fragen: fragen.map(({ reihenfolge, ...frage }) => {
+      const meine = antworten.find((a) => a.userId === ich && a.questionId === frage.id);
+      const seine = antworten.find((a) => a.userId === gid && a.questionId === frage.id);
+      const beantwortet = meine?.istRichtig != null;
+      const richtig = richtige.find((r) => r.questionId === frage.id);
+      return {
+        reihenfolge,
+        beantwortet,
+        // Inhalt und Lösung erst nach eigener Antwort – sonst ließe sich vorab nachschlagen
+        frage: beantwortet ? { ...frage, richtigeAntwort: richtig ? { id: richtig.id, text: richtig.text } : null } : null,
+        ich: antwortStand(meine),
+        gegner: beantwortet ? antwortStand(seine) : null,
+      };
+    }),
+  };
+  return c.json(details);
+});
+
+// Aktuelle Frage abrufen; startet beim ersten Abruf den Timer
+duelsRoute.get('/:id/frage', async (c) => {
+  const duelId = parseId(c.req.param('id'));
+  if (duelId === null) return c.json(fehler('Ungültige Duell-ID'), 400);
+  const ich = c.var.userId;
+
+  return db.transaction(async (tx) => {
+    const geladen = await ladeEigenesDuell(tx, duelId, ich);
+    if (!geladen.duel) return c.json(geladen.fehler, geladen.status);
+    if (!istAmZug(geladen.duel, ich)) return c.json(fehler('Du bist gerade nicht am Zug'), 409);
+
+    const meine = await tx.select().from(duelAnswers)
+      .where(and(eq(duelAnswers.duelId, duelId), eq(duelAnswers.userId, ich)));
+    let offen = meine.find((a) => a.istRichtig === null);
+    if (!offen) {
+      const beantwortet = new Set(meine.map((a) => a.questionId));
+      const reihe = await tx.select().from(duelQuestions)
+        .where(eq(duelQuestions.duelId, duelId))
+        .orderBy(asc(duelQuestions.reihenfolge));
+      const naechste = reihe.find((q) => !beantwortet.has(q.questionId));
+      if (!naechste) return c.json(fehler('Alle Fragen sind beantwortet'), 409);
+      [offen] = await tx.insert(duelAnswers)
+        .values({ duelId, userId: ich, questionId: naechste.questionId, gestelltAt: new Date() })
+        .returning();
+    }
+
+    const [frage] = await tx.select({
+      reihenfolge: duelQuestions.reihenfolge,
+      typ: questions.typ,
+      frageText: questions.frageText,
+      bildUrl: questions.bildUrl,
+      bildQuelle: questions.bildQuelle,
+    }).from(duelQuestions)
+      .innerJoin(questions, eq(questions.id, duelQuestions.questionId))
+      .where(and(eq(duelQuestions.duelId, duelId), eq(duelQuestions.questionId, offen!.questionId)));
+    const optionen = await tx.select({ id: answerOptions.id, text: answerOptions.text }).from(answerOptions)
+      .where(eq(answerOptions.questionId, offen!.questionId));
+
+    const vergangen = Date.now() - offen!.gestelltAt.getTime();
+    return c.json({
+      duelId,
+      reihenfolge: frage!.reihenfolge,
+      anzahl: FRAGEN_PRO_DUELL,
+      frageId: offen!.questionId,
+      typ: frage!.typ,
+      frageText: frage!.frageText,
+      bildUrl: frage!.bildUrl,
+      bildQuelle: frage!.bildQuelle,
+      antworten: mischeAntworten(optionen, duelId, ich),
+      zeitlimitMs: ANTWORTZEIT_MS,
+      restzeitMs: Math.max(0, ANTWORTZEIT_MS - vergangen),
+    } satisfies GestellteFrage);
+  });
+});
+
+// Antwort auf die aktuell gestellte Frage; nach der letzten Frage wechselt der Zug bzw. das Duell wird gewertet
+duelsRoute.post('/:id/antwort', async (c) => {
+  const duelId = parseId(c.req.param('id'));
+  if (duelId === null) return c.json(fehler('Ungültige Duell-ID'), 400);
+  const eingabe = antwortSchema.safeParse(await leseJson(c.req.raw));
+  if (!eingabe.success) {
+    return c.json({ error: 'Ungültige Eingabe', felder: feldFehler(eingabe.error) } satisfies ApiFehler, 400);
+  }
+  const { frageId, antwortId } = eingabe.data;
+  const ich = c.var.userId;
+
+  return db.transaction(async (tx) => {
+    const geladen = await ladeEigenesDuell(tx, duelId, ich);
+    if (!geladen.duel) return c.json(geladen.fehler, geladen.status);
+    const duel = geladen.duel;
+    if (!istAmZug(duel, ich)) return c.json(fehler('Du bist gerade nicht am Zug'), 409);
+
+    const [offen] = await tx.select().from(duelAnswers)
+      .where(and(eq(duelAnswers.duelId, duelId), eq(duelAnswers.userId, ich), isNull(duelAnswers.istRichtig)));
+    if (!offen) return c.json(fehler('Keine offene Frage – zuerst die Frage abrufen'), 409);
+    if (offen.questionId !== frageId) return c.json(fehler('Antwort passt nicht zur aktuell gestellten Frage'), 409);
+
+    const optionen = await tx.select().from(answerOptions).where(eq(answerOptions.questionId, frageId));
+    const richtige = optionen.find((o) => o.istRichtig);
+    if (!richtige) throw new Error(`Frage ${frageId} hat keine richtige Antwort`);
+    const gewaehlt = antwortId === null ? null : optionen.find((o) => o.id === antwortId);
+    if (gewaehlt === undefined) return c.json(fehler('Antwort gehört nicht zu dieser Frage'), 400);
+
+    const jetzt = new Date();
+    const dauer = jetzt.getTime() - offen.gestelltAt.getTime();
+    const zeitAbgelaufen = gewaehlt === null || dauer > ANTWORTZEIT_MS + ZEIT_TOLERANZ_MS;
+    const richtig = !zeitAbgelaufen && gewaehlt.istRichtig;
+
+    await tx.update(duelAnswers).set({
+      answerOptionId: zeitAbgelaufen ? null : gewaehlt.id,
+      antwortzeitMs: zeitAbgelaufen ? null : dauer,
+      istRichtig: richtig,
+      beantwortetAt: jetzt,
+    }).where(and(eq(duelAnswers.duelId, duelId), eq(duelAnswers.userId, ich), eq(duelAnswers.questionId, frageId)));
+
+    const [{ anzahl } = { anzahl: 0 }] = await tx.select({ anzahl: sql<number>`count(*)::int` }).from(duelAnswers)
+      .where(and(eq(duelAnswers.duelId, duelId), eq(duelAnswers.userId, ich), isNotNull(duelAnswers.istRichtig)));
+    const rundeFertig = anzahl >= FRAGEN_PRO_DUELL;
+
+    let status = duel.status;
+    if (rundeFertig && status === 'wartet_a') {
+      status = 'wartet_b';
+      await tx.update(duels).set({ status }).where(eq(duels.id, duelId));
+    } else if (rundeFertig && status === 'wartet_b') {
+      status = 'abgeschlossen';
+      const [abgeschlossen] = await tx.update(duels)
+        .set({ status, abgeschlossenAt: jetzt })
+        .where(eq(duels.id, duelId))
+        .returning();
+      await werteDuell(tx, abgeschlossen!);
+    }
+
+    const [frage] = await tx.select({ erklaerung: questions.erklaerung }).from(questions).where(eq(questions.id, frageId));
+    return c.json({
+      richtig,
+      zeitAbgelaufen,
+      richtigeAntwortId: richtige.id,
+      erklaerung: frage?.erklaerung ?? null,
+      rundeFertig,
+      status,
+    } satisfies AntwortErgebnis);
   });
 });

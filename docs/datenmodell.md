@@ -12,9 +12,9 @@ CHECK-Constraint in der Datenbank abgesichert.
 | `users` | `id` | Spieler, `username` eindeutig |
 | `questions` | `id` | Frage mit `kategorie` (`kulturen`, `schaedlinge`, `krankheiten`, `wissen`), `typ` (`bild`/`text`), Bild-URL + Attribution, `schwierigkeit` 1–5, `erklaerung`, `status` (`entwurf`, `eingereicht`, `freigegeben`, `abgelehnt`), `eingereicht_von` |
 | `answer_options` | `id` | Antwortoptionen je Frage, `ist_richtig` |
-| `duels` | `id` | Duell zwischen `spieler_a_id` und `spieler_b_id`, `kategorie` (zusätzlich `gemischt`), `status` (`wartet_a`, `wartet_b`, `abgeschlossen`), `gewertet_at` nach dem ELO-Update |
+| `duels` | `id` | Duell zwischen `spieler_a_id` und `spieler_b_id` (NULL bis zum Beitritt per `einladungs_code`), `kategorie` (zusätzlich `gemischt`), `status` (`wartet_a`, `wartet_b`, `abgeschlossen`), `gewertet_at` + `rating_aenderung_a/b` nach dem ELO-Update |
 | `duel_questions` | `duel_id`, `reihenfolge` | die 6 Fragen eines Duells (für beide Spieler identisch) |
-| `duel_answers` | `duel_id`, `user_id`, `question_id` | Antwort je Spieler und Frage, `antwortzeit_ms`, `ist_richtig`; `answer_option_id` ist leer, wenn der Timer abgelaufen ist |
+| `duel_answers` | `duel_id`, `user_id`, `question_id` | Antwort je Spieler und Frage: `gestellt_at` (Timer-Start), `beantwortet_at`, `antwortzeit_ms`, `ist_richtig` (NULL = noch offen); `answer_option_id` ist leer, wenn der Timer abgelaufen ist |
 | `ratings` | `user_id`, `kategorie`, `saison` | ELO je Kategorie (`gesamt`, `kulturen`, `schaedlinge`, `krankheiten`, `wissen`) und Saison (fortlaufend, quartalsweise, Saison 1 = Q1 2026), `duelle_gespielt` |
 | `friendships` | `user_id`, `friend_id` | Freundschaft, `status` (`angefragt`, `bestaetigt`) |
 | `achievements` | `id` | Abzeichen, eindeutiger `key` (z. B. `schaedling_experte`) |
@@ -49,16 +49,29 @@ erzeugen.
 
 ## Ablauf im Zusammenspiel
 
-1. Duell erstellen → `duels`-Zeile + 6 (zufällige oder kategoriegefilterte)
-   Fragen in `duel_questions`.
-2. Spieler A beantwortet → 6 Zeilen in `duel_answers` (bei abgelaufenem
-   Timer ohne `answer_option_id`), Status wechselt zu `wartet_b`.
-3. Spieler B beantwortet → weitere 6 Zeilen, Status wird `abgeschlossen`.
-4. Bei Abschluss (in einer Transaktion): Punkte summieren, ELO-Update für
-   `gesamt` und – außer bei `gemischt` – für die Duell-Kategorie berechnen,
-   `ratings` der laufenden Saison upserten (`duelle_gespielt` + 1), danach
-   `duels.gewertet_at` setzen. Ein zweiter Aufruf wird abgelehnt (409).
-   Hat ein Spieler noch kein Rating in der laufenden Saison, startet er mit
-   dem Soft-Reset seines Vorsaison-Ratings (sonst 1000).
-5. Statistik-Screen liest `duel_answers` gruppiert nach `kategorie` (Join
+1. **Duell erstellen** (`POST /api/duels`): `duels`-Zeile + 6 zufällige
+   freigegebene Fragen (bei `gemischt` aus allen Kategorien) in
+   `duel_questions`. Mit Gegner-Name ist `spieler_b_id` sofort gesetzt,
+   ohne Gegner bekommt das Duell einen `einladungs_code`; wer damit
+   beitritt (`POST /api/duels/beitreten`), wird Spieler B und der Code wird
+   gelöscht.
+2. **Frage abrufen** (`GET /api/duels/:id/frage`): legt beim ersten Abruf eine
+   `duel_answers`-Zeile mit `gestellt_at` an (`ist_richtig` noch NULL) – das ist
+   der Start des Timers. Erneutes Abrufen liefert dieselbe Frage mit der
+   Restzeit, der Timer lässt sich also nicht durch Neuladen zurücksetzen.
+3. **Antworten** (`POST /api/duels/:id/antwort`): füllt die offene Zeile.
+   Kommt die Antwort später als 15 s (+ 2 s Toleranz) nach `gestellt_at`,
+   zählt sie als falsch und `answer_option_id` bleibt leer.
+4. Nach der 6. Antwort von A wechselt der Status zu `wartet_b`; B kann erst
+   dann spielen. Nach der 6. Antwort von B wird das Duell `abgeschlossen` und
+   **in derselben Transaktion gewertet**: ELO-Update für `gesamt` und – außer
+   bei `gemischt` – für die Duell-Kategorie, `ratings` der laufenden Saison
+   upserten (`duelle_gespielt` + 1), `gewertet_at` und die Änderung des
+   Gesamt-Ratings (`rating_aenderung_a/b`) am Duell speichern. Hat ein Spieler
+   noch kein Rating in der laufenden Saison, startet er mit dem Soft-Reset
+   seines Vorsaison-Ratings (sonst 1000).
+5. **Sichtbarkeit**: Frage, Lösung und die Antwort des Gegners zu einer Frage
+   liefert die API erst, nachdem man sie selbst beantwortet hat – das gilt auch
+   für die Gegner-Punkte im Dashboard.
+6. Statistik-Screen liest `duel_answers` gruppiert nach `kategorie` (Join
    über `questions`) für die Trefferquote.

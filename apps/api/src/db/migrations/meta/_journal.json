@@ -15,6 +15,13 @@
       "when": 1790446800849,
       "tag": "0001_auth",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790447127122,
+      "tag": "0002_duell_flow",
+      "breakpoints": true
     }
   ]
 }

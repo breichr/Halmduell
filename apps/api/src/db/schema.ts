@@ -82,13 +82,18 @@ export const answerOptions = pgTable('answer_options', {
 export const duels = pgTable('duels', {
   id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
   spielerAId: integer('spieler_a_id').notNull().references(() => users.id),
-  spielerBId: integer('spieler_b_id').notNull().references(() => users.id),
+  // NULL, solange ein per Einladungscode erstelltes Duell noch keinen Gegner hat
+  spielerBId: integer('spieler_b_id').references(() => users.id),
+  einladungsCode: varchar('einladungs_code', { length: 8 }).unique(),
   kategorie: varchar('kategorie', { length: 20 }).$type<DuellKategorie>().notNull(),
   status: varchar('status', { length: 20 }).$type<DuellStatus>().notNull().default('wartet_a'),
   erstelltAt: zeitstempel('erstellt_at').notNull().defaultNow(),
   abgeschlossenAt: zeitstempel('abgeschlossen_at'),
   // gesetzt, sobald das ELO-Update gelaufen ist – verhindert doppelte Wertung
   gewertetAt: zeitstempel('gewertet_at'),
+  // Änderung des Gesamt-Ratings durch dieses Duell (für den Ergebnis-Screen)
+  ratingAenderungA: smallint('rating_aenderung_a'),
+  ratingAenderungB: smallint('rating_aenderung_b'),
 }, (t) => [
   check('duels_kategorie_check', erlaubteWerte(t.kategorie, DUELL_KATEGORIEN)),
   check('duels_status_check', erlaubteWerte(t.status, DUELL_STATUS)),
@@ -113,12 +118,17 @@ export const duelAnswers = pgTable('duel_answers', {
   duelId: integer('duel_id').notNull().references(() => duels.id, { onDelete: 'cascade' }),
   userId: integer('user_id').notNull().references(() => users.id),
   questionId: integer('question_id').notNull().references(() => questions.id),
+  // Zeitpunkt, zu dem die Frage ausgeliefert wurde – Basis für den serverseitigen Timer
+  gestelltAt: zeitstempel('gestellt_at').notNull().defaultNow(),
+  beantwortetAt: zeitstempel('beantwortet_at'),
   // NULL = Zeit abgelaufen, keine Antwort gewählt
   answerOptionId: integer('answer_option_id').references(() => answerOptions.id),
   antwortzeitMs: integer('antwortzeit_ms'),
-  istRichtig: boolean('ist_richtig').notNull(),
+  // NULL, solange die Frage gestellt, aber noch nicht beantwortet ist
+  istRichtig: boolean('ist_richtig'),
 }, (t) => [
   primaryKey({ columns: [t.duelId, t.userId, t.questionId] }),
+  check('duel_answers_beantwortet_check', sql`(${t.istRichtig} is null) = (${t.beantwortetAt} is null)`),
   // Statistik-Screen: Trefferquote je Spieler
   index('duel_answers_user_idx').on(t.userId),
 ]);

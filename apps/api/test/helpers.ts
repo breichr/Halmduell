@@ -48,3 +48,28 @@ export async function neuerUser(prefix = 'user') {
   if (res.status !== 201) throw new Error(`Registrierung fehlgeschlagen: ${JSON.stringify(res.json)}`);
   return { id: res.json.id as number, username, cookie: res.cookie };
 }
+
+/** Legt freigegebene Textfragen mit je 4 Antworten an (die erste ist richtig) */
+export async function erstelleFragen(anzahl: number, kategorie = 'wissen'): Promise<void> {
+  const { db } = await lade();
+  for (let i = 0; i < anzahl; i++) {
+    const [frage] = await db.execute<{ id: number }>(sql`
+      insert into questions (kategorie, typ, frage_text, erklaerung)
+      values (${kategorie}, 'text', ${`${kategorie} Frage ${i}`}, 'Weil es so ist.') returning id`);
+    await db.execute(sql`insert into answer_options (question_id, text, ist_richtig) values
+      (${frage!.id}, 'richtig', true), (${frage!.id}, 'falsch 1', false),
+      (${frage!.id}, 'falsch 2', false), (${frage!.id}, 'falsch 3', false)`);
+  }
+}
+
+export async function antwortIds(frageId: number): Promise<{ richtig: number; falsch: number }> {
+  const { db } = await lade();
+  const zeilen = await db.execute<{ id: number; ist_richtig: boolean }>(
+    sql`select id, ist_richtig from answer_options where question_id = ${frageId} order by id`);
+  return { richtig: zeilen.find((z) => z.ist_richtig)!.id, falsch: zeilen.find((z) => !z.ist_richtig)!.id };
+}
+
+export async function sqlAusfuehren(abfrage: ReturnType<typeof sql>) {
+  const { db } = await lade();
+  return db.execute(abfrage);
+}
