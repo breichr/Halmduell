@@ -22,13 +22,13 @@ CREATE TABLE questions (
     schwierigkeit SMALLINT,        -- 1-5
     erklaerung TEXT,               -- Feedback-Text nach Beantwortung
     status VARCHAR(20),            -- 'entwurf', 'eingereicht', 'freigegeben', 'abgelehnt'
-    eingereicht_von INT REFERENCES users(id)
+    eingereicht_von INT REFERENCES users(id) ON DELETE SET NULL
 );
 
 -- Antwortoptionen je Frage
 CREATE TABLE answer_options (
     id INT PRIMARY KEY,
-    question_id INT REFERENCES questions(id),
+    question_id INT REFERENCES questions(id) ON DELETE CASCADE,
     text VARCHAR(100),
     ist_richtig BOOLEAN
 );
@@ -38,15 +38,16 @@ CREATE TABLE duels (
     id INT PRIMARY KEY,
     spieler_a_id INT REFERENCES users(id),
     spieler_b_id INT REFERENCES users(id),
-    kategorie VARCHAR(20),
+    kategorie VARCHAR(20),         -- 'kulturen', 'schaedlinge', 'krankheiten', 'wissen', 'gemischt'
     status VARCHAR(20),            -- 'wartet_a', 'wartet_b', 'abgeschlossen'
     erstellt_at TIMESTAMP,
-    abgeschlossen_at TIMESTAMP
+    abgeschlossen_at TIMESTAMP,
+    gewertet_at TIMESTAMP          -- gesetzt nach ELO-Update, verhindert doppelte Wertung
 );
 
 -- Die 6 Fragen, die zu einem Duell gehören (für beide Spieler identisch)
 CREATE TABLE duel_questions (
-    duel_id INT REFERENCES duels(id),
+    duel_id INT REFERENCES duels(id) ON DELETE CASCADE,
     question_id INT REFERENCES questions(id),
     reihenfolge SMALLINT,
     PRIMARY KEY (duel_id, reihenfolge)
@@ -54,7 +55,7 @@ CREATE TABLE duel_questions (
 
 -- Antworten je Spieler und Frage
 CREATE TABLE duel_answers (
-    duel_id INT REFERENCES duels(id),
+    duel_id INT REFERENCES duels(id) ON DELETE CASCADE,
     user_id INT REFERENCES users(id),
     question_id INT REFERENCES questions(id),
     answer_option_id INT REFERENCES answer_options(id),
@@ -66,8 +67,9 @@ CREATE TABLE duel_answers (
 -- Ratings (ELO), pro Kategorie und Saison getrennt
 CREATE TABLE ratings (
     user_id INT REFERENCES users(id),
-    kategorie VARCHAR(20),          -- 'gesamt', 'kulturen', 'schaedlinge', 'krankheiten'
-    saison INT,
+    kategorie VARCHAR(20),          -- 'gesamt', 'kulturen', 'schaedlinge', 'krankheiten', 'wissen'
+                                    -- ('gemischt'-Duelle zählen nur für 'gesamt')
+    saison INT,                     -- fortlaufend, quartalsweise (Saison 1 = Q1 2026)
     rating INT DEFAULT 1000,
     duelle_gespielt INT DEFAULT 0,
     PRIMARY KEY (user_id, kategorie, saison)
@@ -106,7 +108,11 @@ CREATE TABLE user_achievements (
 2. Spieler A beantwortet → 6 Zeilen in `duel_answers`, Status wechselt zu
    `wartet_b`.
 3. Spieler B beantwortet → weitere 6 Zeilen, Status wird `abgeschlossen`.
-4. Bei Abschluss: Punkte summieren, ELO-Update-Funktion aufrufen,
-   `ratings` aktualisieren.
+4. Bei Abschluss (in einer Transaktion): Punkte summieren, ELO-Update für
+   `gesamt` und – außer bei `gemischt` – für die Duell-Kategorie berechnen,
+   `ratings` der laufenden Saison upserten (`duelle_gespielt` + 1), danach
+   `duels.gewertet_at` setzen. Ein zweiter Aufruf wird abgelehnt (409).
+   Hat ein Spieler noch kein Rating in der laufenden Saison, startet er mit
+   dem Soft-Reset seines Vorsaison-Ratings (sonst 1000).
 5. Statistik-Screen liest `duel_answers` gruppiert nach `kategorie` (Join
    über `questions`) für die Trefferquote.

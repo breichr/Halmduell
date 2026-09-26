@@ -1,3 +1,4 @@
+export const START_RATING = 1000;
 const K_FACTOR_NEW = 40; // für Spieler mit < 20 Duellen
 const K_FACTOR_ESTABLISHED = 20; // für erfahrene Spieler
 
@@ -23,7 +24,7 @@ export function updateElo(
 
 /** Soft-Reset für Saisonwechsel: zieht Ratings näher an 1000, statt hart zu resetten */
 export function saisonalerSoftReset(altesRating: number, faktor = 0.5): number {
-  return Math.round(1000 + (altesRating - 1000) * faktor);
+  return Math.round(START_RATING + (altesRating - START_RATING) * faktor);
 }
 
 /** Ermittelt die Liga-Bezeichnung zu einem Rating (rein kosmetisch) */
