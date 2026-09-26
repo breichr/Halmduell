@@ -66,7 +66,7 @@ halmduell/
 │
 ├── packages/
 │   └── shared/                   # geteilte Types zwischen Frontend/Backend
-│       └── types.ts               # z. B. Question, Duel, Rating
+│       └── src/index.ts           # Kategorien, Status-Typen, API-Antworten
 │
 ├── docker-compose.yml             # lokale Entwicklung (Postgres + beide Apps)
 ├── Dockerfile.web
@@ -82,7 +82,7 @@ Coolify-Service. Beide unabhängig deploybar.
 
 ## Nächste Implementierungsschritte
 
-1. Monorepo-Grundgerüst anlegen (Bun-Workspaces, siehe Struktur oben)
+1. ~~Monorepo-Grundgerüst anlegen (Bun-Workspaces, siehe Struktur oben)~~ ✓
 2. `apps/api/src/db/schema.ts` einspielen, Migrationen generieren
    (`bunx drizzle-kit generate` / `migrate`)
 3. Basis-Auth (JWT) implementieren

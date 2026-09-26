@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { db } from '../db/client';
-import { duels, duelAnswers, ratings, type RatingKategorie } from '../db/schema';
+import type { DuellWertung, RatingKategorie } from '@halmduell/shared';
+import { duels, duelAnswers, ratings } from '../db/schema';
 import { eq, and, sql } from 'drizzle-orm';
 import { updateElo, saisonalerSoftReset, START_RATING } from '../services/elo';
 import { aktuelleSaison } from '../services/saison';
@@ -71,7 +72,7 @@ duelsRoute.post('/:id/complete', async (c) => {
     // Zeilen immer in derselben Reihenfolge (nach User-ID) sperren, um Deadlocks zu vermeiden
     const aZuerst = duel.spielerAId < duel.spielerBId;
 
-    const neueRatings: Partial<Record<RatingKategorie, { a: number; b: number }>> = {};
+    const neueRatings: DuellWertung['ratings'] = {};
     for (const kategorie of kategorien) {
       let altA, altB;
       if (aZuerst) {
@@ -92,6 +93,6 @@ duelsRoute.post('/:id/complete', async (c) => {
 
     await tx.update(duels).set({ gewertetAt: new Date() }).where(eq(duels.id, duelId));
 
-    return c.json({ punkteA, punkteB, saison, ratings: neueRatings });
+    return c.json({ punkteA, punkteB, saison, ratings: neueRatings } satisfies DuellWertung);
   });
 });

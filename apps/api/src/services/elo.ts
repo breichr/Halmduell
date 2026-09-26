@@ -1,3 +1,5 @@
+import type { Liga } from '@halmduell/shared';
+
 export const START_RATING = 1000;
 const K_FACTOR_NEW = 40; // für Spieler mit < 20 Duellen
 const K_FACTOR_ESTABLISHED = 20; // für erfahrene Spieler
@@ -28,7 +30,7 @@ export function saisonalerSoftReset(altesRating: number, faktor = 0.5): number {
 }
 
 /** Ermittelt die Liga-Bezeichnung zu einem Rating (rein kosmetisch) */
-export function liga(rating: number): string {
+export function liga(rating: number): Liga {
   if (rating < 900) return 'Bronze';
   if (rating < 1100) return 'Silber';
   if (rating < 1300) return 'Gold';

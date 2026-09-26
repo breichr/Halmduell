@@ -9,7 +9,7 @@ Quizduell: asynchrones 1v1, 6 Fragen pro Runde, danach Frage-für-Frage-Vergleic
 Ein grüner Grashüpfer/Heuschrecke, sitzt auf einem Getreidehalm (Wortspiel:
 "Halm" + "Duell"), hält für Bilderkennungs-Fragen optional eine Lupe.
 
-## Dokumente in diesem Ordner
+## Dokumente
 
 - `docs/konzept.md` – Spielprinzip, Spielablauf, UX/Screens, Ranking-System
 - `docs/architektur.md` – Tech-Stack, Projektstruktur, Deployment
@@ -18,10 +18,32 @@ Ein grüner Grashüpfer/Heuschrecke, sitzt auf einem Getreidehalm (Wortspiel:
 - `apps/api/src/services/elo.ts` – ELO-Rating-Logik
 - `apps/api/src/routes/duels.ts` – Beispiel-Route für Duell-Abschluss
 
+## Entwicklung
+
+Voraussetzungen: [Bun](https://bun.sh) ≥ 1.3, Docker (für PostgreSQL).
+
+```sh
+bun install
+cp .env.example apps/api/.env   # DATABASE_URL für API und drizzle-kit
+bun run db:up                   # PostgreSQL per docker compose starten
+bun run dev                     # API (:3000) und Web (:5173) mit Hot Reload
+```
+
+Das Frontend leitet `/api/*` im Dev-Modus an die API weiter (siehe
+`apps/web/vite.config.ts`).
+
+| Befehl | Zweck |
+|---|---|
+| `bun run check` | Typecheck aller Pakete (tsc / svelte-check) |
+| `bun run test` | Unit-Tests (`bun test` in `apps/api`) |
+| `bun run build` | Produktions-Build des Frontends |
+| `bun run db:generate` / `db:migrate` | Drizzle-Migrationen erzeugen / anwenden |
+| `docker compose up --build` | kompletter Stack in Containern (Web :3001, API :3000) |
+
 ## Status
 
-Konzeptphase abgeschlossen. Bereit für Implementierungsstart (Projekt-Setup,
-Datenbank-Migrationen, erste Screens).
+Monorepo-Grundgerüst steht (Schritt 1 in `docs/architektur.md`). Als Nächstes:
+Datenbank-Migrationen, Auth, Duell-Flow.
 
 ## Offene Punkte (bewusst noch nicht entschieden)
 

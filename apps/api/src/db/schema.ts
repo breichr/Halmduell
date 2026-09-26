@@ -1,10 +1,13 @@
 import { pgTable, serial, integer, varchar, text, boolean, timestamp, smallint, primaryKey } from 'drizzle-orm/pg-core';
-
-export type FragenKategorie = 'kulturen' | 'schaedlinge' | 'krankheiten' | 'wissen';
-export type DuellKategorie = FragenKategorie | 'gemischt';
-/** 'gemischt'-Duelle zählen nur für 'gesamt', es gibt kein eigenes Rating dafür */
-export type RatingKategorie = 'gesamt' | FragenKategorie;
-export type DuellStatus = 'wartet_a' | 'wartet_b' | 'abgeschlossen';
+import type {
+  DuellKategorie,
+  DuellStatus,
+  FragenKategorie,
+  FrageStatus,
+  FrageTyp,
+  FreundschaftStatus,
+  RatingKategorie,
+} from '@halmduell/shared';
 
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
@@ -15,13 +18,13 @@ export const users = pgTable('users', {
 export const questions = pgTable('questions', {
   id: serial('id').primaryKey(),
   kategorie: varchar('kategorie', { length: 20 }).$type<FragenKategorie>().notNull(),
-  typ: varchar('typ', { length: 10 }).notNull(),               // 'bild' | 'text'
+  typ: varchar('typ', { length: 10 }).$type<FrageTyp>().notNull(),
   frageText: text('frage_text').notNull(),
   bildUrl: varchar('bild_url', { length: 255 }),
   bildQuelle: varchar('bild_quelle', { length: 255 }),
   schwierigkeit: smallint('schwierigkeit').default(1),
   erklaerung: text('erklaerung'),
-  status: varchar('status', { length: 20 }).default('freigegeben'), // für Community-Einreichung
+  status: varchar('status', { length: 20 }).$type<FrageStatus>().notNull().default('freigegeben'), // für Community-Einreichung
   eingereichtVon: integer('eingereicht_von').references(() => users.id, { onDelete: 'set null' }),
 });
 
@@ -76,7 +79,7 @@ export const ratings = pgTable('ratings', {
 export const friendships = pgTable('friendships', {
   userId: integer('user_id').notNull().references(() => users.id),
   friendId: integer('friend_id').notNull().references(() => users.id),
-  status: varchar('status', { length: 20 }).default('angefragt'), // 'angefragt' | 'bestaetigt'
+  status: varchar('status', { length: 20 }).$type<FreundschaftStatus>().notNull().default('angefragt'),
   erstelltAt: timestamp('erstellt_at').defaultNow(),
 }, (t) => ({
   pk: primaryKey({ columns: [t.userId, t.friendId] }),
