@@ -123,9 +123,20 @@ lassen und **Network Aliases** auf `halmduell-api` setzen – der generierte
 Containername ändert sich mit jedem Deployment, der Alias nicht. Bei beiden
 Services **Ports Exposes** = `3000`.
 
-Health-Checks sind in den Dockerfiles definiert (`HEALTHCHECK`, per `wget`
-gegen `127.0.0.1`); Coolify verwendet diese automatisch, im Dashboard muss
-dafür nichts eingestellt werden.
+**Health-Check:** Ist unter **Configuration → Healthcheck** der Check im
+Dashboard aktiv, verwendet Coolify diesen – nicht den `HEALTHCHECK` aus dem
+Dockerfile. Dort **Host** auf `127.0.0.1` setzen, nicht `localhost`: Auf dem
+Server löst `localhost` im Container vermutlich zu `::1` (IPv6) auf, die
+Server lauschen aber nur auf IPv4 – der Check schlägt dann mit „Connection
+refused“ fehl und Coolify rollt das Deployment zurück.
+
+| Service | Host | Port | Pfad |
+|---|---|---|---|
+| API | `127.0.0.1` | `3000` | `/api/health` |
+| Web | `127.0.0.1` | `3000` | `/` |
+
+Alternativ den Dashboard-Check deaktivieren; dann greift der `HEALTHCHECK`
+aus dem Dockerfile, der bereits `127.0.0.1` verwendet.
 
 Beim Start wendet die API ausstehende Migrationen an und importiert
 `fragen/fragen.csv`. `TRUST_PROXY=true` ist richtig, solange die API nur über
