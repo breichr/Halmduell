@@ -115,8 +115,17 @@ selbst braucht keine Domain.
 | Service | Dockerfile | Umgebungsvariablen |
 |---|---|---|
 | PostgreSQL | Coolify-Datenbank | – |
-| API | `Dockerfile.api` | `DATABASE_URL`, `JWT_SECRET` (geheim, `openssl rand -base64 48`), `TRUST_PROXY=true` |
-| Web | `Dockerfile.web` | `API_URL` (interne Adresse der API, z. B. `http://<api-service>:3000`), `ORIGIN` (öffentliche URL, z. B. `https://halmduell.example`) |
+| API | `Dockerfile.api` | `DATABASE_URL` (Internal URL der Datenbank), `JWT_SECRET` (geheim, `openssl rand -base64 48`), `TRUST_PROXY=true` |
+| Web | `Dockerfile.web` | `API_URL=http://halmduell-api:3000`, `ORIGIN` (öffentliche URL, z. B. `https://halmduell.example`) |
+
+Beim API-Service unter **Configuration → General** das Feld **Domains** leer
+lassen und **Network Aliases** auf `halmduell-api` setzen – der generierte
+Containername ändert sich mit jedem Deployment, der Alias nicht. Bei beiden
+Services **Ports Exposes** = `3000`.
+
+Health-Checks sind in den Dockerfiles definiert (`HEALTHCHECK`, per `wget`
+gegen `127.0.0.1`); Coolify verwendet diese automatisch, im Dashboard muss
+dafür nichts eingestellt werden.
 
 Beim Start wendet die API ausstehende Migrationen an und importiert
 `fragen/fragen.csv`. `TRUST_PROXY=true` ist richtig, solange die API nur über
