@@ -1,0 +1,51 @@
+# Lokale Entwicklung: `docker compose up -d db` für nur die Datenbank,
+# `docker compose up --build` für den kompletten Stack.
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: halmduell
+      POSTGRES_PASSWORD: halmduell
+      POSTGRES_DB: halmduell
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U halmduell"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    environment:
+      DATABASE_URL: postgres://halmduell:halmduell@db:5432/halmduell
+      PORT: 3000
+      JWT_SECRET: nur-fuer-lokale-entwicklung-bitte-aendern-1234567890
+      # Aufrufe kommen nur über den Web-Container, der X-Forwarded-For setzt
+      TRUST_PROXY: "true"
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    environment:
+      PORT: 3001
+      ORIGIN: http://localhost:3001
+      API_URL: http://api:3000
+    ports:
+      - "3001:3001"
+    depends_on:
+      - api
+
+volumes:
+  pgdata:

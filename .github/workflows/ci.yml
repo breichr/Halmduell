@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  pruefen:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: halmduell
+          POSTGRES_PASSWORD: halmduell
+          POSTGRES_DB: halmduell_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U halmduell"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgres://halmduell:halmduell@localhost:5432/halmduell_test
+      JWT_SECRET: ci-secret-nur-fuer-tests-1234567890abcdef
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.11
+
+      - run: bun install --frozen-lockfile
+      - name: Typecheck
+        run: bun run check
+      - name: Migrationen passen zum Schema
+        working-directory: apps/api
+        run: |
+          bunx drizzle-kit check
+          bunx drizzle-kit generate
+          if [ -n "$(git status --porcelain src/db/migrations)" ]; then
+            echo "::error::schema.ts wurde geändert, aber keine Migration erzeugt (bun run db:generate)"
+            git status --porcelain src/db/migrations
+            exit 1
+          fi
+      - name: Fragenkatalog prüfen
+        run: bun run fragen:pruefen
+      - name: Tests (inkl. Integrationstests gegen Postgres)
+        run: bun run test
+      - name: Frontend-Build
+        run: bun run build
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: API-Image bauen
+        run: docker build -f Dockerfile.api -t halmduell-api .
+      - name: Zeitzonendaten im Image (Saisonwechsel um Mitternacht deutscher Zeit)
+        run: |
+          docker run --rm halmduell-api bun -e "
+            const { aktuelleSaison } = await import('@halmduell/shared');
+            const vorher = aktuelleSaison(new Date('2026-06-30T21:59:00Z'));
+            const nachher = aktuelleSaison(new Date('2026-06-30T22:00:00Z'));
+            if (vorher !== 2 || nachher !== 3) { console.error('Saison falsch:', vorher, nachher); process.exit(1); }
+            console.log('Europe/Berlin ok');
+          "
+      - name: Web-Image bauen
+        run: docker build -f Dockerfile.web -t halmduell-web .
