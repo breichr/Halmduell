@@ -16,6 +16,10 @@ COPY fragen fragen
 
 ENV NODE_ENV=production
 EXPOSE 3000
+# 127.0.0.1 statt localhost (siehe Dockerfile.web); längere Startphase, weil
+# vor dem Start Migrationen und der Fragen-Import laufen
+HEALTHCHECK --interval=10s --timeout=3s --start-period=60s --retries=3 \
+  CMD wget -q -O /dev/null "http://127.0.0.1:${PORT:-3000}/api/health" || exit 1
 WORKDIR /app/apps/api
 # Migrationen anwenden, fragen/fragen.csv importieren, API starten
 CMD ["bun", "run", "start"]
