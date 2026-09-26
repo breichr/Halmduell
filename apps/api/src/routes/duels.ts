@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { and, asc, desc, eq, inArray, isNotNull, isNull, ne, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, isNotNull, isNull, or, sql } from 'drizzle-orm';
 import {
   ANTWORTZEIT_MS,
   FRAGEN_PRO_DUELL,
@@ -13,6 +13,7 @@ import {
   type DuellSpieler,
   type DuellUebersicht,
   type GestellteFrage,
+  type NeuesDuell,
 } from '@halmduell/shared';
 import { db } from '../db/client';
 import { answerOptions, duelAnswers, duelQuestions, duels, questions, users } from '../db/schema';
@@ -23,10 +24,13 @@ import {
   baueUebersicht,
   erzeugeEinladungsCode,
   istAmZug,
+  istLaufend,
   istTeilnehmer,
   mischeAntworten,
   sortiereFuerDashboard,
+  zugBis,
 } from '../services/duell';
+import { beendeVorzeitig } from '../services/duell-ende';
 import { werteDuell } from '../services/wertung';
 
 /** Toleranz für die Netzwerklaufzeit zwischen Anzeige der Frage und Eintreffen der Antwort */
@@ -62,6 +66,39 @@ async function ladeEigenesDuell(tx: Tx, duelId: number, userId: number) {
   return { duel };
 }
 
+/**
+ * Frist abgelaufen, aber der Fristen-Job hat das Duell noch nicht beendet?
+ * Dann jetzt beenden, damit niemand nach Ablauf noch spielen kann.
+ */
+async function fristPruefen(tx: Tx, duel: Duell, jetzt = new Date()): Promise<Duell> {
+  const frist = zugBis(duel);
+  if (!frist || frist > jetzt) return duel;
+  const verlierer = duel.status === 'wartet_a' ? duel.spielerAId : duel.spielerBId ?? duel.spielerAId;
+  return beendeVorzeitig(tx, duel, verlierer, jetzt);
+}
+
+/**
+ * Wählt Fragen für ein neues Duell: bevorzugt Fragen, die keiner der Spieler
+ * schon in einem Duell hatte; bei 'gemischt' reihum aus allen Kategorien.
+ */
+async function waehleFragen(tx: Tx, kategorie: NeuesDuell['kategorie'], spielerIds: number[]): Promise<number[]> {
+  const ids = sql.join(spielerIds.map((id) => sql`${id}`), sql`, `);
+  const gesehen = sql`(
+    select count(*) from duel_questions dq join duels d on d.id = dq.duel_id
+    where dq.question_id = q.id and (d.spieler_a_id in (${ids}) or d.spieler_b_id in (${ids}))
+  )`;
+  const filter = kategorie === 'gemischt' ? sql`` : sql`and q.kategorie = ${kategorie}`;
+  const zeilen = await tx.execute<{ id: number }>(sql`
+    select id from (
+      select q.id, row_number() over (partition by q.kategorie order by ${gesehen}, random()) as rang
+      from questions q
+      where q.status = 'freigegeben' ${filter}
+    ) auswahl
+    order by rang, random()
+    limit ${FRAGEN_PRO_DUELL}`);
+  return zeilen.map((z) => z.id);
+}
+
 export const duelsRoute = new Hono<AuthEnv>();
 
 duelsRoute.use(requireAuth);
@@ -71,9 +108,9 @@ duelsRoute.get('/', async (c) => {
   const ich = c.var.userId;
   const beteiligt = or(eq(duels.spielerAId, ich), eq(duels.spielerBId, ich));
   const laufend = await db.select().from(duels)
-    .where(and(beteiligt, ne(duels.status, 'abgeschlossen')));
+    .where(and(beteiligt, inArray(duels.status, ['wartet_a', 'wartet_b'])));
   const abgeschlossen = await db.select().from(duels)
-    .where(and(beteiligt, eq(duels.status, 'abgeschlossen')))
+    .where(and(beteiligt, inArray(duels.status, ['abgeschlossen', 'abgebrochen'])))
     .orderBy(desc(duels.abgeschlossenAt))
     .limit(ABGESCHLOSSENE_IM_DASHBOARD);
   const liste = [...laufend, ...abgeschlossen];
@@ -109,13 +146,7 @@ duelsRoute.post('/', async (c) => {
       gegnerSpieler = gefunden;
     }
 
-    const fragen = await tx.select({ id: questions.id }).from(questions)
-      .where(and(
-        eq(questions.status, 'freigegeben'),
-        kategorie === 'gemischt' ? undefined : eq(questions.kategorie, kategorie),
-      ))
-      .orderBy(sql`random()`)
-      .limit(FRAGEN_PRO_DUELL);
+    const fragen = await waehleFragen(tx, kategorie, gegnerSpieler ? [ich, gegnerSpieler.id] : [ich]);
     if (fragen.length < FRAGEN_PRO_DUELL) return c.json(fehler('Nicht genug Fragen in dieser Kategorie'), 409);
 
     const [duel] = await tx.insert(duels).values({
@@ -125,7 +156,7 @@ duelsRoute.post('/', async (c) => {
       einladungsCode: gegnerSpieler ? null : erzeugeEinladungsCode(),
     }).returning();
     await tx.insert(duelQuestions).values(
-      fragen.map((f, i) => ({ duelId: duel!.id, questionId: f.id, reihenfolge: i + 1 })),
+      fragen.map((questionId, i) => ({ duelId: duel!.id, questionId, reihenfolge: i + 1 })),
     );
     return c.json(baueUebersicht(duel!, ich, gegnerSpieler, []) satisfies DuellUebersicht, 201);
   });
@@ -143,9 +174,13 @@ duelsRoute.post('/beitreten', async (c) => {
       .for('update');
     if (!duel) return c.json(fehler('Einladung nicht gefunden oder schon angenommen'), 404);
     if (duel.spielerAId === ich) return c.json(fehler('Das ist deine eigene Einladung'), 400);
+    if ((await fristPruefen(tx, duel)).status === 'abgebrochen') {
+      return c.json(fehler('Einladung nicht gefunden oder schon angenommen'), 404);
+    }
 
     const [aktualisiert] = await tx.update(duels)
-      .set({ spielerBId: ich, einladungsCode: null })
+      // hat A schon gespielt, beginnt Bs Zug (und dessen Frist) jetzt
+      .set({ spielerBId: ich, einladungsCode: null, ...(duel.status === 'wartet_b' ? { zugSeit: new Date() } : {}) })
       .where(eq(duels.id, duel.id))
       .returning();
     const spieler = await ladeSpieler(tx, [duel.spielerAId]);
@@ -213,6 +248,7 @@ duelsRoute.get('/:id/frage', async (c) => {
   return db.transaction(async (tx) => {
     const geladen = await ladeEigenesDuell(tx, duelId, ich);
     if (!geladen.duel) return c.json(geladen.fehler, geladen.status);
+    if (!istLaufend(await fristPruefen(tx, geladen.duel))) return c.json(fehler('Das Duell ist beendet'), 409);
     if (!istAmZug(geladen.duel, ich)) return c.json(fehler('Du bist gerade nicht am Zug'), 409);
 
     const meine = await tx.select().from(duelAnswers)
@@ -274,6 +310,7 @@ duelsRoute.post('/:id/antwort', async (c) => {
     const geladen = await ladeEigenesDuell(tx, duelId, ich);
     if (!geladen.duel) return c.json(geladen.fehler, geladen.status);
     const duel = geladen.duel;
+    if (!istLaufend(await fristPruefen(tx, duel))) return c.json(fehler('Das Duell ist beendet'), 409);
     if (!istAmZug(duel, ich)) return c.json(fehler('Du bist gerade nicht am Zug'), 409);
 
     const [offen] = await tx.select().from(duelAnswers)
@@ -306,7 +343,8 @@ duelsRoute.post('/:id/antwort', async (c) => {
     let status = duel.status;
     if (rundeFertig && status === 'wartet_a') {
       status = 'wartet_b';
-      await tx.update(duels).set({ status }).where(eq(duels.id, duelId));
+      // Bs Frist beginnt jetzt (bei offener Einladung erst mit dem Beitritt)
+      await tx.update(duels).set({ status, zugSeit: jetzt }).where(eq(duels.id, duelId));
     } else if (rundeFertig && status === 'wartet_b') {
       status = 'abgeschlossen';
       const [abgeschlossen] = await tx.update(duels)
@@ -325,5 +363,24 @@ duelsRoute.post('/:id/antwort', async (c) => {
       rundeFertig,
       status,
     } satisfies AntwortErgebnis);
+  });
+});
+
+// Aufgeben: der Gegner gewinnt; ohne Gegner (offene Einladung) wird das Duell abgebrochen
+duelsRoute.post('/:id/aufgeben', async (c) => {
+  const duelId = parseId(c.req.param('id'));
+  if (duelId === null) return c.json(fehler('Ungültige Duell-ID'), 400);
+  const ich = c.var.userId;
+
+  return db.transaction(async (tx) => {
+    const geladen = await ladeEigenesDuell(tx, duelId, ich);
+    if (!geladen.duel) return c.json(geladen.fehler, geladen.status);
+    if (!istLaufend(geladen.duel)) return c.json(fehler('Das Duell ist bereits beendet'), 409);
+
+    const beendet = await beendeVorzeitig(tx, geladen.duel, ich);
+    const gid = gegnerId(beendet, ich);
+    const gegner = gid === null ? null : (await ladeSpieler(tx, [gid])).get(gid) ?? null;
+    const antworten = await tx.select().from(duelAnswers).where(eq(duelAnswers.duelId, duelId));
+    return c.json(baueUebersicht(beendet, ich, gegner, antworten) satisfies DuellUebersicht);
   });
 });

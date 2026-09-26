@@ -41,6 +41,10 @@ export const users = pgTable('users', {
   id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
   username: varchar('username', { length: 50 }).notNull(),
   passwortHash: text('passwort_hash').notNull(), // argon2id (Bun.password)
+  // Hash des Wiederherstellungscodes für "Passwort vergessen"; NULL = kein Code hinterlegt
+  wiederherstellungsHash: text('wiederherstellungs_hash'),
+  // steckt in jedem Token; Erhöhen macht alle bestehenden Sessions ungültig
+  sessionVersion: integer('session_version').notNull().default(0),
   createdAt: zeitstempel('created_at').notNull().defaultNow(),
 }, (t) => [
   // "Anna" und "anna" sind derselbe Name
@@ -94,6 +98,10 @@ export const duels = pgTable('duels', {
   // Änderung des Gesamt-Ratings durch dieses Duell (für den Ergebnis-Screen)
   ratingAenderungA: smallint('rating_aenderung_a'),
   ratingAenderungB: smallint('rating_aenderung_b'),
+  // Beginn des aktuellen Zugs – nach Ablauf der Frist verliert, wer am Zug ist
+  zugSeit: zeitstempel('zug_seit').notNull().defaultNow(),
+  // gesetzt bei Aufgabe oder Fristablauf; dieser Spieler verliert unabhängig von den Punkten
+  aufgegebenVon: integer('aufgegeben_von').references(() => users.id),
 }, (t) => [
   check('duels_kategorie_check', erlaubteWerte(t.kategorie, DUELL_KATEGORIEN)),
   check('duels_status_check', erlaubteWerte(t.status, DUELL_STATUS)),
@@ -101,6 +109,8 @@ export const duels = pgTable('duels', {
   // Dashboard: laufende Duelle eines Spielers (als A oder B)
   index('duels_spieler_a_idx').on(t.spielerAId, t.status),
   index('duels_spieler_b_idx').on(t.spielerBId, t.status),
+  // Fristen-Job: laufende Duelle nach Zugbeginn
+  index('duels_status_zug_idx').on(t.status, t.zugSeit),
 ]);
 
 export const duelQuestions = pgTable('duel_questions', {
@@ -112,6 +122,8 @@ export const duelQuestions = pgTable('duel_questions', {
   check('duel_questions_reihenfolge_check', sql`${t.reihenfolge} between 1 and 6`),
   // dieselbe Frage nicht zweimal im selben Duell
   uniqueIndex('duel_questions_frage_idx').on(t.duelId, t.questionId),
+  // Fragenauswahl: schon gesehene Fragen erkennen
+  index('duel_questions_question_idx').on(t.questionId),
 ]);
 
 export const duelAnswers = pgTable('duel_answers', {

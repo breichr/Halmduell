@@ -8,4 +8,6 @@ if (!jwtSecret || jwtSecret.length < 32) {
 export const env = {
   jwtSecret,
   istProduktion: process.env.NODE_ENV === 'production',
+  // hinter einem Reverse-Proxy (Coolify/Traefik): Client-IP aus X-Forwarded-For lesen
+  vertraueProxy: process.env.TRUST_PROXY === 'true',
 };

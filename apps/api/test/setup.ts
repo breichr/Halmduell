@@ -3,6 +3,8 @@
 const testUrl = process.env.TEST_DATABASE_URL;
 
 process.env.JWT_SECRET ??= 'test-secret-mindestens-32-zeichen-lang!!';
+// Tests setzen die Client-IP per X-Forwarded-For (siehe helpers.ts)
+process.env.TRUST_PROXY = 'true';
 
 if (testUrl) {
   if (!new URL(testUrl).pathname.includes('test')) {

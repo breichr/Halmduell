@@ -9,10 +9,10 @@ CHECK-Constraint in der Datenbank abgesichert.
 
 | Tabelle | Schlüssel | Inhalt |
 |---|---|---|
-| `users` | `id` | Spieler, `username` eindeutig |
+| `users` | `id` | Spieler, `username` eindeutig (ohne Groß-/Kleinschreibung), `passwort_hash`, `wiederherstellungs_hash`, `session_version` |
 | `questions` | `id` | Frage mit `kategorie` (`kulturen`, `schaedlinge`, `krankheiten`, `wissen`), `typ` (`bild`/`text`), Bild-URL + Attribution, `schwierigkeit` 1–5, `erklaerung`, `status` (`entwurf`, `eingereicht`, `freigegeben`, `abgelehnt`), `eingereicht_von` |
 | `answer_options` | `id` | Antwortoptionen je Frage, `ist_richtig` |
-| `duels` | `id` | Duell zwischen `spieler_a_id` und `spieler_b_id` (NULL bis zum Beitritt per `einladungs_code`), `kategorie` (zusätzlich `gemischt`), `status` (`wartet_a`, `wartet_b`, `abgeschlossen`), `gewertet_at` + `rating_aenderung_a/b` nach dem ELO-Update |
+| `duels` | `id` | Duell zwischen `spieler_a_id` und `spieler_b_id` (NULL bis zum Beitritt per `einladungs_code`), `kategorie` (zusätzlich `gemischt`), `status` (`wartet_a`, `wartet_b`, `abgeschlossen`), `zug_seit` (Beginn des aktuellen Zugs, für die 3-Tage-Frist), `aufgegeben_von`, `gewertet_at` + `rating_aenderung_a/b` nach dem ELO-Update; Status zusätzlich `abgebrochen` (ohne Wertung) |
 | `duel_questions` | `duel_id`, `reihenfolge` | die 6 Fragen eines Duells (für beide Spieler identisch) |
 | `duel_answers` | `duel_id`, `user_id`, `question_id` | Antwort je Spieler und Frage: `gestellt_at` (Timer-Start), `beantwortet_at`, `antwortzeit_ms`, `ist_richtig` (NULL = noch offen); `answer_option_id` ist leer, wenn der Timer abgelaufen ist |
 | `ratings` | `user_id`, `kategorie`, `saison` | ELO je Kategorie (`gesamt`, `kulturen`, `schaedlinge`, `krankheiten`, `wissen`) und Saison (fortlaufend, quartalsweise, Saison 1 = Q1 2026), `duelle_gespielt` |
@@ -70,8 +70,15 @@ erzeugen.
    Gesamt-Ratings (`rating_aenderung_a/b`) am Duell speichern. Hat ein Spieler
    noch kein Rating in der laufenden Saison, startet er mit dem Soft-Reset
    seines Vorsaison-Ratings (sonst 1000).
-5. **Sichtbarkeit**: Frage, Lösung und die Antwort des Gegners zu einer Frage
+5. **Vorzeitiges Ende**: Aufgabe (`POST /api/duels/:id/aufgeben`) oder
+   Fristablauf (Zug nicht innerhalb von 3 Tagen ab `zug_seit`) setzt
+   `aufgegeben_von`, das Duell wird `abgeschlossen` und gewertet – der
+   Aufgebende verliert unabhängig vom Punktestand. Ohne Gegner (offene
+   Einladung, bzw. nach 7 Tagen nicht angenommen) wird es `abgebrochen`,
+   ohne Wertung. `zug_seit` wird beim Wechsel zu B neu gesetzt, bei offener
+   Einladung erst mit dem Beitritt.
+6. **Sichtbarkeit**: Frage, Lösung und die Antwort des Gegners zu einer Frage
    liefert die API erst, nachdem man sie selbst beantwortet hat – das gilt auch
    für die Gegner-Punkte im Dashboard.
-6. Statistik-Screen liest `duel_answers` gruppiert nach `kategorie` (Join
+7. Statistik-Screen liest `duel_answers` gruppiert nach `kategorie` (Join
    über `questions`) für die Trefferquote.

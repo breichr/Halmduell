@@ -11,18 +11,22 @@ type Duell = typeof duels.$inferSelect;
 /**
  * Liest das Rating der laufenden Saison (Zeile wird bis Transaktionsende gesperrt).
  * Gibt es noch keins, startet der Spieler mit dem Soft-Reset seines Vorsaison-Ratings.
+ * `duelleInsgesamt` zählt über alle Saisons und steuert den K-Faktor.
  */
 async function ladeRating(tx: Tx, userId: number, kategorie: RatingKategorie, saison: number) {
   const [aktuell] = await tx.select().from(ratings)
     .where(and(eq(ratings.userId, userId), eq(ratings.kategorie, kategorie), eq(ratings.saison, saison)))
     .for('update');
-  if (aktuell) return { rating: aktuell.rating, duelleGespielt: aktuell.duelleGespielt };
+  const [summe] = await tx.select({ anzahl: sql<number>`coalesce(sum(${ratings.duelleGespielt}), 0)::int` }).from(ratings)
+    .where(and(eq(ratings.userId, userId), eq(ratings.kategorie, kategorie)));
+  const duelleInsgesamt = summe?.anzahl ?? 0;
+  if (aktuell) return { rating: aktuell.rating, duelleInsgesamt };
 
   const [vorsaison] = await tx.select().from(ratings)
     .where(and(eq(ratings.userId, userId), eq(ratings.kategorie, kategorie), eq(ratings.saison, saison - 1)));
   return {
     rating: vorsaison ? saisonalerSoftReset(vorsaison.rating) : START_RATING,
-    duelleGespielt: 0,
+    duelleInsgesamt,
   };
 }
 
@@ -56,7 +60,10 @@ export async function werteDuell(tx: Tx, duel: Duell): Promise<DuellWertung> {
 
   const punkteA = await punkte(tx, duel.id, duel.spielerAId);
   const punkteB = await punkte(tx, duel.id, spielerBId);
-  const ergebnisA: Ergebnis = punkteA > punkteB ? 1 : punkteA < punkteB ? 0 : 0.5;
+  // Aufgabe/Fristablauf entscheidet unabhängig vom Punktestand
+  const ergebnisA: Ergebnis = duel.aufgegebenVon !== null
+    ? (duel.aufgegebenVon === duel.spielerAId ? 0 : 1)
+    : punkteA > punkteB ? 1 : punkteA < punkteB ? 0 : 0.5;
   const ergebnisB = (1 - ergebnisA) as Ergebnis;
 
   const saison = aktuelleSaison();
@@ -78,8 +85,8 @@ export async function werteDuell(tx: Tx, duel: Duell): Promise<DuellWertung> {
       altA = await ladeRating(tx, duel.spielerAId, kategorie, saison);
     }
 
-    const neuA = updateElo(altA.rating, altB.rating, ergebnisA, altA.duelleGespielt);
-    const neuB = updateElo(altB.rating, altA.rating, ergebnisB, altB.duelleGespielt);
+    const neuA = updateElo(altA.rating, altB.rating, ergebnisA, altA.duelleInsgesamt);
+    const neuB = updateElo(altB.rating, altA.rating, ergebnisB, altB.duelleInsgesamt);
 
     await speichereRating(tx, duel.spielerAId, kategorie, saison, neuA);
     await speichereRating(tx, spielerBId, kategorie, saison, neuB);

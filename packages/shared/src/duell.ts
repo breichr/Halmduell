@@ -5,6 +5,10 @@ export const FRAGEN_PRO_DUELL = 6;
 /** Zeit pro Frage; der Server gibt zusätzlich eine kleine Toleranz für die Netzwerklaufzeit */
 export const ANTWORTZEIT_MS = 15_000;
 export const EINLADUNGSCODE_LAENGE = 8;
+/** Wer nicht innerhalb dieser Frist seinen Zug spielt, verliert das Duell */
+export const ZUG_FRIST_MS = 3 * 24 * 60 * 60 * 1000;
+/** Nicht angenommene Einladungen verfallen danach ohne Wertung */
+export const EINLADUNG_FRIST_MS = 7 * 24 * 60 * 60 * 1000;
 
 // --- Requests ---
 
@@ -47,6 +51,10 @@ export interface DuellUebersicht {
   gegnerPunkte: number;
   /** Änderung meines Gesamt-Ratings, sobald das Duell gewertet ist */
   ratingAenderung: number | null;
+  /** Frist für den aktuellen Zug (bzw. Ablauf der offenen Einladung); null, wenn das Duell beendet ist */
+  zugBis: string | null;
+  /** wer aufgegeben hat bzw. die Frist verpasst hat */
+  aufgegeben: 'ich' | 'gegner' | null;
   erstelltAt: string;
   abgeschlossenAt: string | null;
 }

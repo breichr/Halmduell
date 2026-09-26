@@ -51,12 +51,25 @@ nichts speichern, der Browser schickt das Cookie bei `/api/*` automatisch mit.
 
 | Endpunkt | Zweck |
 |---|---|
-| `POST /api/auth/register` | `{ username, password }` → User anlegen und anmelden |
+| `POST /api/auth/register` | `{ username, password }` → User anlegen, anmelden, **Wiederherstellungscode** (nur einmal angezeigt) |
 | `POST /api/auth/login` | `{ username, password }` → anmelden |
-| `POST /api/auth/logout` | Cookie löschen |
+| `POST /api/auth/zuruecksetzen` | `{ username, code, neuesPasswort }` → Passwort vergessen; liefert neuen Code |
+| `POST /api/auth/logout` | auf diesem Gerät abmelden |
+| `POST /api/auth/logout-alle` | auf allen Geräten abmelden |
 | `GET /api/auth/me` | aktueller User, sonst 401 |
+| `POST /api/auth/passwort` | `{ altesPasswort, neuesPasswort }` → ändern, andere Geräte werden abgemeldet |
+| `POST /api/auth/wiederherstellungscode` | `{ passwort }` → neuen Code erzeugen, der alte wird ungültig |
 
-In Produktion `JWT_SECRET` als geheime Umgebungsvariable in Coolify setzen.
+Es gibt bewusst keine E-Mail: Wer sein Passwort vergisst, setzt es mit dem
+Wiederherstellungscode zurück (gespeichert nur als Hash). Jedes Token enthält
+eine Session-Version; Passwortänderung, Zurücksetzen und „überall abmelden“
+erhöhen sie und machen alte Tokens sofort ungültig.
+
+Fehlversuche werden je IP + Konto (10 / 15 min) und je IP (50 / 15 min)
+begrenzt – eine fremde IP kann niemanden aussperren.
+
+In Produktion auf Coolify setzen: `JWT_SECRET` (geheim) und `TRUST_PROXY=true`,
+damit die Client-IP aus `X-Forwarded-For` des Proxys gelesen wird.
 
 ## Duell-API
 
@@ -70,10 +83,21 @@ Alle Endpunkte erfordern eine Anmeldung.
 | `GET /api/duels/:id` | Details + Frage-für-Frage-Vergleich |
 | `GET /api/duels/:id/frage` | aktuelle Frage (startet den 15-s-Timer, Neuladen setzt ihn nicht zurück) |
 | `POST /api/duels/:id/antwort` | `{ frageId, antwortId \| null }` → Ergebnis, Lösung, Erklärung |
+| `POST /api/duels/:id/aufgeben` | aufgeben: Gegner gewinnt; offene Einladung wird ohne Wertung abgebrochen |
 
 Ablauf: A beantwortet 6 Fragen, dann B dieselben 6. Nach Bs letzter Antwort
 wird das Duell automatisch gewertet (ELO). Lösungen und Antworten des Gegners
 sieht man erst, nachdem man die jeweilige Frage selbst beantwortet hat.
+
+**Fristen:** Wer seinen Zug nicht innerhalb von 3 Tagen spielt, verliert (mit
+ELO-Wertung). Nicht angenommene Einladungen verfallen nach 7 Tagen ohne
+Wertung. Die API prüft das alle 10 Minuten und zusätzlich bei jedem Zug.
+
+**Fragenauswahl:** bevorzugt Fragen, die keiner der beiden Spieler schon
+hatte; `gemischt` verteilt die 6 Fragen reihum auf alle Kategorien.
+
+**K-Faktor:** 40 für die ersten 20 Duelle eines Spielers in einer Kategorie
+(über alle Saisons gezählt), danach 20.
 Request- und Response-Typen liegen in `packages/shared/src/duell.ts`.
 
 ## Status
@@ -81,7 +105,17 @@ Request- und Response-Typen liegen in `packages/shared/src/duell.ts`.
 Backend für den Duell-Flow steht (Schritte 1–4 in `docs/architektur.md`).
 Als Nächstes: Frontend-Screens.
 
-## Offene Punkte (bewusst noch nicht entschieden)
+## Offene Punkte
+
+Noch zu entscheiden:
+
+- Start von Saison 1 (aktuell fest Q1 2026, `apps/api/src/services/saison.ts`)
+- Fragen-Pool: wer erstellt und prüft die Fragen fachlich? (bisher 6
+  Beispielfragen – Kategorie-Duelle brauchen je ≥ 6 freigegebene Fragen)
+- Routing auf Coolify: eine Domain mit `/api` → API-Container oder getrennte
+  Domains
+
+Bewusst später:
 
 - Matchmaking für Zufallsgegner (MVP: nur Freund-Einladung per Code/Link)
 - Community-Fragen-Einreichung (geplant, aber erst nach MVP)

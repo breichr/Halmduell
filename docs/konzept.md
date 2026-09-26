@@ -75,7 +75,8 @@ Attribution wird automatisch im Quiz eingeblendet ("Bild: Name, CC-BY-SA").
   Reset-Formel statt hartem Reset auf 1000, damit gute Spieler nicht komplett
   bei null anfangen:
   `neues_rating = 1000 + (altes_rating - 1000) * 0.5`
-- K-Faktor: 40 für Spieler mit < 20 Duellen, 20 für erfahrene Spieler.
+- K-Faktor: 40 für Spieler mit < 20 Duellen in der jeweiligen Kategorie
+  (über alle Saisons gezählt), 20 für erfahrene Spieler.
 
 Liga-Grenzen (Vorschlag):
 

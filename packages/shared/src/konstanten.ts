@@ -14,7 +14,8 @@ export type FrageTyp = (typeof FRAGE_TYPEN)[number];
 export const FRAGE_STATUS = ['entwurf', 'eingereicht', 'freigegeben', 'abgelehnt'] as const;
 export type FrageStatus = (typeof FRAGE_STATUS)[number];
 
-export const DUELL_STATUS = ['wartet_a', 'wartet_b', 'abgeschlossen'] as const;
+/** 'abgebrochen' = beendet ohne Wertung (z. B. Einladung nie angenommen) */
+export const DUELL_STATUS = ['wartet_a', 'wartet_b', 'abgeschlossen', 'abgebrochen'] as const;
 export type DuellStatus = (typeof DUELL_STATUS)[number];
 
 export const FREUNDSCHAFT_STATUS = ['angefragt', 'bestaetigt'] as const;

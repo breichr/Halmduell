@@ -1,27 +1,19 @@
 import {
+  EINLADUNG_FRIST_MS,
   EINLADUNGSCODE_LAENGE,
+  ZUG_FRIST_MS,
   type AntwortStand,
   type DuellSpieler,
   type DuellUebersicht,
 } from '@halmduell/shared';
 import type { duelAnswers, duels } from '../db/schema';
+import { zufallsCode } from './zufall';
 
 type Duell = typeof duels.$inferSelect;
 type DuellAntwort = typeof duelAnswers.$inferSelect;
 
-// ohne leicht verwechselbare Zeichen (0/O, 1/I/L)
-const CODE_ZEICHEN = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
-// größtes Vielfaches der Zeichenanzahl unter 256 – Bytes darüber verwerfen, sonst wären einige Zeichen häufiger
-const BYTE_GRENZE = 256 - (256 % CODE_ZEICHEN.length);
-
 export function erzeugeEinladungsCode(): string {
-  let code = '';
-  while (code.length < EINLADUNGSCODE_LAENGE) {
-    for (const b of crypto.getRandomValues(new Uint8Array(EINLADUNGSCODE_LAENGE))) {
-      if (b < BYTE_GRENZE && code.length < EINLADUNGSCODE_LAENGE) code += CODE_ZEICHEN[b % CODE_ZEICHEN.length];
-    }
-  }
-  return code;
+  return zufallsCode(EINLADUNGSCODE_LAENGE);
 }
 
 /** Stabile, pro Spieler unterschiedliche Reihenfolge der Antwortoptionen (bleibt beim Neuladen gleich) */
@@ -33,6 +25,19 @@ export function mischeAntworten<T extends { id: number }>(optionen: T[], duelId:
 export function istAmZug(duel: Duell, userId: number): boolean {
   return (duel.status === 'wartet_a' && duel.spielerAId === userId)
     || (duel.status === 'wartet_b' && duel.spielerBId === userId);
+}
+
+export function istLaufend(duel: Duell): boolean {
+  return duel.status === 'wartet_a' || duel.status === 'wartet_b';
+}
+
+/** Frist des aktuellen Zugs; bei offener Einladung nach As Runde deren Ablauf */
+export function zugBis(duel: Duell): Date | null {
+  if (!istLaufend(duel)) return null;
+  if (duel.status === 'wartet_b' && duel.spielerBId === null) {
+    return new Date(duel.erstelltAt.getTime() + EINLADUNG_FRIST_MS);
+  }
+  return new Date(duel.zugSeit.getTime() + ZUG_FRIST_MS);
 }
 
 export function istTeilnehmer(duel: Duell, userId: number): boolean {
@@ -71,6 +76,8 @@ export function baueUebersicht(
     meinePunkte: meine.filter((a) => a.istRichtig).length,
     gegnerPunkte: gegnerSichtbar.filter((a) => a.istRichtig).length,
     ratingAenderung: ichBinA ? duel.ratingAenderungA : duel.ratingAenderungB,
+    zugBis: zugBis(duel)?.toISOString() ?? null,
+    aufgegeben: duel.aufgegebenVon === null ? null : duel.aufgegebenVon === userId ? 'ich' : 'gegner',
     erstelltAt: duel.erstelltAt.toISOString(),
     abgeschlossenAt: duel.abgeschlossenAt?.toISOString() ?? null,
   };
@@ -78,6 +85,7 @@ export function baueUebersicht(
 
 /** Dashboard-Sortierung: am Zug zuerst, abgeschlossene zuletzt, sonst neueste zuerst */
 export function sortiereFuerDashboard(a: DuellUebersicht, b: DuellUebersicht): number {
-  const rang = (d: DuellUebersicht) => (d.duBistDran ? 0 : d.status === 'abgeschlossen' ? 2 : 1);
+  const beendet = (d: DuellUebersicht) => d.status === 'abgeschlossen' || d.status === 'abgebrochen';
+  const rang = (d: DuellUebersicht) => (d.duBistDran ? 0 : beendet(d) ? 2 : 1);
   return rang(a) - rang(b) || b.erstelltAt.localeCompare(a.erstelltAt);
 }

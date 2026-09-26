@@ -18,11 +18,15 @@ interface Optionen {
   method?: string;
   body?: unknown;
   cookie?: string;
+  /** Client-IP; ohne Angabe eine zufällige, damit sich Tests nicht gegenseitig ins Rate-Limit bringen */
+  ip?: string;
 }
 
-export async function anfrage(pfad: string, { method = 'GET', body, cookie }: Optionen = {}) {
+export const zufallsIp = () => `10.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`;
+
+export async function anfrage(pfad: string, { method = 'GET', body, cookie, ip = zufallsIp() }: Optionen = {}) {
   const { app } = await lade();
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = { 'x-forwarded-for': ip };
   if (body !== undefined) headers['content-type'] = 'application/json';
   if (cookie) headers.cookie = cookie;
   const res = await app.request(`/api${pfad}`, {
@@ -46,7 +50,7 @@ export async function neuerUser(prefix = 'user') {
   const username = `${prefix}_${++zaehler}_${Date.now() % 100000}`;
   const res = await anfrage('/auth/register', { method: 'POST', body: { username, password: 'geheim123' } });
   if (res.status !== 201) throw new Error(`Registrierung fehlgeschlagen: ${JSON.stringify(res.json)}`);
-  return { id: res.json.id as number, username, cookie: res.cookie };
+  return { id: res.json.id as number, username, cookie: res.cookie, code: res.json.wiederherstellungsCode as string };
 }
 
 /** Legt freigegebene Textfragen mit je 4 Antworten an (die erste ist richtig) */
