@@ -30,3 +30,5 @@ export interface DuellWertung {
   saison: number;
   ratings: Partial<Record<RatingKategorie, { a: number; b: number }>>;
 }
+
+export * from './auth';

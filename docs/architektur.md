@@ -9,7 +9,7 @@
 | Backend/API | Hono.js | modern, minimal, TypeScript-first, läuft auf Bun |
 | ORM/DB | Drizzle ORM + PostgreSQL | typsicher, kein separater Codegen-Schritt |
 | PWA-Tooling | vite-plugin-pwa | Standard für Svelte/Vite, Service Worker + Manifest |
-| Auth | JWT (z. B. via Lucia oder eigene Middleware) | leichtgewichtig, kein Vendor-Lock-in |
+| Auth | JWT im httpOnly-Cookie (hono/jwt), Passwörter mit argon2id (Bun.password) | leichtgewichtig, kein Vendor-Lock-in |
 | Notifications | Web Push | reicht für asynchrones Spiel, kein WebSocket-Server nötig |
 | Bilder-Storage | Wikimedia-Referenzen (extern), später ggf. MinIO für Community-Uploads | spart initialen Storage-Aufwand |
 | Deployment | Coolify (Docker-Container) | bereits vorhandene Infrastruktur |
@@ -85,7 +85,7 @@ Coolify-Service. Beide unabhängig deploybar.
 1. ~~Monorepo-Grundgerüst anlegen (Bun-Workspaces, siehe Struktur oben)~~ ✓
 2. ~~`apps/api/src/db/schema.ts` einspielen, Migrationen generieren
    (`bunx drizzle-kit generate` / `migrate`)~~ ✓
-3. Basis-Auth (JWT) implementieren
+3. ~~Basis-Auth (JWT) implementieren~~ ✓ (Benutzername/Passwort, JWT im httpOnly-Cookie)
 4. Duell-Flow (Erstellen → Beantworten → Abschluss inkl. ELO-Update) als
    erste vertikale Funktionsscheibe umsetzen
 5. Frontend-Screens gemäß `konzept.md` (Dashboard, Frage-Screen,

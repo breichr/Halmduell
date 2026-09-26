@@ -11,6 +11,7 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U halmduell"]
       interval: 5s
@@ -24,6 +25,7 @@ services:
     environment:
       DATABASE_URL: postgres://halmduell:halmduell@db:5432/halmduell
       PORT: 3000
+      JWT_SECRET: nur-fuer-lokale-entwicklung-bitte-aendern-1234567890
     ports:
       - "3000:3000"
     depends_on:

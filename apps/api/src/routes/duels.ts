@@ -5,11 +5,14 @@ import { duels, duelAnswers, ratings } from '../db/schema';
 import { eq, and, sql } from 'drizzle-orm';
 import { updateElo, saisonalerSoftReset, START_RATING } from '../services/elo';
 import { aktuelleSaison } from '../services/saison';
+import { requireAuth, type AuthEnv } from '../middleware/auth';
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 type Ergebnis = 0 | 0.5 | 1;
 
-export const duelsRoute = new Hono();
+export const duelsRoute = new Hono<AuthEnv>();
+
+duelsRoute.use(requireAuth);
 
 /**
  * Liest das Rating der laufenden Saison (Zeile wird bis Transaktionsende gesperrt).
@@ -50,6 +53,9 @@ duelsRoute.post('/:id/complete', async (c) => {
     // Duell sperren, damit parallele Aufrufe nicht doppelt werten
     const [duel] = await tx.select().from(duels).where(eq(duels.id, duelId)).for('update');
     if (!duel) return c.json({ error: 'Duell nicht gefunden' }, 404);
+    if (c.var.userId !== duel.spielerAId && c.var.userId !== duel.spielerBId) {
+      return c.json({ error: 'Kein Teilnehmer dieses Duells' }, 403);
+    }
     if (duel.status !== 'abgeschlossen') {
       return c.json({ error: 'Duell noch nicht von beiden Seiten beantwortet' }, 400);
     }

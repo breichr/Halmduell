@@ -39,9 +39,13 @@ const zeitstempel = (name: string) => timestamp(name, { withTimezone: true });
 
 export const users = pgTable('users', {
   id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
-  username: varchar('username', { length: 50 }).notNull().unique(),
+  username: varchar('username', { length: 50 }).notNull(),
+  passwortHash: text('passwort_hash').notNull(), // argon2id (Bun.password)
   createdAt: zeitstempel('created_at').notNull().defaultNow(),
-});
+}, (t) => [
+  // "Anna" und "anna" sind derselbe Name
+  uniqueIndex('users_username_lower_idx').on(sql`lower(${t.username})`),
+]);
 
 export const questions = pgTable('questions', {
   id: integer('id').primaryKey().generatedByDefaultAsIdentity(),

@@ -24,7 +24,7 @@ Voraussetzungen: [Bun](https://bun.sh) ≥ 1.3, Docker (für PostgreSQL).
 
 ```sh
 bun install
-cp .env.example apps/api/.env   # DATABASE_URL für API und drizzle-kit
+cp .env.example apps/api/.env   # DATABASE_URL, JWT_SECRET, TEST_DATABASE_URL
 bun run db:up                   # PostgreSQL per docker compose starten
 bun run db:migrate              # Tabellen anlegen
 bun run db:seed                 # Abzeichen + Beispielfragen
@@ -37,16 +37,32 @@ Das Frontend leitet `/api/*` im Dev-Modus an die API weiter (siehe
 | Befehl | Zweck |
 |---|---|
 | `bun run check` | Typecheck aller Pakete (tsc / svelte-check) |
-| `bun run test` | Unit-Tests (`bun test` in `apps/api`) |
+| `bun run test` | Tests in `apps/api`; Integrationstests laufen nur mit `TEST_DATABASE_URL` (Test-DB wird geleert) |
 | `bun run build` | Produktions-Build des Frontends |
 | `bun run db:generate` / `db:migrate` | Migration aus dem Schema erzeugen / anwenden |
 | `bun run db:seed` | Abzeichen und Beispielfragen einspielen (mehrfach ausführbar) |
 | `docker compose up --build` | kompletter Stack in Containern (Web :3001, API :3000) |
 
+## API-Authentifizierung
+
+Anmeldung mit Benutzername + Passwort (argon2id). Die Session ist ein JWT
+(HS256, 30 Tage) im httpOnly-Cookie `halmduell_session` – das Frontend muss
+nichts speichern, der Browser schickt das Cookie bei `/api/*` automatisch mit.
+
+| Endpunkt | Zweck |
+|---|---|
+| `POST /api/auth/register` | `{ username, password }` → User anlegen und anmelden |
+| `POST /api/auth/login` | `{ username, password }` → anmelden |
+| `POST /api/auth/logout` | Cookie löschen |
+| `GET /api/auth/me` | aktueller User, sonst 401 |
+
+Alle Duell-Endpunkte erfordern eine Anmeldung. In Produktion `JWT_SECRET`
+als geheime Umgebungsvariable in Coolify setzen.
+
 ## Status
 
-Monorepo-Grundgerüst und Datenbank-Migrationen stehen (Schritte 1–2 in
-`docs/architektur.md`). Als Nächstes: Auth, Duell-Flow.
+Monorepo-Grundgerüst, Datenbank-Migrationen und Basis-Auth stehen (Schritte
+1–3 in `docs/architektur.md`). Als Nächstes: Duell-Flow.
 
 ## Offene Punkte (bewusst noch nicht entschieden)
 
