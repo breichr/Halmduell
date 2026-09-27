@@ -14,6 +14,7 @@ import {
 import { db } from '../db/client';
 import { duels, friendships, ratings, users } from '../db/schema';
 import { requireAuth, type AuthEnv } from '../middleware/auth';
+import { pruefeAbzeichen } from '../services/abzeichen';
 import { andere } from '../services/freunde';
 
 /** Wie viele zuletzt gespielte Gegner als Vorschlag erscheinen */
@@ -135,6 +136,7 @@ freundeRoute.post('/', async (c) => {
     if (bestehend?.userId === ich) return c.json(fehler(`Du hast ${ziel.username} schon angefragt`), 409);
     if (bestehend) {
       await db.update(friendships).set({ status: 'bestaetigt' }).where(paar(ich, ziel.id));
+      await Promise.all([pruefeAbzeichen(db, ich), pruefeAbzeichen(db, ziel.id)]);
       return c.json({ ...ziel, status: 'bestaetigt' } satisfies FreundHinzugefuegt);
     }
 
@@ -160,6 +162,7 @@ freundeRoute.post('/:id/annehmen', async (c) => {
     .where(and(eq(friendships.userId, id), eq(friendships.friendId, ich), eq(friendships.status, 'angefragt')))
     .returning({ id: friendships.userId });
   if (!angenommen.length) return c.json(fehler('Anfrage nicht gefunden'), 404);
+  await Promise.all([pruefeAbzeichen(db, ich), pruefeAbzeichen(db, id)]);
   return c.body(null, 204);
 });
 

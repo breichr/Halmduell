@@ -31,6 +31,7 @@ import {
   sortiereFuerDashboard,
   zugBis,
 } from '../services/duell';
+import { abzeichenAusDuell } from '../services/abzeichen';
 import { beendeVorzeitig } from '../services/duell-ende';
 import { werteDuell } from '../services/wertung';
 
@@ -234,6 +235,7 @@ duelsRoute.get('/:id', async (c) => {
 
   const details: DuellDetails = {
     ...baueUebersicht(duel, ich, gegner, antworten),
+    neueAbzeichen: duel.gewertetAt ? await abzeichenAusDuell(db, ich, duel.id) : [],
     fragen: fragen.map(({ reihenfolge, ...frage }) => {
       const meine = antworten.find((a) => a.userId === ich && a.questionId === frage.id);
       const seine = antworten.find((a) => a.userId === gid && a.questionId === frage.id);

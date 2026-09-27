@@ -161,6 +161,23 @@ aus abgebrochenen Duellen; abgelaufene Zeit zählt als falsch. Oberfläche: oben
 im Profil, mit Hinweis auf Stärke und Übungsbedarf (ab 5 Fragen je Kategorie).
 Typen: `packages/shared/src/statistik.ts`.
 
+## Abzeichen
+
+| Endpunkt | Zweck |
+|---|---|
+| `GET /api/abzeichen` | alle Abzeichen mit „erreicht am“ bzw. Fortschritt (z. B. 23 / 50) |
+
+Katalog: `packages/shared/src/abzeichen.ts` (Meilensteine, Fachwissen je
+Kategorie, Saison, besondere Momente). Die `key`s sind dauerhaft, Titel und
+Texte dürfen sich ändern. Vergeben wird automatisch nach jedem gewerteten Duell
+(für beide Spieler) und beim Annehmen einer Freundschaft; Saison-Abzeichen
+(Top 10 / Platz 1 Gesamt einer abgeschlossenen Saison) beim nächsten Abruf der
+Liste. Durch ein Duell erreichte Abzeichen erscheinen im Ergebnis
+(„Neues Abzeichen!“, `neueAbzeichen` in `GET /api/duels/:id`). Oberfläche: im
+Profil, nicht erreichte ausgegraut mit Beschreibung und Fortschritt.
+`bun run db:seed` bringt Titel/Texte in der Tabelle auf Stand (fehlende Zeilen
+legt die API beim Vergeben selbst an).
+
 ## App & offline (PWA)
 
 Halmduell lässt sich wie eine App installieren (Android/Chrome: Knopf
@@ -225,8 +242,8 @@ Duell-Flow steht Ende-zu-Ende, Backend und Oberfläche, installierbar als
 App (Schritte 1–6 in `docs/architektur.md`). Screens: Anmelden/Registrieren/Passwort vergessen,
 Übersicht, neues Duell (Benutzername oder Einladungslink), Einladung annehmen,
 Frage mit Timer, Frage-für-Frage-Vergleich, Rangliste (je Kategorie und
-Saison, mit Archiv und Freunde-Ansicht), Freunde, Profil mit Statistik. Als
-Nächstes: Abzeichen.
+Saison, mit Archiv und Freunde-Ansicht), Freunde, Profil mit Statistik und
+Abzeichen.
 
 ## Offene Punkte
 

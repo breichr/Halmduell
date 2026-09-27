@@ -7,3 +7,4 @@ export * from './saison';
 export * from './rangliste';
 export * from './freunde';
 export * from './statistik';
+export * from './abzeichen';
