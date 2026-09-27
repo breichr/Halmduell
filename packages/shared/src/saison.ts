@@ -27,3 +27,18 @@ export function saisonBezeichnung(saison: number): string {
   const quartal = (((index % 4) + 4) % 4) + 1;
   return `Q${quartal} ${jahr}`;
 }
+
+/** Beginn einer Saison: 1. Tag des Quartals, 00:00 deutscher Zeit */
+export function saisonBeginn(saison: number): Date {
+  const index = saison - 1;
+  const jahr = ERSTES_SAISON_JAHR + Math.floor(index / 4);
+  const monat = (((index % 4) + 4) % 4) * 3;
+  // Mitternacht in Berlin ist 22:00 (MESZ) oder 23:00 UTC (MEZ) des Vortags
+  const sommerzeit = new Date(Date.UTC(jahr, monat, 1) - 2 * 60 * 60 * 1000);
+  return aktuelleSaison(sommerzeit) === saison ? sommerzeit : new Date(Date.UTC(jahr, monat, 1) - 60 * 60 * 1000);
+}
+
+/** Ende einer Saison = Beginn der nächsten */
+export function saisonEnde(saison: number): Date {
+  return saisonBeginn(saison + 1);
+}

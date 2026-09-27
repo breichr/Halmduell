@@ -9,6 +9,10 @@
 		<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11 12 4l9 7v9H3z" /></svg>
 		Start
 	</a>
+	<a href="/rangliste" aria-current={aktiv === '/rangliste' ? 'page' : undefined}>
+		<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z" /><path d="M7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4" /></svg>
+		Rangliste
+	</a>
 	<a href="/duell/neu" class="neu" aria-label="Neues Duell">
 		<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
 	</a>
@@ -27,7 +31,8 @@
 		width: min(26rem, calc(100% - 1.5rem));
 		height: 68px;
 		display: grid;
-		grid-template-columns: repeat(3, minmax(0, 1fr));
+		/* Plus-Knopf mittig: links Start + Rangliste, rechts Profil (Platz für Freunde) */
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 72px minmax(0, 2fr);
 		align-items: center;
 		background: var(--flaeche);
 		border: 3px solid var(--kontur);

@@ -117,6 +117,19 @@ deutscher Zeit; Saison 1 = Q1 2026. `saisonBezeichnung()` in
 (über alle Saisons gezählt), danach 20.
 Request- und Response-Typen liegen in `packages/shared/src/duell.ts`.
 
+## Rangliste
+
+| Endpunkt | Zweck |
+|---|---|
+| `GET /api/rangliste?kategorie=gesamt&saison=3` | Bestenliste einer Kategorie (`gesamt`, `kulturen`, `schaedlinge`, `krankheiten`, `wissen`) und Saison; ohne `saison` die laufende |
+
+Liefert die ersten 100 Plätze, den eigenen Platz (auch wenn er weiter hinten
+liegt), die Zahl der Platzierten und alle Saisons mit Ergebnissen (für das
+Archiv). Platziert ist, wer in der Saison in der Kategorie mindestens ein
+gewertetes Duell hat; gleiches Rating = gleicher Platz. Die Liga (Bronze bis
+Meister) kommt aus `liga()` in `packages/shared`. Oberfläche: `/rangliste`
+mit Podest, Kategorien und Saisonauswahl. Typen: `packages/shared/src/rangliste.ts`.
+
 ## App & offline (PWA)
 
 Halmduell lässt sich wie eine App installieren (Android/Chrome: Knopf
@@ -180,8 +193,9 @@ könnten Clients ihre IP für die Rate-Limits fälschen.
 Duell-Flow steht Ende-zu-Ende, Backend und Oberfläche, installierbar als
 App (Schritte 1–6 in `docs/architektur.md`). Screens: Anmelden/Registrieren/Passwort vergessen,
 Übersicht, neues Duell (Benutzername oder Einladungslink), Einladung annehmen,
-Frage mit Timer, Frage-für-Frage-Vergleich, Profil. Als Nächstes: Rangliste,
-Freunde, Statistik, Abzeichen.
+Frage mit Timer, Frage-für-Frage-Vergleich, Rangliste (je Kategorie und
+Saison, mit Archiv), Profil. Als Nächstes: Freunde (inkl. Freunde-Rangliste),
+Statistik, Abzeichen.
 
 ## Offene Punkte
 
