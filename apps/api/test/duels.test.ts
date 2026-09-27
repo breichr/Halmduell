@@ -120,6 +120,12 @@ describe.skipIf(!mitDatenbank)('Duell-Flow', () => {
     expect(benNachher).toMatchObject({ meinePunkte: 2, gegnerPunkte: 4, ratingAenderung: -20 });
     expect(benNachher.fragen.every((f) => f.gegner !== null)).toBe(true);
 
+    // Neue Abzeichen durch dieses Duell (Antworten im Test sind blitzschnell)
+    const annaAbzeichen = ((await anfrage(`/duels/${duel.id}`, { cookie: anna.cookie })).json as DuellDetails).neueAbzeichen.map((a) => a.key);
+    expect(annaAbzeichen.sort()).toEqual(['blitzmerker', 'erster_sieg', 'erstes_duell']);
+    expect(benNachher.neueAbzeichen.map((a) => a.key).sort()).toEqual(['blitzmerker', 'erstes_duell']);
+    expect(annaDetails.neueAbzeichen).toEqual([]);
+
     const ratings = await sqlAusfuehren(sql`select user_id, kategorie, rating, duelle_gespielt from ratings order by user_id, kategorie`);
     expect([...ratings]).toEqual([
       { user_id: anna.id, kategorie: 'gesamt', rating: 1020, duelle_gespielt: 1 },

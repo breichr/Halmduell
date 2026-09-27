@@ -1,3 +1,4 @@
+import type { NeuesAbzeichen } from './abzeichen';
 import { z } from 'zod';
 import { DUELL_KATEGORIEN, type DuellKategorie, type DuellStatus, type FrageTyp } from './konstanten';
 
@@ -85,6 +86,8 @@ export interface DuellFrageVergleich {
 /** GET /api/duels/:id */
 export interface DuellDetails extends DuellUebersicht {
   fragen: DuellFrageVergleich[];
+  /** durch dieses Duell neu erreichte eigene Abzeichen */
+  neueAbzeichen: NeuesAbzeichen[];
 }
 
 /** GET /api/duels/:id/frage */

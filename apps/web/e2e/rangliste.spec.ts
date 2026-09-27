@@ -44,8 +44,14 @@ test('nach einem Duell stehen beide Spieler in der Rangliste', async ({ browser 
 	await expect(plaetze.filter({ hasText: dora.username })).toHaveCount(1);
 	await expect(clara.seite.getByTestId('eigener-platz')).toContainText(/Platz \d von \d/);
 
+	// Neue Abzeichen im Ergebnis und im Profil
+	await clara.seite.goto(`/duell/${duel.id}`);
+	await expect(clara.seite.getByTestId('neue-abzeichen')).toContainText('Erste Schritte');
+	await clara.seite.getByTestId('neue-abzeichen').click();
+	await expect(clara.seite).toHaveURL(/\/profil#abzeichen$/);
+	await expect(clara.seite.getByRole('region', { name: /^Abzeichen/ })).toContainText(/Erste Schritte\s*Das erste Duell abgeschlossen\s*erreicht am/);
+
 	// Statistik im Profil: ein Duell, 6 beantwortete Fragen
-	await clara.seite.getByRole('navigation', { name: 'Hauptnavigation' }).getByRole('link', { name: 'Profil' }).click();
 	const bilanz = clara.seite.getByRole('region', { name: 'Bilanz' });
 	await expect(bilanz.getByRole('listitem')).toHaveCount(1);
 	await expect(clara.seite.getByRole('region', { name: 'Trefferquote' })).toContainText(/von 6 Fragen richtig/);

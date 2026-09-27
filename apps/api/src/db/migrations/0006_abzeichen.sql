@@ -1,0 +1,2 @@
+ALTER TABLE "user_achievements" ADD COLUMN "duel_id" integer;--> statement-breakpoint
+ALTER TABLE "user_achievements" ADD CONSTRAINT "user_achievements_duel_id_duels_id_fk" FOREIGN KEY ("duel_id") REFERENCES "public"."duels"("id") ON DELETE set null ON UPDATE no action;

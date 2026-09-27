@@ -187,6 +187,8 @@ export const userAchievements = pgTable('user_achievements', {
   userId: integer('user_id').notNull().references(() => users.id),
   achievementId: integer('achievement_id').notNull().references(() => achievements.id),
   erreichtAt: zeitstempel('erreicht_at').notNull().defaultNow(),
+  // Duell, durch das es erreicht wurde (für „Neues Abzeichen!“ im Ergebnis); sonst NULL
+  duelId: integer('duel_id').references(() => duels.id, { onDelete: 'set null' }),
 }, (t) => [
   primaryKey({ columns: [t.userId, t.achievementId] }),
 ]);

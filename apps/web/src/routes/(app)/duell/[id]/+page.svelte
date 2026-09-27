@@ -2,6 +2,7 @@
 	import { goto, invalidate } from '$app/navigation';
 	import { api, ApiError } from '$lib/api';
 	import EinladungTeilen from '$lib/components/EinladungTeilen.svelte';
+	import AbzeichenPlakette from '$lib/components/AbzeichenPlakette.svelte';
 	import Ergebnissymbol from '$lib/components/Ergebnissymbol.svelte';
 	import Halmi from '$lib/components/Halmi.svelte';
 	import KategorieSymbol from '$lib/components/KategorieSymbol.svelte';
@@ -92,6 +93,18 @@
 		<span class="zahl gegner">{gegnerHatNichtGespielt ? '?' : duel.gegnerPunkte}</span>
 	</div>
 </div>
+
+{#if duel.neueAbzeichen.length}
+	<a class="karte neue-abzeichen" href="/profil#abzeichen" data-testid="neue-abzeichen">
+		<span class="plaketten">
+			{#each duel.neueAbzeichen as a (a.key)}<AbzeichenPlakette icon={a.icon} groesse={44} />{/each}
+		</span>
+		<span>
+			<strong>{duel.neueAbzeichen.length === 1 ? 'Neues Abzeichen!' : `${duel.neueAbzeichen.length} neue Abzeichen!`}</strong>
+			<span class="abzeichen-namen">{duel.neueAbzeichen.map((a) => a.titel).join(' · ')}</span>
+		</span>
+	</a>
+{/if}
 
 {#if duel.duBistDran}
 	<a href="/duell/{duel.id}/spielen" class="knopf breit spielen" data-sveltekit-preload-data="off">{angefangen ? 'Weiterspielen' : 'Runde spielen'}</a>
@@ -349,5 +362,30 @@
 		display: grid;
 		grid-template-columns: 1fr 1fr;
 		gap: 0.6rem;
+	}
+	.neue-abzeichen {
+		display: flex;
+		align-items: center;
+		gap: 0.8rem;
+		margin-bottom: 1rem;
+		background: var(--sonne);
+		color: var(--auf-farbe);
+		border-color: var(--kontur);
+		text-decoration: none;
+	}
+	.neue-abzeichen > span:last-child {
+		display: grid;
+		min-width: 0;
+	}
+	.plaketten {
+		display: flex;
+		flex: none;
+	}
+	.plaketten :global(.plakette + .plakette) {
+		margin-left: -14px;
+	}
+	.abzeichen-namen {
+		font-size: 0.9rem;
+		font-weight: 700;
 	}
 </style>

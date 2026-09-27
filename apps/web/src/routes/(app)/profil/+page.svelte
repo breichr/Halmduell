@@ -7,6 +7,7 @@
 	import AppInstallieren from '$lib/components/AppInstallieren.svelte';
 	import Halmi from '$lib/components/Halmi.svelte';
 	import Statistik from '$lib/components/Statistik.svelte';
+	import AbzeichenUebersicht from '$lib/components/AbzeichenUebersicht.svelte';
 	import Wiederherstellungscode from '$lib/components/Wiederherstellungscode.svelte';
 
 	const js = hydriert();
@@ -73,6 +74,7 @@
 </header>
 
 <Statistik statistik={data.statistik} />
+<AbzeichenUebersicht liste={data.abzeichen} />
 
 <h2 class="abschnitt-titel konto">Konto</h2>
 

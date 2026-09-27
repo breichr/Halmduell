@@ -2,6 +2,7 @@ import { and, eq, sql } from 'drizzle-orm';
 import { aktuelleSaison, type DuellWertung, type RatingKategorie } from '@halmduell/shared';
 import { duels, duelAnswers, ratings } from '../db/schema';
 import type { Tx } from '../db/types';
+import { pruefeAbzeichen } from './abzeichen';
 import { saisonalerSoftReset, START_RATING, updateElo } from './elo';
 
 type Ergebnis = 0 | 0.5 | 1;
@@ -99,6 +100,10 @@ export async function werteDuell(tx: Tx, duel: Duell): Promise<DuellWertung> {
   await tx.update(duels)
     .set({ gewertetAt: new Date(), ratingAenderungA: aenderungA, ratingAenderungB: aenderungB })
     .where(eq(duels.id, duel.id));
+
+  // Nach dem Rating-Update, damit Liga-Abzeichen das neue Rating sehen
+  await pruefeAbzeichen(tx, duel.spielerAId, duel.id);
+  await pruefeAbzeichen(tx, spielerBId, duel.id);
 
   return { punkteA, punkteB, saison, ratings: neueRatings };
 }

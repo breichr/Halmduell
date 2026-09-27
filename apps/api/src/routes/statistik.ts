@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { and, desc, eq, isNotNull, or, sql } from 'drizzle-orm';
+import { and, eq, isNotNull, sql } from 'drizzle-orm';
 import {
   FORM_LAENGE,
   FRAGEN_KATEGORIEN,
@@ -10,8 +10,9 @@ import {
   type Statistik,
 } from '@halmduell/shared';
 import { db } from '../db/client';
-import { duelAnswers, duels, questions, ratings } from '../db/schema';
+import { duelAnswers, questions, ratings } from '../db/schema';
 import { requireAuth, type AuthEnv } from '../middleware/auth';
+import { duellAusgaenge } from '../services/ergebnisse';
 
 export const statistikRoute = new Hono<AuthEnv>();
 
@@ -22,20 +23,8 @@ statistikRoute.get('/', async (c) => {
   const ich = c.var.userId;
   const saison = aktuelleSaison();
 
-  const richtigeVon = (spieler: typeof duels.spielerAId | typeof duels.spielerBId) => sql<number>`(
-    select count(*)::int from ${duelAnswers}
-    where ${duelAnswers.duelId} = ${duels.id} and ${duelAnswers.userId} = ${spieler} and ${duelAnswers.istRichtig})`;
-
-  const [ergebnisse, antworten, ratingZeilen] = await Promise.all([
-    // gewertete Duelle, neueste zuerst
-    db.select({
-      a: duels.spielerAId,
-      aufgegebenVon: duels.aufgegebenVon,
-      punkteA: richtigeVon(duels.spielerAId),
-      punkteB: richtigeVon(duels.spielerBId),
-    }).from(duels)
-      .where(and(eq(duels.status, 'abgeschlossen'), isNotNull(duels.spielerBId), or(eq(duels.spielerAId, ich), eq(duels.spielerBId, ich))))
-      .orderBy(desc(duels.abgeschlossenAt), desc(duels.id)),
+  const [ausgaenge, antworten, ratingZeilen] = await Promise.all([
+    duellAusgaenge(db, ich),
     // beantwortete Fragen je Kategorie (auch aus abgebrochenen Duellen)
     db.select({
       kategorie: questions.kategorie,
@@ -51,12 +40,6 @@ statistikRoute.get('/', async (c) => {
       .where(and(eq(ratings.userId, ich), eq(ratings.saison, saison))),
   ]);
 
-  const ausgaenge: DuellAusgang[] = ergebnisse.map((d) => {
-    const binA = d.a === ich;
-    if (d.aufgegebenVon !== null) return d.aufgegebenVon === ich ? 'niederlage' : 'sieg';
-    const [meine, seine] = binA ? [d.punkteA, d.punkteB] : [d.punkteB, d.punkteA];
-    return meine > seine ? 'sieg' : meine < seine ? 'niederlage' : 'unentschieden';
-  });
   const anzahl = (ausgang: DuellAusgang) => ausgaenge.filter((x) => x === ausgang).length;
 
   let laenge = 0;

@@ -43,6 +43,13 @@
       "when": 1790495621526,
       "tag": "0005_freunde",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790497824503,
+      "tag": "0006_abzeichen",
+      "breakpoints": true
     }
   ]
 }
