@@ -6,7 +6,7 @@
 	import Feld from '$lib/components/Feld.svelte';
 	import Halmi from '$lib/components/Halmi.svelte';
 	import Sprechblase from '$lib/components/Sprechblase.svelte';
-	import { wann } from '$lib/format';
+	import { aktivText, geradeAktiv, wann } from '$lib/format';
 
 	const js = hydriert();
 
@@ -107,10 +107,11 @@
 		<ul class="liste karte">
 			{#each l.freunde as f (f.id)}
 				<li>
-					<span class="avatar" aria-hidden="true">{f.username.slice(0, 1).toUpperCase()}</span>
+					<span class="avatar" class:online={geradeAktiv(f.zuletztAktiv)} aria-hidden="true">{f.username.slice(0, 1).toUpperCase()}</span>
 					<span class="text">
 						<strong>{f.username}</strong>
-						<span class="unterzeile">{f.rating === null ? 'Diese Saison noch nicht gespielt' : `${zahl(f.rating)} · Liga ${f.liga}`}</span>
+						<span class="unterzeile">{f.rating === null ? 'Saison noch nicht gespielt' : `${f.liga} · ${zahl(f.rating)}`}</span>
+						<span class="aktiv" class:online={geradeAktiv(f.zuletztAktiv)} data-testid="aktiv">{aktivText(f.zuletztAktiv)}</span>
 					</span>
 					<span class="aktionen">
 						{#if f.laufendesDuell}
@@ -229,6 +230,34 @@
 		background: var(--flaeche);
 		border: 2px solid var(--kontur);
 		font-weight: 800;
+	}
+	.avatar.online {
+		position: relative;
+	}
+	/* grüner Punkt: gerade in der App */
+	.avatar.online::after {
+		content: '';
+		position: absolute;
+		right: -3px;
+		bottom: -3px;
+		width: 14px;
+		height: 14px;
+		border-radius: 50%;
+		background: #3fb950;
+		border: 2px solid var(--flaeche);
+	}
+	.text .unterzeile {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	.aktiv {
+		font-size: 0.78rem;
+		font-weight: 700;
+		color: var(--text-2);
+	}
+	.aktiv.online {
+		color: var(--richtig);
 	}
 	.text {
 		display: grid;

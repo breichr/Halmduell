@@ -1,6 +1,11 @@
 import { z } from 'zod';
 import type { Liga } from './konstanten';
 
+/** Aktivität wird höchstens so oft gespeichert … */
+export const AKTIVITAET_INTERVALL_MS = 5 * 60 * 1000;
+/** … und so lange gilt jemand als „gerade aktiv“ */
+export const GERADE_AKTIV_MS = 2 * AKTIVITAET_INTERVALL_MS;
+
 /** Höchstens so viele unbeantwortete Anfragen darf man gleichzeitig verschickt haben */
 export const OFFENE_ANFRAGEN_MAX = 30;
 
@@ -20,6 +25,8 @@ export interface Freund {
   /** Gesamt-Rating der laufenden Saison; null = in dieser Saison noch nicht gespielt */
   rating: number | null;
   liga: Liga | null;
+  /** zuletzt in der App aktiv; null = noch nie seit Einführung erfasst */
+  zuletztAktiv: string | null;
   /** laufendes Duell zwischen uns beiden (das älteste), sonst null */
   laufendesDuell: { id: number; duBistDran: boolean } | null;
 }

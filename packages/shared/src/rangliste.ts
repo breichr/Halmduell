@@ -37,6 +37,8 @@ export interface RanglistenEintrag {
   liga: Liga;
   /** Duelle in dieser Kategorie und Saison */
   duelle: number;
+  /** Plätze gewonnen (+) bzw. verloren (−) seit gestern; null = kein Vergleich (neu, Archiv, Freundeskreis) */
+  veraenderung: number | null;
 }
 
 /** GET /api/rangliste */

@@ -54,12 +54,17 @@ freundeRoute.get('/', async (c) => {
     status: friendships.status,
     seit: friendships.erstelltAt,
     username: users.username,
+    zuletztAktiv: users.zuletztAktivAt,
   }).from(friendships)
     .innerJoin(users, eq(users.id, andere(ich)))
     .where(or(eq(friendships.userId, ich), eq(friendships.friendId, ich)))
     .orderBy(desc(friendships.erstelltAt));
 
-  const bestaetigt = beziehungen.filter((b) => b.status === 'bestaetigt').map((b) => ({ id: b.von === ich ? b.an : b.von, username: b.username }));
+  const bestaetigt = beziehungen.filter((b) => b.status === 'bestaetigt').map((b) => ({
+    id: b.von === ich ? b.an : b.von,
+    username: b.username,
+    zuletztAktiv: b.zuletztAktiv?.toISOString() ?? null,
+  }));
   const ids = bestaetigt.map((f) => f.id);
   const bekannte = beziehungen.map((b) => (b.von === ich ? b.an : b.von));
 

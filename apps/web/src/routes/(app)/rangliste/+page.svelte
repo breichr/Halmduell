@@ -8,6 +8,7 @@
 		type RatingKategorie
 	} from '@halmduell/shared';
 	import Halmi from '$lib/components/Halmi.svelte';
+	import Platzveraenderung from '$lib/components/Platzveraenderung.svelte';
 	import { hydriert } from '$lib/hydriert.svelte';
 	import { kategorieName, restzeit } from '$lib/format';
 
@@ -66,6 +67,7 @@
 {#if r.ich}
 	<p class="ich-zeile" data-testid="eigener-platz">
 		Du bist auf <strong>Platz {r.ich.platz}</strong> von {zahl(r.spielerAnzahl)}{freundeskreis ? ' unter Freunden' : ''} · {zahl(r.ich.rating)} · Liga {r.ich.liga}
+		{#if r.ich.veraenderung}<br /><Platzveraenderung wert={r.ich.veraenderung} lang />{/if}
 	</p>
 {/if}
 
@@ -94,6 +96,7 @@
 				{/if}
 				<span class="avatar" aria-hidden="true">{e.username.slice(0, 1).toUpperCase()}</span>
 				<span class="name">{istIch(e) ? 'Du' : e.username}</span>
+				<Platzveraenderung wert={e.veraenderung} />
 				<span class="sockel">
 					<span class="platz"><span class="nur-screenreader">Platz </span>{e.platz}</span>
 					<span class="rating">{zahl(e.rating)}</span>
@@ -156,7 +159,7 @@
 		<span class="platz"><span class="nur-screenreader">Platz </span>{e.platz}</span>
 		<span class="avatar klein" aria-hidden="true">{e.username.slice(0, 1).toUpperCase()}</span>
 		<span class="name">{istIch(e) ? 'Du' : e.username}<span class="liga">{' · '}{e.liga}</span></span>
-		<span class="rating">{zahl(e.rating)}</span>
+		<span class="rating">{zahl(e.rating)}<Platzveraenderung wert={e.veraenderung} /></span>
 	</li>
 {/snippet}
 
@@ -362,6 +365,12 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
+	}
+	.liste .rating {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
+		line-height: 1.15;
 	}
 	.liga {
 		font-weight: 600;

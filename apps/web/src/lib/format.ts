@@ -1,4 +1,4 @@
-import { KATEGORIE_NAMEN, type DuellKategorie } from '@halmduell/shared';
+import { GERADE_AKTIV_MS, KATEGORIE_NAMEN, type DuellKategorie } from '@halmduell/shared';
 
 export const kategorieName = (k: DuellKategorie | 'gesamt') => KATEGORIE_NAMEN[k];
 
@@ -39,3 +39,20 @@ export const KATEGORIE_FARBE: Record<DuellKategorie, string> = {
 	wissen: 'var(--sonne)',
 	gemischt: '#ffffff'
 };
+
+/** Ist jemand gerade in der App? */
+export const geradeAktiv = (zuletzt: string | null, jetzt = Date.now()) =>
+	zuletzt !== null && jetzt - new Date(zuletzt).getTime() < GERADE_AKTIV_MS;
+
+/** "gerade aktiv", "vor 20 Min. aktiv", "vor 3 Std. aktiv", "gestern aktiv", "am 3. Sept. aktiv" */
+export function aktivText(zuletzt: string | null, jetzt = new Date()): string {
+	if (zuletzt === null) return 'länger nicht aktiv';
+	const ms = jetzt.getTime() - new Date(zuletzt).getTime();
+	if (ms < GERADE_AKTIV_MS) return 'gerade aktiv';
+	const minuten = Math.floor(ms / 60_000);
+	if (minuten < 60) return `vor ${minuten} Min. aktiv`;
+	if (minuten < 12 * 60) return `vor ${Math.floor(minuten / 60)} Std. aktiv`;
+	const w = wann(zuletzt, jetzt);
+	if (w === 'heute') return `vor ${Math.floor(minuten / 60)} Std. aktiv`;
+	return /^\d/.test(w) ? `am ${w} aktiv` : `${w} aktiv`;
+}

@@ -14,6 +14,7 @@ import { db } from '../db/client';
 import { ratings, users } from '../db/schema';
 import { requireAuth, type AuthEnv } from '../middleware/auth';
 import { freundIds } from '../services/freunde';
+import { plaetzeVonGestern } from '../services/verlauf';
 
 export const ranglisteRoute = new Hono<AuthEnv>();
 
@@ -59,14 +60,24 @@ ranglisteRoute.get('/', async (c) => {
     db.selectDistinct({ saison: ratings.saison }).from(ratings).orderBy(desc(ratings.saison)),
   ]);
 
-  const eintrag = (z: Omit<RanglistenEintrag, 'liga'>): RanglistenEintrag => ({
-    platz: z.platz,
-    id: z.id,
-    username: z.username,
-    rating: z.rating,
-    liga: liga(z.rating),
-    duelle: z.duelle,
-  });
+  // Veränderung seit gestern nur, wo der Schnappschuss passt: laufende Saison, alle Spieler
+  const vergleichbar = kreis === 'alle' && saison === laufend;
+  const gestern = vergleichbar
+    ? await plaetzeVonGestern(kategorie, saison, [...new Set([...zeilen, ...(eigene ? [eigene] : [])].map((z) => z.id))])
+    : new Map<number, number>();
+
+  const eintrag = (z: Omit<RanglistenEintrag, 'liga' | 'veraenderung'>): RanglistenEintrag => {
+    const vorher = gestern.get(z.id);
+    return {
+      platz: z.platz,
+      id: z.id,
+      username: z.username,
+      rating: z.rating,
+      liga: liga(z.rating),
+      duelle: z.duelle,
+      veraenderung: vorher === undefined ? null : vorher - z.platz,
+    };
+  };
   const saisons = [...new Set([laufend, ...saisonZeilen.map((z) => z.saison)])].sort((a, b) => b - a);
 
   return c.json({

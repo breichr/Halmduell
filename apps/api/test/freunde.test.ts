@@ -121,6 +121,7 @@ describe.skipIf(!mitDatenbank)('Freunde', () => {
     const beiAnna = await liste(anna);
     expect(beiAnna.freunde).toEqual([{
       id: ben.id, username: ben.username, rating: 1150, liga: 'Gold', laufendesDuell: { id: duell!.id, duBistDran: false },
+      zuletztAktiv: expect.any(String),
     }]);
     expect(beiAnna.vorschlaege).toEqual([{ id: clara.id, username: clara.username }]);
 
@@ -151,5 +152,23 @@ describe.skipIf(!mitDatenbank)('Freunde', () => {
     expect(alle.ich?.platz).toBe(4);
 
     expect((await anfrage('/rangliste?kreis=quatsch', { cookie: anna.cookie })).status).toBe(400);
+  });
+  test('zuletzt aktiv: gesetzt bei Anfragen, höchstens alle 5 Minuten neu gespeichert', async () => {
+    await anfragen(anna, ben);
+    await annehmen(ben, anna);
+    await sqlAusfuehren(sql`update users set zuletzt_aktiv_at = now() - interval '2 hours' where id = ${ben.id}`);
+    await sqlAusfuehren(sql`update users set zuletzt_aktiv_at = now() - interval '2 minutes' where id = ${anna.id}`);
+
+    // Ben ist wieder aktiv → wird aktualisiert; Annas Anfrage (vor 2 Min. aktiv) schreibt nicht
+    await liste(ben);
+    await liste(anna);
+    await Bun.sleep(50);
+    const zeilen = (await sqlAusfuehren(sql`select id, extract(epoch from now() - zuletzt_aktiv_at)::int as sek from users where id in (${anna.id}, ${ben.id})`)) as unknown as { id: number; sek: number }[];
+    const sek = new Map(zeilen.map((z) => [z.id, z.sek]));
+    expect(sek.get(ben.id)).toBeLessThan(5);
+    expect(sek.get(anna.id)).toBeGreaterThanOrEqual(115);
+
+    const f = (await liste(anna)).freunde[0]!;
+    expect(Math.abs(new Date(f.zuletztAktiv!).getTime() - Date.now())).toBeLessThan(10_000);
   });
 });

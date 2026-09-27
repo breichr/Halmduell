@@ -3,6 +3,7 @@ import {
   type AnyPgColumn,
   boolean,
   check,
+  date,
   index,
   integer,
   pgTable,
@@ -46,6 +47,8 @@ export const users = pgTable('users', {
   // steckt in jedem Token; Erhöhen macht alle bestehenden Sessions ungültig
   sessionVersion: integer('session_version').notNull().default(0),
   createdAt: zeitstempel('created_at').notNull().defaultNow(),
+  // zuletzt in der App aktiv (höchstens alle paar Minuten aktualisiert) – nur für Freunde sichtbar
+  zuletztAktivAt: zeitstempel('zuletzt_aktiv_at'),
 }, (t) => [
   // "Anna" und "anna" sind derselbe Name
   uniqueIndex('users_username_lower_idx').on(sql`lower(${t.username})`),
@@ -220,4 +223,17 @@ export const uebungen = pgTable('uebungen', {
   gemeistertAt: zeitstempel('gemeistert_at'),
 }, (t) => [
   primaryKey({ columns: [t.userId, t.questionId] }),
+]);
+
+// Täglicher Schnappschuss der Plätze (laufende Saison) – für „↑ 2 Plätze seit gestern“
+export const platzVerlauf = pgTable('platz_verlauf', {
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  kategorie: varchar('kategorie', { length: 20 }).$type<RatingKategorie>().notNull(),
+  saison: integer('saison').notNull(),
+  // Kalendertag (deutsche Zeit), an dessen Beginn der Schnappschuss entstand
+  tag: date('tag').notNull(),
+  platz: integer('platz').notNull(),
+}, (t) => [
+  primaryKey({ columns: [t.userId, t.kategorie, t.saison, t.tag] }),
+  index('platz_verlauf_tag_idx').on(t.tag),
 ]);

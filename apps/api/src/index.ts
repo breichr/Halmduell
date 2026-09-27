@@ -1,5 +1,6 @@
 import { app } from './app';
 import { verarbeiteFristen, verschickeErinnerungen } from './services/duell-ende';
+import { platzSchnappschuss } from './services/verlauf';
 
 const FRISTEN_INTERVALL_MS = 10 * 60 * 1000;
 
@@ -7,6 +8,8 @@ async function fristenJob() {
   try {
     const { beendet } = await verarbeiteFristen();
     if (beendet > 0) console.log(`Fristen: ${beendet} Duell(e) beendet`);
+    const { angelegt } = await platzSchnappschuss();
+    if (angelegt > 0) console.log(`Rangliste: Schnappschuss mit ${angelegt} Plätzen`);
     const { erinnert } = await verschickeErinnerungen();
     if (erinnert > 0) console.log(`Fristen: ${erinnert} Erinnerung(en) verschickt`);
   } catch (fehler) {
