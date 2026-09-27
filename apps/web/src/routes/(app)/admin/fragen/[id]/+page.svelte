@@ -1,8 +1,12 @@
 <script lang="ts">
 	import { goto, invalidate } from '$app/navigation';
-	import type { AdminFrage, FrageBearbeiten } from '@halmduell/shared';
-	import { api } from '$lib/api';
+	import { MELDUNG_GRUND_NAMEN, type AdminFrage, type FrageBearbeiten } from '@halmduell/shared';
+	import { api, ApiError } from '$lib/api';
+	import { hydriert } from '$lib/hydriert.svelte';
 	import FrageFormular from '$lib/components/admin/FrageFormular.svelte';
+	import { wann } from '$lib/format';
+
+	const js = hydriert();
 
 	let { data } = $props();
 	const f = $derived(data.frage);
@@ -12,6 +16,22 @@
 		await api().put<AdminFrage>(`/admin/fragen/${f.id}`, daten);
 		await invalidate('app:admin');
 		history.length > 1 ? history.back() : await goto('/admin');
+	}
+
+	let schliesst = $state(false);
+	let meldungFehler = $state('');
+
+	async function meldungenAbschliessen(status: 'erledigt' | 'verworfen') {
+		schliesst = true;
+		meldungFehler = '';
+		try {
+			await api().post(`/admin/fragen/${f.id}/meldungen`, { status });
+			await Promise.all([invalidate('app:admin-frage'), invalidate('app:admin')]);
+		} catch (e) {
+			meldungFehler = e instanceof ApiError ? e.message : 'Das hat nicht geklappt';
+		} finally {
+			schliesst = false;
+		}
 	}
 </script>
 
@@ -29,6 +49,71 @@
 	{#if f.statistik.beantwortet}Bei inhaltlich anderer Frage besser eine neue anlegen und diese ablehnen – sonst passen alte Duelle nicht mehr.{/if}
 </p>
 
+{#if data.meldungen.length}
+	<section id="meldungen" class="karte meldungen" aria-labelledby="meldungen-titel">
+		<h2 id="meldungen-titel">⚑ {data.meldungen.length === 1 ? '1 offene Meldung' : `${data.meldungen.length} offene Meldungen`}</h2>
+		<ul>
+			{#each data.meldungen as m (m.id)}
+				<li data-testid="meldung">
+					<strong>{MELDUNG_GRUND_NAMEN[m.grund]}</strong>
+					{#if m.kommentar}<q>{m.kommentar}</q>{/if}
+					<span class="wer">{m.username} · {wann(m.erstelltAt)} · hat {m.seineAntwort ? `„${m.seineAntwort}“ geantwortet` : 'nicht rechtzeitig geantwortet'}</span>
+				</li>
+			{/each}
+		</ul>
+		{#if meldungFehler}<p class="fehlermeldung" role="alert">{meldungFehler}</p>{/if}
+		<p class="hinweis">Frage unten korrigieren (oder ablehnen), dann als erledigt markieren. Unbegründete Meldungen verwerfen.</p>
+		<div class="aktionen">
+			<button class="knopf klein" disabled={!js.bereit || schliesst} onclick={() => meldungenAbschliessen('erledigt')}>Erledigt</button>
+			<button class="knopf klein zweitrangig" disabled={!js.bereit || schliesst} onclick={() => meldungenAbschliessen('verworfen')}>Verwerfen</button>
+		</div>
+	</section>
+{/if}
+
 {#key f.id}
 	<FrageFormular frage={f} {speichern} />
 {/key}
+
+<style>
+	.meldungen {
+		display: grid;
+		gap: 0.6rem;
+		margin-bottom: 1rem;
+		border-color: var(--falsch);
+		background: var(--falsch-hell);
+	}
+	.meldungen h2 {
+		margin: 0;
+		font-size: 1.15rem;
+		color: var(--falsch);
+	}
+	.meldungen ul {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: grid;
+		gap: 0.5rem;
+	}
+	.meldungen li {
+		display: grid;
+		gap: 0.15rem;
+		padding: 0.5rem 0.7rem;
+		border-radius: var(--radius-klein);
+		background: var(--flaeche);
+	}
+	.meldungen q {
+		font-style: italic;
+	}
+	.wer {
+		font-size: 0.82rem;
+		color: var(--text-2);
+	}
+	.meldungen .hinweis {
+		margin: 0;
+	}
+	.aktionen {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+	}
+</style>

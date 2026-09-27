@@ -21,6 +21,8 @@ import {
   FRAGE_TYPEN,
   FRAGEN_KATEGORIEN,
   FREUNDSCHAFT_STATUS,
+  MELDUNG_GRUENDE,
+  MELDUNG_STATUS,
   RATING_KATEGORIEN,
   type DuellKategorie,
   type DuellStatus,
@@ -28,6 +30,8 @@ import {
   type FrageStatus,
   type FrageTyp,
   type FreundschaftStatus,
+  type MeldungGrund,
+  type MeldungStatus,
   type RatingKategorie,
 } from '@halmduell/shared';
 
@@ -236,4 +240,24 @@ export const platzVerlauf = pgTable('platz_verlauf', {
 }, (t) => [
   primaryKey({ columns: [t.userId, t.kategorie, t.saison, t.tag] }),
   index('platz_verlauf_tag_idx').on(t.tag),
+]);
+
+// Spieler melden Fragen (z. B. „die richtige Antwort stimmt nicht“); Admins arbeiten sie im Portal ab
+export const frageMeldungen = pgTable('frage_meldungen', {
+  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
+  questionId: integer('question_id').notNull().references(() => questions.id, { onDelete: 'cascade' }),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  grund: varchar('grund', { length: 20 }).$type<MeldungGrund>().notNull(),
+  kommentar: text('kommentar'),
+  status: varchar('status', { length: 20 }).$type<MeldungStatus>().notNull().default('offen'),
+  erstelltAt: zeitstempel('erstellt_at').notNull().defaultNow(),
+  abgeschlossenAt: zeitstempel('abgeschlossen_at'),
+  abgeschlossenVon: integer('abgeschlossen_von').references(() => users.id, { onDelete: 'set null' }),
+}, (t) => [
+  check('frage_meldungen_grund_check', erlaubteWerte(t.grund, MELDUNG_GRUENDE)),
+  check('frage_meldungen_status_check', erlaubteWerte(t.status, MELDUNG_STATUS)),
+  // je Spieler und Frage höchstens eine offene Meldung (erneutes Melden aktualisiert sie)
+  uniqueIndex('frage_meldungen_offen_idx').on(t.questionId, t.userId).where(sql`${t.status} = 'offen'`),
+  // Tageslimit je Spieler
+  index('frage_meldungen_user_idx').on(t.userId, t.erstelltAt),
 ]);

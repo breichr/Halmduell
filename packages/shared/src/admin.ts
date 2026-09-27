@@ -38,6 +38,8 @@ export const adminFragenFilterSchema = z.object({
   status: z.enum(FRAGE_STATUS).optional(),
   kategorie: z.enum(FRAGEN_KATEGORIEN).optional(),
   suche: z.string().trim().max(100).optional(),
+  /** nur Fragen mit offenen Meldungen */
+  gemeldet: z.literal('1').optional(),
 });
 
 /** POST /api/admin/commons – Link zu einer Datei auf Wikimedia Commons */
@@ -73,6 +75,8 @@ export interface AdminFrage {
   status: FrageStatus;
   /** in Duellen beantwortet (inkl. abgelaufener Zeit) bzw. davon richtig */
   statistik: { beantwortet: number; richtig: number };
+  /** offene Meldungen von Spielern */
+  meldungen: number;
 }
 
 export interface AdminKategorieStand {
@@ -88,4 +92,6 @@ export interface AdminFragenListe {
   fragen: AdminFrage[];
   /** immer über alle Fragen, unabhängig vom Filter */
   uebersicht: AdminKategorieStand[];
+  /** Fragen mit offenen Meldungen (unabhängig vom Filter) */
+  gemeldet: number;
 }

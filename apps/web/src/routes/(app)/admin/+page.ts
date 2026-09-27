@@ -7,7 +7,8 @@ export const load: PageLoad = async ({ fetch, url, depends }) => {
 	// Standard: Entwürfe – die warten auf Prüfung
 	const status = url.searchParams.get('status') ?? 'entwurf';
 	const query = new URLSearchParams();
-	if (status !== 'alle') query.set('status', status);
+	if (status === 'gemeldet') query.set('gemeldet', '1');
+	else if (status !== 'alle') query.set('status', status);
 	for (const name of ['kategorie', 'suche']) {
 		const wert = url.searchParams.get(name);
 		if (wert) query.set(name, wert);
