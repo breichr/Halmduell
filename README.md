@@ -346,6 +346,15 @@ Abzeichen, Fehler üben, Benachrichtigungen, Admin-Portal für Fragen.
 - Admin-Portal erweitern: eingereichte Community-Fragen moderieren,
   Admins im Portal verwalten statt per `ADMIN_USERNAMES`
 
+- Kategorien umstellen – neu: **Gemischt, Landtechnik, Pflanzenbau,
+  Viehwirtschaft** (statt Kulturen, Schädlinge, Krankheiten, Wissen). Betrifft:
+  `FRAGEN_KATEGORIEN`/`KATEGORIE_NAMEN` in `packages/shared`, CHECK-Constraints
+  (Migration), Zuordnung der vorhandenen Fragen (Kulturen/Schädlinge/Krankheiten
+  → Pflanzenbau, Wissen je Frage neu einordnen), Codes in `fragen.csv`,
+  Ratings und Rangliste je Kategorie (Umgang mit bisherigen Kategorie-Ratings),
+  Fachwissen-Abzeichen, Farben/Symbole je Kategorie; für Landtechnik und
+  Viehwirtschaft fehlen noch Fragen
+
 Bewusst später:
 
 - Matchmaking für Zufallsgegner (MVP: nur Freund-Einladung per Code/Link)
