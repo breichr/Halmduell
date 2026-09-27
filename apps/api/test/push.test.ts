@@ -68,14 +68,14 @@ describe.skipIf(!mitDatenbank)('Web Push', () => {
   });
 
   test('Duell: Herausforderung nach As Runde, Ergebnis an A nach Bs Runde', async () => {
-    await erstelleFragen(6, 'wissen');
+    await erstelleFragen(6, 'pflanzenbau');
     await abo(anna);
     await abo(ben);
-    const duel = (await anfrage('/duels', { method: 'POST', cookie: anna.cookie, body: { kategorie: 'wissen', gegner: ben.username } })).json as DuellUebersicht;
+    const duel = (await anfrage('/duels', { method: 'POST', cookie: anna.cookie, body: { kategorie: 'pflanzenbau', gegner: ben.username } })).json as DuellUebersicht;
     await runde(duel.id, anna);
     expect(await versendet()).toEqual([{
       endpoint: `https://push.example/${ben.username}`,
-      nachricht: { titel: `${anna.username} fordert dich heraus!`, text: `Wissen – ${anna.username} hat die Runde gespielt, jetzt bist du dran.`, url: `/duell/${duel.id}`, tag: `duell-${duel.id}` },
+      nachricht: { titel: `${anna.username} fordert dich heraus!`, text: `Pflanzenbau – ${anna.username} hat die Runde gespielt, jetzt bist du dran.`, url: `/duell/${duel.id}`, tag: `duell-${duel.id}` },
     }]);
 
     gesendet = [];
@@ -87,11 +87,11 @@ describe.skipIf(!mitDatenbank)('Web Push', () => {
   });
 
   test('Aufgeben benachrichtigt den Gegner; abgelaufene Abos werden entfernt', async () => {
-    await erstelleFragen(6, 'wissen');
+    await erstelleFragen(6, 'pflanzenbau');
     await abo(ben);
     await abo(ben, 'https://push.example/altes-handy');
     antwortVon['https://push.example/altes-handy'] = 410;
-    const duel = (await anfrage('/duels', { method: 'POST', cookie: anna.cookie, body: { kategorie: 'wissen', gegner: ben.username } })).json as DuellUebersicht;
+    const duel = (await anfrage('/duels', { method: 'POST', cookie: anna.cookie, body: { kategorie: 'pflanzenbau', gegner: ben.username } })).json as DuellUebersicht;
     await anfrage(`/duels/${duel.id}/aufgeben`, { method: 'POST', cookie: anna.cookie });
     const n = await versendet();
     expect(n).toHaveLength(2);
@@ -100,8 +100,8 @@ describe.skipIf(!mitDatenbank)('Web Push', () => {
   });
 
   test('Anstupsen: nur wenn der Gegner am Zug ist, höchstens alle 12 Stunden', async () => {
-    await erstelleFragen(6, 'wissen');
-    const duel = (await anfrage('/duels', { method: 'POST', cookie: anna.cookie, body: { kategorie: 'wissen', gegner: ben.username } })).json as DuellUebersicht;
+    await erstelleFragen(6, 'pflanzenbau');
+    const duel = (await anfrage('/duels', { method: 'POST', cookie: anna.cookie, body: { kategorie: 'pflanzenbau', gegner: ben.username } })).json as DuellUebersicht;
     // Anna ist selbst dran
     expect((await anfrage(`/duels/${duel.id}/anstupsen`, { method: 'POST', cookie: anna.cookie })).status).toBe(409);
     expect(((await anfrage(`/duels/${duel.id}`, { cookie: anna.cookie })).json as DuellDetails).anstupsenAb).toBeNull();
@@ -133,7 +133,7 @@ describe.skipIf(!mitDatenbank)('Web Push', () => {
     await abo(anna);
     await abo(ben);
     const [d] = (await sqlAusfuehren(sql`insert into duels (kategorie, spieler_a_id, spieler_b_id, status, zug_seit)
-      values ('wissen', ${anna.id}, ${ben.id}, 'wartet_b', now() - interval '50 hours') returning id`)) as unknown as { id: number }[];
+      values ('pflanzenbau', ${anna.id}, ${ben.id}, 'wartet_b', now() - interval '50 hours') returning id`)) as unknown as { id: number }[];
     const { verschickeErinnerungen, verarbeiteFristen } = await ende();
 
     expect(await verschickeErinnerungen()).toEqual({ erinnert: 1 });

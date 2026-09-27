@@ -11,13 +11,19 @@ Duelle möglich, Push-Notification wenn der Gegner am Zug ist.
 
 1. **Wissensfragen** (Multiple Choice, 4 Antworten): Anbau, Düngung,
    Fruchtfolge, Maschinen, Recht/Förderungen, Tierhaltung.
-2. **Bilderkennung** (Multiple Choice mit Bild):
-   - Kulturen bestimmen
-   - Krankheiten (z. B. Septoria vs. Gelbrost bei Weizen)
-   - Schädlinge (Insekten, Fraßbilder, Larven)
-   - Unkräuter
+2. **Bilderkennung** (Multiple Choice mit Bild): Kulturen, Krankheiten,
+   Schädlinge, Unkräuter, Maschinen, Rassen.
 
-Kategorien: `kulturen`, `schaedlinge`, `krankheiten`, `wissen`, `gemischt`.
+Kategorien:
+
+- `landtechnik` – Maschinen, Technik, Bodenbearbeitung, Precision Farming
+- `pflanzenbau` – Kulturen, Düngung, Pflanzenschutz, Krankheiten, Schädlinge
+- `viehzucht` – Rinder, Schweine, Geflügel, Fütterung, Tiergesundheit
+- `gemischt` – nur als Duellart: Fragen aus allen Kategorien
+
+Bis September 2026 gab es `kulturen`, `schaedlinge`, `krankheiten` und `wissen`;
+Migration `0010_kategorien` hat die Fragen neu zugeordnet (Codes bleiben) und
+die Kategorie-Ratings zurückgesetzt (Gesamt blieb).
 
 ## Timer
 
@@ -67,8 +73,8 @@ Attribution wird automatisch im Quiz eingeblendet ("Bild: Name, CC-BY-SA").
 
 - **ELO als Kern-Rating** (Start 1000), zusätzlich sichtbare
   **Liga-Einteilung** (Bronze/Silber/Gold/Platin/Meister) für Greifbarkeit.
-- **Separates Rating pro Kategorie** (`gesamt`, `kulturen`, `schaedlinge`,
-  `krankheiten`, `wissen`) – passt zur Statistik-Ansicht. Jedes Duell zählt
+- **Separates Rating pro Kategorie** (`gesamt`, `landtechnik`, `pflanzenbau`,
+  `viehzucht`) – passt zur Statistik-Ansicht. Jedes Duell zählt
   für `gesamt` und zusätzlich für seine Kategorie; `gemischt`-Duelle zählen
   nur für `gesamt`.
 - **Saisonale Resets** (z. B. alle 3 Monate) mit Bestenlisten-Archiv; Soft-

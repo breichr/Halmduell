@@ -54,7 +54,7 @@ export async function neuerUser(prefix = 'user') {
 }
 
 /** Legt freigegebene Textfragen mit je 4 Antworten an (die erste ist richtig) */
-export async function erstelleFragen(anzahl: number, kategorie = 'wissen'): Promise<void> {
+export async function erstelleFragen(anzahl: number, kategorie = 'pflanzenbau'): Promise<void> {
   const { db } = await lade();
   for (let i = 0; i < anzahl; i++) {
     const [frage] = await db.execute<{ id: number }>(sql`

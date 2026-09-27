@@ -41,25 +41,25 @@ describe.skipIf(!mitDatenbank)('Duell-Flow', () => {
 
   test('ohne Anmeldung 401', async () => {
     expect((await anfrage('/duels')).status).toBe(401);
-    expect((await anfrage('/duels', { method: 'POST', body: { kategorie: 'wissen' } })).status).toBe(401);
+    expect((await anfrage('/duels', { method: 'POST', body: { kategorie: 'pflanzenbau' } })).status).toBe(401);
   });
 
   test('zu wenige Fragen → 409', async () => {
-    await erstelleFragen(5, 'wissen');
-    const res = await anfrage('/duels', { method: 'POST', cookie: anna.cookie, body: { kategorie: 'wissen', gegner: ben.username } });
+    await erstelleFragen(5, 'pflanzenbau');
+    const res = await anfrage('/duels', { method: 'POST', cookie: anna.cookie, body: { kategorie: 'pflanzenbau', gegner: ben.username } });
     expect(res.status).toBe(409);
   });
 
   test('Gegner muss existieren und darf nicht man selbst sein', async () => {
-    await erstelleFragen(3, 'wissen');
-    const body = (gegner: string) => ({ method: 'POST', cookie: anna.cookie, body: { kategorie: 'wissen', gegner } });
+    await erstelleFragen(3, 'pflanzenbau');
+    const body = (gegner: string) => ({ method: 'POST', cookie: anna.cookie, body: { kategorie: 'pflanzenbau', gegner } });
     expect((await anfrage('/duels', body('gibtsnicht'))).status).toBe(404);
     expect((await anfrage('/duels', body(anna.username.toUpperCase()))).status).toBe(400);
     expect((await anfrage('/duels', { method: 'POST', cookie: anna.cookie, body: { kategorie: 'obst' } })).status).toBe(400);
   });
 
   test('kompletter Ablauf: A spielt, B spielt, Wertung', async () => {
-    const neu = await anfrage('/duels', { method: 'POST', cookie: anna.cookie, body: { kategorie: 'wissen', gegner: ben.username } });
+    const neu = await anfrage('/duels', { method: 'POST', cookie: anna.cookie, body: { kategorie: 'pflanzenbau', gegner: ben.username } });
     expect(neu.status).toBe(201);
     const duel = neu.json as DuellUebersicht;
     expect(duel).toMatchObject({ status: 'wartet_a', duBistDran: true, gegner: { username: ben.username }, einladungsCode: null });
@@ -129,9 +129,9 @@ describe.skipIf(!mitDatenbank)('Duell-Flow', () => {
     const ratings = await sqlAusfuehren(sql`select user_id, kategorie, rating, duelle_gespielt from ratings order by user_id, kategorie`);
     expect([...ratings]).toEqual([
       { user_id: anna.id, kategorie: 'gesamt', rating: 1020, duelle_gespielt: 1 },
-      { user_id: anna.id, kategorie: 'wissen', rating: 1020, duelle_gespielt: 1 },
+      { user_id: anna.id, kategorie: 'pflanzenbau', rating: 1020, duelle_gespielt: 1 },
       { user_id: ben.id, kategorie: 'gesamt', rating: 980, duelle_gespielt: 1 },
-      { user_id: ben.id, kategorie: 'wissen', rating: 980, duelle_gespielt: 1 },
+      { user_id: ben.id, kategorie: 'pflanzenbau', rating: 980, duelle_gespielt: 1 },
     ]);
 
     // Nach Abschluss ist niemand mehr dran

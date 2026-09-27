@@ -55,10 +55,10 @@ test('Freund anfragen, annehmen, herausfordern und Freunde-Rangliste', async ({ 
 	const kreis = fritz.seite.getByRole('navigation', { name: 'Wer steht in der Liste' });
 	await expect(kreis.getByRole('link', { name: 'Freunde' })).toHaveAttribute('aria-current', 'page');
 	await expect(fritz.seite.getByText('Noch niemand platziert.')).toBeVisible();
-	await fritz.seite.getByRole('navigation', { name: 'Kategorie' }).getByRole('link', { name: 'Wissen' }).click();
-	await expect(fritz.seite).toHaveURL(/\/rangliste\?kategorie=wissen&kreis=freunde$/);
+	await fritz.seite.getByRole('navigation', { name: 'Kategorie' }).getByRole('link', { name: 'Pflanzenbau' }).click();
+	await expect(fritz.seite).toHaveURL(/\/rangliste\?kategorie=pflanzenbau&kreis=freunde$/);
 	await kreis.getByRole('link', { name: 'Alle Spieler' }).click();
-	await expect(fritz.seite).toHaveURL(/\/rangliste\?kategorie=wissen$/);
+	await expect(fritz.seite).toHaveURL(/\/rangliste\?kategorie=pflanzenbau$/);
 
 	// Freundschaft beenden
 	await fritz.seite.goto('/freunde');

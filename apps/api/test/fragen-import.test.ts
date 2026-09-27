@@ -4,7 +4,7 @@ import type { FragenZeile } from '../src/fragen/csv';
 import { leereDatenbank, mitDatenbank, sqlAusfuehren } from './helpers';
 
 const frage = (code: string, abweichend: Partial<FragenZeile> = {}): FragenZeile => ({
-  code, kategorie: 'wissen', typ: 'text', frage: `Frage ${code}`, richtig: 'A', falsch1: 'B', falsch2: 'C', falsch3: 'D',
+  code, kategorie: 'pflanzenbau', typ: 'text', frage: `Frage ${code}`, richtig: 'A', falsch1: 'B', falsch2: 'C', falsch3: 'D',
   erklaerung: undefined, schwierigkeit: 1, bild_url: undefined, bild_quelle: undefined, status: 'freigegeben', ...abweichend,
 });
 

@@ -26,7 +26,7 @@
 
 	// Startwerte einmalig aus der geladenen Frage übernehmen (die Seite setzt das Formular per {#key} neu auf)
 	const start = untrack(() => frage);
-	let kategorie = $state<FragenKategorie>(start?.kategorie ?? 'kulturen');
+	let kategorie = $state<FragenKategorie>(start?.kategorie ?? 'pflanzenbau');
 	let typ = $state<FrageTyp>(start?.typ ?? 'text');
 	let text = $state(start?.frage ?? '');
 	let richtig = $state(start?.richtig ?? '');

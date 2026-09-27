@@ -63,9 +63,9 @@ test('nach einem Duell stehen beide Spieler in der Rangliste', async ({ browser 
 	await expect(emil.seite.getByText('Du bist noch nicht platziert.')).toBeVisible();
 	await expect(emil.seite.getByTestId('eigener-platz')).toHaveCount(0);
 
-	// „Gemischt“ zählt nur für Gesamt – in Kulturen ist noch niemand
-	await clara.seite.getByRole('navigation', { name: 'Kategorie' }).getByRole('link', { name: 'Kulturen' }).click();
-	await expect(clara.seite).toHaveURL(/\/rangliste\?kategorie=kulturen$/);
+	// „Gemischt“ zählt nur für Gesamt – in Pflanzenbau ist noch niemand
+	await clara.seite.getByRole('navigation', { name: 'Kategorie' }).getByRole('link', { name: 'Pflanzenbau' }).click();
+	await expect(clara.seite).toHaveURL(/\/rangliste\?kategorie=pflanzenbau$/);
 	await expect(clara.seite.getByText('Noch niemand platziert.')).toBeVisible();
 
 	// Kaputte Links führen zur aktuellen Rangliste

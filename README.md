@@ -1,7 +1,7 @@
 # Halmduell
 
-PWA-Quizduell-Spiel mit landwirtschaftlichen Fragen – Wissensfragen und
-Bilderkennung (Kulturen, Krankheiten, Schädlinge). Spielprinzip angelehnt an
+PWA-Quizduell-Spiel mit landwirtschaftlichen Fragen aus Landtechnik,
+Pflanzenbau und Viehzucht – Wissensfragen und Bilderkennung. Spielprinzip angelehnt an
 Quizduell: asynchrones 1v1, 6 Fragen pro Runde, danach Frage-für-Frage-Vergleich.
 
 ## Maskottchen und Design
@@ -121,7 +121,7 @@ Request- und Response-Typen liegen in `packages/shared/src/duell.ts`.
 
 | Endpunkt | Zweck |
 |---|---|
-| `GET /api/rangliste?kategorie=gesamt&saison=3` | Bestenliste einer Kategorie (`gesamt`, `kulturen`, `schaedlinge`, `krankheiten`, `wissen`) und Saison; ohne `saison` die laufende |
+| `GET /api/rangliste?kategorie=gesamt&saison=3` | Bestenliste einer Kategorie (`gesamt`, `landtechnik`, `pflanzenbau`, `viehzucht`) und Saison; ohne `saison` die laufende |
 | `GET /api/rangliste?kreis=freunde` | dasselbe nur für mich und meine bestätigten Freunde (Plätze innerhalb dieses Kreises) |
 
 Liefert die ersten 100 Plätze, den eigenen Platz (auch wenn er weiter hinten
@@ -341,19 +341,16 @@ Abzeichen, Fehler üben, Benachrichtigungen, Admin-Portal für Fragen.
 ## Offene Punkte
 
 - Fragenkatalog prüfen und freigeben (im Admin-Portal unter „Entwürfe“): 6
-  freigegebene Beispielfragen, dazu 100 Entwürfe (je 25 pro Kategorie).
-  Kategorie-Duelle brauchen je ≥ 6 freigegebene Fragen; Bildfragen fehlen noch
+  freigegebene Beispielfragen, dazu 134 Entwürfe (davon 34 Bildfragen).
+  Kategorie-Duelle brauchen je ≥ 6 freigegebene Fragen
+- Fragen für **Landtechnik** (bisher 3) und **Viehzucht** (bisher 1) schreiben –
+  nach der Umstellung stammen fast alle Fragen aus Pflanzenbau
 - Admin-Portal erweitern: eingereichte Community-Fragen moderieren,
   Admins im Portal verwalten statt per `ADMIN_USERNAMES`
 
-- Kategorien umstellen – neu: **Gemischt, Landtechnik, Pflanzenbau,
-  Viehwirtschaft** (statt Kulturen, Schädlinge, Krankheiten, Wissen). Betrifft:
-  `FRAGEN_KATEGORIEN`/`KATEGORIE_NAMEN` in `packages/shared`, CHECK-Constraints
-  (Migration), Zuordnung der vorhandenen Fragen (Kulturen/Schädlinge/Krankheiten
-  → Pflanzenbau, Wissen je Frage neu einordnen), Codes in `fragen.csv`,
-  Ratings und Rangliste je Kategorie (Umgang mit bisherigen Kategorie-Ratings),
-  Fachwissen-Abzeichen, Farben/Symbole je Kategorie; für Landtechnik und
-  Viehwirtschaft fehlen noch Fragen
+- Fragen melden: nach dem Duell eine Frage melden können, wenn die als richtig
+  gewertete Antwort falsch erscheint (optional mit Begründung); Meldungen im
+  Admin-Portal sichten, Frage korrigieren oder zurückziehen
 
 Bewusst später:
 

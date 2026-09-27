@@ -35,7 +35,7 @@ describe.skipIf(!mitDatenbank)('Rangliste', () => {
     await setzeRating(anna.id, 'gesamt', saison, 1100, 3);
     await setzeRating(ben.id, 'gesamt', saison, 1100, 5);
     await setzeRating(clara.id, 'gesamt', saison, 980, 2);
-    await setzeRating(anna.id, 'kulturen', saison, 1020, 1);
+    await setzeRating(anna.id, 'landtechnik', saison, 1020, 1);
     // Vorsaison: Clara vorne
     await setzeRating(clara.id, 'gesamt', saison - 1, 1300, 12);
     await setzeRating(anna.id, 'gesamt', saison - 1, 1000, 4);
@@ -70,12 +70,12 @@ describe.skipIf(!mitDatenbank)('Rangliste', () => {
   });
 
   test('je Kategorie eigene Liste', async () => {
-    const { daten } = await rangliste(ben, '?kategorie=kulturen');
+    const { daten } = await rangliste(ben, '?kategorie=landtechnik');
     expect(daten.eintraege.map((e) => e.username)).toEqual([anna.username]);
     expect(daten.ich).toBeNull();
-    const wissen = await rangliste(ben, '?kategorie=wissen');
-    expect(wissen.daten.eintraege).toEqual([]);
-    expect(wissen.daten.spielerAnzahl).toBe(0);
+    const pflanzenbau = await rangliste(ben, '?kategorie=pflanzenbau');
+    expect(pflanzenbau.daten.eintraege).toEqual([]);
+    expect(pflanzenbau.daten.spielerAnzahl).toBe(0);
   });
 
   test('vergangene Saison bleibt abrufbar', async () => {
@@ -94,9 +94,9 @@ describe.skipIf(!mitDatenbank)('Rangliste', () => {
 
   test(`zeigt höchstens ${RANGLISTE_LAENGE} Plätze, den eigenen aber immer`, async () => {
     const ids = await stilleSpieler(RANGLISTE_LAENGE + 5, 'profi');
-    for (const id of ids) await setzeRating(id, 'krankheiten', saison, 1200);
-    await setzeRating(clara.id, 'krankheiten', saison, 850);
-    const { daten } = await rangliste(clara, '?kategorie=krankheiten');
+    for (const id of ids) await setzeRating(id, 'viehzucht', saison, 1200);
+    await setzeRating(clara.id, 'viehzucht', saison, 850);
+    const { daten } = await rangliste(clara, '?kategorie=viehzucht');
     expect(daten.eintraege).toHaveLength(RANGLISTE_LAENGE);
     expect(daten.spielerAnzahl).toBe(RANGLISTE_LAENGE + 6);
     expect(daten.eintraege.some((e) => e.id === clara.id)).toBe(false);

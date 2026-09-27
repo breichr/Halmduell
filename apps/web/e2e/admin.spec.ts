@@ -53,7 +53,7 @@ test('Admin-Portal: Entwürfe prüfen, bearbeiten, freigeben, neue Frage, CSV', 
 
 	// Neue Frage anlegen
 	await admin.seite.goto('/admin/fragen/neu');
-	await admin.seite.getByLabel('Kategorie').selectOption('wissen');
+	await admin.seite.getByLabel('Kategorie').selectOption('landtechnik');
 	await admin.seite.getByLabel('Frage', { exact: true }).fill('Wie viele Quadratmeter hat ein Ar?');
 	await admin.seite.getByLabel('Richtige Antwort').fill('100 m²');
 	await admin.seite.getByLabel('Falsche Antwort 1').fill('10 m²');
@@ -61,7 +61,7 @@ test('Admin-Portal: Entwürfe prüfen, bearbeiten, freigeben, neue Frage, CSV', 
 	await admin.seite.getByLabel('Falsche Antwort 3').fill('10.000 m²');
 	await expect(admin.seite.getByRole('region', { name: 'Vorschau' })).toContainText('Wie viele Quadratmeter hat ein Ar?');
 	await admin.seite.getByRole('button', { name: 'Frage anlegen' }).click();
-	await expect(admin.seite).toHaveURL(/status=entwurf&suche=wissen-028/);
+	await expect(admin.seite).toHaveURL(/status=entwurf&suche=landtechnik-001/);
 	await expect(admin.seite.getByTestId('admin-frage')).toContainText('Wie viele Quadratmeter hat ein Ar?');
 
 	// CSV-Export
@@ -69,5 +69,5 @@ test('Admin-Portal: Entwürfe prüfen, bearbeiten, freigeben, neue Frage, CSV', 
 	expect(csv.status()).toBe(200);
 	const text = await csv.text();
 	expect(text).toContain('code;kategorie;typ;frage;richtig');
-	expect(text).toContain('wissen-028;wissen;text;Wie viele Quadratmeter hat ein Ar?');
+	expect(text).toContain('landtechnik-001;landtechnik;text;Wie viele Quadratmeter hat ein Ar?');
 });

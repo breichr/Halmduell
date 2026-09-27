@@ -9,9 +9,9 @@
 		garbe: 'var(--sonne)',
 		scheune: 'var(--orange)',
 		aehre: 'var(--sonne)',
-		kulturen: 'var(--hellgruen)',
-		schaedlinge: 'var(--orange)',
-		krankheiten: 'var(--blau)',
+		landtechnik: 'var(--orange)',
+		pflanzenbau: 'var(--hellgruen)',
+		viehzucht: 'var(--blau)',
 		wissen: 'var(--sonne)',
 		pokal: 'var(--sonne)',
 		krone: 'var(--sonne)',
@@ -32,12 +32,12 @@
 			<path d="M3 10 12 4l9 6v10H3z" /><path d="M9 20v-6h6v6M9 14l6 6M15 14l-6 6" />
 		{:else if icon === 'aehre'}
 			<path d="M12 22V9" /><path d="M12 9c-1.6-.6-2.5-2-2.5-3.6C11 5.8 12 7 12 9zm0 0c1.6-.6 2.5-2 2.5-3.6C13 5.8 12 7 12 9zM12 13c-1.8-.6-3-2-3-3.8 1.8.4 3 1.8 3 3.8zm0 0c1.8-.6 3-2 3-3.8-1.8.4-3 1.8-3 3.8zM12 17c-2-.6-3.3-2-3.3-4 2 .4 3.3 1.9 3.3 4zm0 0c2-.6 3.3-2 3.3-4-2 .4-3.3 1.9-3.3 4zM12 4.5V2" />
-		{:else if icon === 'kulturen'}
+		{:else if icon === 'landtechnik'}
+			<circle cx="7" cy="16" r="4" /><circle cx="18" cy="17" r="2.5" /><path d="M4 12V6h6l2 6h6l2 3v2M11 17h4.5" />
+		{:else if icon === 'pflanzenbau'}
 			<path d="M12 21V8" /><path d="M12 12c-3 0-5-2-5-5 3 0 5 2 5 5zM12 9c3 0 5-2 5-5-3 0-5 2-5 5zM12 16c-3 0-5-2-5-4 3 0 5 1.5 5 4zM12 14c3 0 5-2 5-4-3 0-5 1.5-5 4z" />
-		{:else if icon === 'schaedlinge'}
-			<ellipse cx="12" cy="14" rx="4" ry="5.5" /><circle cx="12" cy="7" r="2" /><path d="M12 9v10M8 11 4 9M8 14H3.5M8 17l-4 2M16 11l4-2M16 14h4.5M16 17l4 2" />
-		{:else if icon === 'krankheiten'}
-			<path d="M5 19c0-8 5-14 14-14 0 9-6 14-14 14z" /><path d="M5 19 13 11" /><circle cx="14" cy="9" r="1" /><circle cx="10" cy="14" r="1" />
+		{:else if icon === 'viehzucht'}
+			<path d="M7 7 3 5.5C3 8 4.5 9.5 7 9.5M17 7l4-1.5C21 8 19.5 9.5 17 9.5" /><path d="M7 6.5c0-1.4 2.2-2.5 5-2.5s5 1.1 5 2.5V14H7z" /><path d="M7.5 14c-.8 1-1 2-1 3 0 2.2 2.4 4 5.5 4s5.5-1.8 5.5-4c0-1-.2-2-1-3z" />
 		{:else if icon === 'wissen'}
 			<path d="M4 5.5C6.5 4 9.5 4 12 6c2.5-2 5.5-2 8-.5V19c-2.5-1.5-5.5-1.5-8 .5-2.5-2-5.5-2-8-.5z" /><path d="M12 6v13.5" />
 		{:else if icon === 'pokal'}

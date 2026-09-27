@@ -1,4 +1,4 @@
-export const FRAGEN_KATEGORIEN = ['kulturen', 'schaedlinge', 'krankheiten', 'wissen'] as const;
+export const FRAGEN_KATEGORIEN = ['landtechnik', 'pflanzenbau', 'viehzucht'] as const;
 export type FragenKategorie = (typeof FRAGEN_KATEGORIEN)[number];
 
 export const DUELL_KATEGORIEN = [...FRAGEN_KATEGORIEN, 'gemischt'] as const;
@@ -6,10 +6,9 @@ export type DuellKategorie = (typeof DUELL_KATEGORIEN)[number];
 
 /** Anzeigenamen der Kategorien */
 export const KATEGORIE_NAMEN: Record<DuellKategorie | 'gesamt', string> = {
-  kulturen: 'Kulturen',
-  schaedlinge: 'Schädlinge',
-  krankheiten: 'Krankheiten',
-  wissen: 'Wissen',
+  landtechnik: 'Landtechnik',
+  pflanzenbau: 'Pflanzenbau',
+  viehzucht: 'Viehzucht',
   gemischt: 'Gemischt',
   gesamt: 'Gesamt',
 };

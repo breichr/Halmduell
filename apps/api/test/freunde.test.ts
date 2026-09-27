@@ -114,9 +114,9 @@ describe.skipIf(!mitDatenbank)('Freunde', () => {
     await setzeRating(ben.id, 'gesamt', 1150);
     // Anna fordert Ben und Clara heraus (Kategorie ohne Fragen → direkt per SQL)
     const [duell] = await sqlAusfuehren(sql`insert into duels (kategorie, spieler_a_id, spieler_b_id, status)
-      values ('wissen', ${anna.id}, ${ben.id}, 'wartet_b') returning id`) as unknown as { id: number }[];
+      values ('pflanzenbau', ${anna.id}, ${ben.id}, 'wartet_b') returning id`) as unknown as { id: number }[];
     await sqlAusfuehren(sql`insert into duels (kategorie, spieler_a_id, spieler_b_id, status)
-      values ('wissen', ${clara.id}, ${anna.id}, 'abgeschlossen')`);
+      values ('pflanzenbau', ${clara.id}, ${anna.id}, 'abgeschlossen')`);
 
     const beiAnna = await liste(anna);
     expect(beiAnna.freunde).toEqual([{

@@ -28,8 +28,8 @@ ausgerollt. Enthält die Datei einen Fehler, wird **nichts** importiert.
 
 | Spalte | Pflicht | Inhalt |
 |---|---|---|
-| `code` | ja | eindeutiger, fester Schlüssel, z. B. `krankheiten-012`. Nur Kleinbuchstaben, Ziffern, `-`, `_`. **Nie ändern** – daran erkennt der Import die Frage wieder. |
-| `kategorie` | ja | `kulturen`, `schaedlinge`, `krankheiten` oder `wissen` |
+| `code` | ja | eindeutiger, fester Schlüssel, z. B. `viehzucht-012`. Nur Kleinbuchstaben, Ziffern, `-`, `_`. **Nie ändern** – daran erkennt der Import die Frage wieder. |
+| `kategorie` | ja | `landtechnik`, `pflanzenbau` oder `viehzucht` (ältere Codes wie `kulturen-003` bleiben, auch wenn die Kategorie wechselt) |
 | `typ` | nein | `text` (Standard) oder `bild` |
 | `frage` | ja | Fragetext |
 | `richtig` | ja | die richtige Antwort (max. 100 Zeichen) |
