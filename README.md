@@ -225,6 +225,35 @@ Beantworten lassen sich nur Fragen, die gerade zum Üben offen sind – so
 lässt sich über das Üben keine Lösung einer laufenden Duell-Frage nachschlagen.
 Stand je Frage: Tabelle `uebungen`.
 
+## Admin-Portal (Fragen pflegen)
+
+Unter `/admin` (Link im Profil) prüfen, bearbeiten und freigeben Admins die
+Fragen: Übersicht je Kategorie (Warnung unter 6 freigegebenen), Filter
+Entwürfe/Freigegeben/Abgelehnt, Suche in Frage, Antworten und Code,
+Freigeben/Ablehnen mit einem Tipp, Bearbeiten mit Vorschau wie im Spiel,
+neue Fragen (Code wird je Kategorie vergeben) und **CSV-Export** im Format
+von `fragen/fragen.csv`.
+
+- **Die Datenbank ist maßgeblich.** Beim Deploy kommen aus `fragen.csv` nur
+  Fragen mit neuem `code` hinzu; vorhandene bleiben, wie sie im Portal
+  gepflegt sind. Zum Sichern oder Versionieren den Export herunterladen und
+  bei Bedarf als `fragen/fragen.csv` committen. Einmalig alles aus der Datei
+  übernehmen: `bun run fragen:import -- --ueberschreiben`.
+- **Admins:** `ADMIN_USERNAMES=anna,ben` beim API-Service (Groß-/Kleinschreibung
+  egal); wirkt nach dem Neustart. Alle `/api/admin/*`-Endpunkte antworten
+  sonst mit 403.
+- Bearbeiten ändert die Antwortoptionen an Ort und Stelle (gespielte Duelle
+  bleiben gültig); bei inhaltlich anderer Frage besser eine neue anlegen und
+  die alte ablehnen.
+
+| Endpunkt | Zweck |
+|---|---|
+| `GET /api/admin/fragen?status=&kategorie=&suche=` | Fragen mit Antworten und Duell-Statistik, Übersicht je Kategorie |
+| `GET /api/admin/fragen/:id` / `PUT …` | eine Frage lesen / bearbeiten |
+| `POST /api/admin/fragen` | neue Frage |
+| `POST /api/admin/fragen/:id/status` | `{ status }` freigeben, ablehnen, Entwurf |
+| `GET /api/admin/fragen.csv` | Export aller Fragen |
+
 ## Benachrichtigungen (Web Push)
 
 Push-Nachrichten, wenn jemand herausfordert bzw. man dran ist, ein Duell
@@ -263,7 +292,7 @@ selbst braucht keine Domain.
 | Service | Dockerfile | Umgebungsvariablen |
 |---|---|---|
 | PostgreSQL | Coolify-Datenbank | – |
-| API | `Dockerfile.api` | `DATABASE_URL` (Internal URL der Datenbank), `JWT_SECRET` (geheim, `openssl rand -base64 48`), `TRUST_PROXY=true`, optional `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT` (Web Push, siehe unten) |
+| API | `Dockerfile.api` | `DATABASE_URL` (Internal URL der Datenbank), `JWT_SECRET` (geheim, `openssl rand -base64 48`), `TRUST_PROXY=true`, `ADMIN_USERNAMES` (Admin-Portal, kommagetrennt), optional `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT` (Web Push, siehe unten) |
 | Web | `Dockerfile.web` | `API_URL=http://halmduell-api:3000`, `ORIGIN` (öffentliche URL, z. B. `https://halmduell.example`) |
 
 Beim API-Service unter **Configuration → General** das Feld **Domains** leer
@@ -286,8 +315,9 @@ refused“ fehl und Coolify rollt das Deployment zurück.
 Alternativ den Dashboard-Check deaktivieren; dann greift der `HEALTHCHECK`
 aus dem Dockerfile, der bereits `127.0.0.1` verwendet.
 
-Beim Start wendet die API ausstehende Migrationen an und importiert
-`fragen/fragen.csv`. `TRUST_PROXY=true` ist richtig, solange die API nur über
+Beim Start wendet die API ausstehende Migrationen an und importiert aus
+`fragen/fragen.csv` die Fragen mit neuem `code` (vorhandene pflegt das
+Admin-Portal). `TRUST_PROXY=true` ist richtig, solange die API nur über
 den Web-Service erreichbar ist (keine eigene öffentliche Domain) – sonst
 könnten Clients ihre IP für die Rate-Limits fälschen.
 
@@ -298,17 +328,15 @@ App (Schritte 1–6 in `docs/architektur.md`). Screens: Anmelden/Registrieren/Pa
 Übersicht, neues Duell (Benutzername oder Einladungslink), Einladung annehmen,
 Frage mit Timer, Frage-für-Frage-Vergleich, Rangliste (je Kategorie und
 Saison, mit Archiv und Freunde-Ansicht), Freunde, Profil mit Statistik und
-Abzeichen, Fehler üben, Benachrichtigungen.
+Abzeichen, Fehler üben, Benachrichtigungen, Admin-Portal für Fragen.
 
 ## Offene Punkte
 
-- Fragenkatalog prüfen und freigeben (`fragen/fragen.csv`, kuratiert): 6
-  freigegebene Beispielfragen, dazu 100 Entwürfe (je 25 pro Kategorie,
-  `status` = `entwurf`) – nach Prüfung auf `freigegeben` setzen.
+- Fragenkatalog prüfen und freigeben (im Admin-Portal unter „Entwürfe“): 6
+  freigegebene Beispielfragen, dazu 100 Entwürfe (je 25 pro Kategorie).
   Kategorie-Duelle brauchen je ≥ 6 freigegebene Fragen; Bildfragen fehlen noch
-- Admin-Panel: Fragen im Browser prüfen, bearbeiten und freigeben (statt nur
-  per CSV), später auch eingereichte Community-Fragen moderieren; dazu eine
-  Admin-Rolle für Konten
+- Admin-Portal erweitern: eingereichte Community-Fragen moderieren,
+  Admins im Portal verwalten statt per `ADMIN_USERNAMES`
 
 Bewusst später:
 

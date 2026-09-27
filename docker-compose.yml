@@ -28,6 +28,8 @@ services:
       JWT_SECRET: nur-fuer-lokale-entwicklung-bitte-aendern-1234567890
       # Aufrufe kommen nur über den Web-Container, der X-Forwarded-For setzt
       TRUST_PROXY: "true"
+      # Admin-Portal: Benutzernamen mit Admin-Rechten (kommagetrennt)
+      # ADMIN_USERNAMES: anna
       # Web Push (optional): cd apps/api && bun run push:schluessel
       # VAPID_PUBLIC_KEY: …
       # VAPID_PRIVATE_KEY: …

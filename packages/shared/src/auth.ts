@@ -41,6 +41,8 @@ export const zuruecksetzenSchema = z.object({
 export interface AngemeldeterUser {
   id: number;
   username: string;
+  /** darf das Admin-Portal nutzen (ADMIN_USERNAMES) */
+  istAdmin: boolean;
 }
 
 /**

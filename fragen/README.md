@@ -1,10 +1,20 @@
 # Fragen pflegen
 
-Alle Quizfragen stehen in `fragen.csv` – eine Zeile pro Frage. Die Datei lässt
-sich direkt in Excel oder LibreOffice Calc öffnen und bearbeiten.
+**Gepflegt werden die Fragen im Admin-Portal** (`/admin`, siehe README) –
+die Datenbank ist maßgeblich. Diese Datei dient als Startbestand und für
+größere Mengen neuer Fragen:
 
-Beim Start des API-Containers wird die Datei automatisch importiert. Ablauf:
-Datei bearbeiten → prüfen → committen → deployen.
+- Beim Start des API-Containers werden Zeilen mit **neuem `code`** importiert.
+  Zeilen, deren Code schon in der Datenbank steht, werden übersprungen –
+  Änderungen daran wirken also nicht mehr (dafür das Portal nutzen).
+- Aktuellen Stand sichern: im Portal „CSV exportieren“ – die Datei hat genau
+  dieses Format und kann hier als `fragen.csv` eingecheckt werden.
+- Ausnahmsweise alles aus der Datei übernehmen (überschreibt Änderungen aus dem
+  Portal): `bun run fragen:import -- --ueberschreiben`.
+
+Die Datei lässt sich direkt in Excel oder LibreOffice Calc öffnen und
+bearbeiten. Ablauf für neue Fragen: Zeilen mit neuen Codes anhängen → prüfen →
+committen → deployen.
 
 ```sh
 bun run fragen:pruefen   # Datei prüfen (ohne Datenbank), zeigt Fehler mit Zeilennummer
@@ -33,16 +43,14 @@ ausgerollt. Enthält die Datei einen Fehler, wird **nichts** importiert.
 Die Antworten werden im Spiel für jeden Spieler gemischt; in der Datei steht
 die richtige immer in der Spalte `richtig`.
 
-## Ändern und Entfernen
+## Ändern und Entfernen (im Admin-Portal)
 
-- **Tippfehler korrigieren / Erklärung verbessern:** einfach in der Zeile
-  ändern. Gespielte Duelle zeigen danach den korrigierten Text.
-- **Inhaltlich andere Frage:** neue Zeile mit neuem `code` anlegen und die
-  alte auf `abgelehnt` setzen – sonst passen alte Duell-Ergebnisse nicht mehr
-  zur Frage.
-- **Frage entfernen:** `status` auf `abgelehnt` setzen. Zeilen zu löschen
-  entfernt die Frage nicht aus der Datenbank (sie könnte in Duellen vorkommen);
-  der Import weist dann nur darauf hin.
+- **Tippfehler korrigieren / Erklärung verbessern:** Frage bearbeiten.
+  Gespielte Duelle zeigen danach den korrigierten Text.
+- **Inhaltlich andere Frage:** neue Frage anlegen und die alte ablehnen –
+  sonst passen alte Duell-Ergebnisse nicht mehr zur Frage.
+- **Frage entfernen:** ablehnen. Gelöscht wird nie (sie könnte in Duellen
+  vorkommen).
 
 ## Speichern
 

@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { logger } from 'hono/logger';
 import { abzeichenRoute } from './routes/abzeichen';
+import { adminRoute } from './routes/admin';
 import { authRoute } from './routes/auth';
 import { duelsRoute } from './routes/duels';
 import { freundeRoute } from './routes/freunde';
@@ -22,3 +23,4 @@ app.route('/statistik', statistikRoute);
 app.route('/abzeichen', abzeichenRoute);
 app.route('/push', pushRoute);
 app.route('/ueben', uebenRoute);
+app.route('/admin', adminRoute);

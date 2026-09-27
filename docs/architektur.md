@@ -54,6 +54,7 @@ halmduell/
 │       │   │   ├── freunde.ts
 │       │   │   ├── statistik.ts
 │       │   │   ├── abzeichen.ts
+│       │   │   ├── admin.ts
 │       │   │   ├── push.ts
 │       │   │   ├── ueben.ts
 │       │   │   └── auth.ts

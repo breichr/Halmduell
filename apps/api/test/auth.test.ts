@@ -7,7 +7,7 @@ describe.skipIf(!mitDatenbank)('Auth', () => {
   test('Registrierung setzt httpOnly-Session-Cookie', async () => {
     const res = await anfrage('/auth/register', { method: 'POST', body: { username: 'Anna', password: 'geheim123' } });
     expect(res.status).toBe(201);
-    expect(res.json).toEqual({ id: expect.any(Number), username: 'Anna', wiederherstellungsCode: expect.any(String) });
+    expect(res.json).toEqual({ id: expect.any(Number), username: 'Anna', istAdmin: false, wiederherstellungsCode: expect.any(String) });
     expect(res.setCookie).toContain('halmduell_session=');
     expect(res.setCookie).toContain('HttpOnly');
     expect(res.setCookie).toContain('SameSite=Lax');

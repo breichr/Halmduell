@@ -1,7 +1,10 @@
 // Importiert fragen/fragen.csv in die Datenbank (idempotent).
-//   bun run fragen:import               → importieren
-//   bun run fragen:import -- --pruefen  → nur prüfen, ohne Datenbank (für CI)
-//   bun run fragen:import -- pfad.csv   → andere Datei
+// Die Datenbank ist maßgeblich (gepflegt im Admin-Portal): Standardmäßig kommen
+// nur Fragen mit neuem `code` hinzu, vorhandene bleiben unangetastet.
+//   bun run fragen:import                     → neue Fragen importieren
+//   bun run fragen:import -- --ueberschreiben → auch vorhandene mit der Datei überschreiben
+//   bun run fragen:import -- --pruefen        → nur prüfen, ohne Datenbank (für CI)
+//   bun run fragen:import -- pfad.csv         → andere Datei
 import { asc, eq, isNotNull } from 'drizzle-orm';
 import { answerOptions, questions } from '../db/schema';
 import type { Tx } from '../db/types';
@@ -13,17 +16,19 @@ export interface ImportErgebnis {
   neu: number;
   geaendert: number;
   unveraendert: number;
+  /** schon vorhanden und nicht verglichen (Standard: Datenbank ist maßgeblich) */
+  uebersprungen: number;
   /** Fragen mit Code in der DB, die in der Datei fehlen (werden nicht gelöscht) */
   nichtInDatei: string[];
 }
 
 /**
- * Legt neue Fragen an und aktualisiert bestehende (per `code`). Antwortoptionen
- * werden an Ort und Stelle geändert, damit ihre IDs – auf die gespielte Duelle
- * verweisen – erhalten bleiben. Gelöscht wird nie.
+ * Legt neue Fragen an (per `code`). Mit `ueberschreiben` werden auch bestehende
+ * aktualisiert; Antwortoptionen dann an Ort und Stelle, damit ihre IDs – auf die
+ * gespielte Duelle verweisen – erhalten bleiben. Gelöscht wird nie.
  */
-export async function importiereFragen(tx: Tx, fragen: FragenZeile[]): Promise<ImportErgebnis> {
-  const ergebnis: ImportErgebnis = { neu: 0, geaendert: 0, unveraendert: 0, nichtInDatei: [] };
+export async function importiereFragen(tx: Tx, fragen: FragenZeile[], { ueberschreiben = false } = {}): Promise<ImportErgebnis> {
+  const ergebnis: ImportErgebnis = { neu: 0, geaendert: 0, unveraendert: 0, uebersprungen: 0, nichtInDatei: [] };
 
   for (const zeile of fragen) {
     const felder = {
@@ -49,6 +54,10 @@ export async function importiereFragen(tx: Tx, fragen: FragenZeile[]): Promise<I
       const [frage] = await tx.insert(questions).values({ code: zeile.code, ...felder }).returning({ id: questions.id });
       await tx.insert(answerOptions).values(antworten.map((a) => ({ questionId: frage!.id, ...a })));
       ergebnis.neu++;
+      continue;
+    }
+    if (!ueberschreiben) {
+      ergebnis.uebersprungen++;
       continue;
     }
 
@@ -82,6 +91,7 @@ export async function importiereFragen(tx: Tx, fragen: FragenZeile[]): Promise<I
 if (import.meta.main) {
   const argumente = process.argv.slice(2);
   const nurPruefen = argumente.includes('--pruefen');
+  const ueberschreiben = argumente.includes('--ueberschreiben');
   const datei = argumente.find((a) => !a.startsWith('--')) ?? STANDARD_DATEI;
 
   const { fragen, fehler } = leseFragenCsv(new Uint8Array(await Bun.file(datei).arrayBuffer()));
@@ -95,8 +105,10 @@ if (import.meta.main) {
   }
 
   const { db, sqlClient } = await import('../db/client');
-  const ergebnis = await db.transaction((tx) => importiereFragen(tx, fragen));
-  console.log(`Fragen: ${ergebnis.neu} neu, ${ergebnis.geaendert} geändert, ${ergebnis.unveraendert} unverändert`);
+  const ergebnis = await db.transaction((tx) => importiereFragen(tx, fragen, { ueberschreiben }));
+  console.log(ueberschreiben
+    ? `Fragen: ${ergebnis.neu} neu, ${ergebnis.geaendert} geändert, ${ergebnis.unveraendert} unverändert`
+    : `Fragen: ${ergebnis.neu} neu, ${ergebnis.uebersprungen} schon vorhanden (Datenbank ist maßgeblich)`);
   if (ergebnis.nichtInDatei.length) {
     console.warn(`Nicht mehr in der Datei (bleiben unverändert in der DB): ${ergebnis.nichtInDatei.join(', ')}`);
   }
