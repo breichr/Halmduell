@@ -31,13 +31,13 @@ async function duell(a: User, b: User, fragen: number[], richtig: boolean[], ms 
 describe.skipIf(!mitDatenbank)('Abzeichen', () => {
   let anna: User;
   let ben: User;
-  let wissen: number[];
+  let pflanzenbau: number[];
 
   beforeEach(async () => {
     await leereDatenbank();
     [anna, ben] = [await neuerUser('anna'), await neuerUser('ben')];
-    await erstelleFragen(6, 'wissen');
-    wissen = await frageIds('wissen');
+    await erstelleFragen(6, 'pflanzenbau');
+    pflanzenbau = await frageIds('pflanzenbau');
   });
 
   test('ohne Anmeldung 401', async () => {
@@ -53,36 +53,36 @@ describe.skipIf(!mitDatenbank)('Abzeichen', () => {
   });
 
   test('Meilensteine, Serie und volle Scheune', async () => {
-    await duell(anna, ben, wissen, [true, true, true, true, true, true]);
-    await duell(anna, ben, wissen.slice(0, 2), [true, false]);
-    await duell(anna, ben, wissen.slice(0, 1), [true]);
+    await duell(anna, ben, pflanzenbau, [true, true, true, true, true, true]);
+    await duell(anna, ben, pflanzenbau.slice(0, 2), [true, false]);
+    await duell(anna, ben, pflanzenbau.slice(0, 1), [true]);
     const l = await liste(anna);
     expect(erreicht(l)).toEqual(['erster_sieg', 'erstes_duell', 'siegesserie', 'volle_scheune']);
     expect(eintrag(l, 'zehn_duelle')).toMatchObject({ erreichtAt: null, stand: 3 });
     expect(eintrag(l, 'siegesserie')).toMatchObject({ stand: null });
     expect(eintrag(l, 'siegesserie').erreichtAt).not.toBeNull();
-    expect(eintrag(l, 'wissen_experte')).toMatchObject({ erreichtAt: null, stand: 8 });
+    expect(eintrag(l, 'pflanzenbau_experte')).toMatchObject({ erreichtAt: null, stand: 8 });
 
     // Ben hat alles verloren: nur „Erste Schritte“
     expect(erreicht(await liste(ben))).toEqual(['erstes_duell']);
   });
 
   test('Serie zählt nur ununterbrochene Siege', async () => {
-    await duell(anna, ben, wissen.slice(0, 1), [true]);
-    await duell(anna, ben, wissen.slice(0, 1), [true]);
-    await duell(anna, ben, wissen.slice(0, 1), [false]); // unentschieden 0:0
-    await duell(anna, ben, wissen.slice(0, 1), [true]);
+    await duell(anna, ben, pflanzenbau.slice(0, 1), [true]);
+    await duell(anna, ben, pflanzenbau.slice(0, 1), [true]);
+    await duell(anna, ben, pflanzenbau.slice(0, 1), [false]); // unentschieden 0:0
+    await duell(anna, ben, pflanzenbau.slice(0, 1), [true]);
     expect(eintrag(await liste(anna), 'siegesserie')).toMatchObject({ erreichtAt: null, stand: 2 });
   });
 
   test('Kategorie-Experte ab 50 richtigen, Blitzmerker unter 2 Sekunden', async () => {
-    // 50 richtige Wissensfragen über mehrere Duelle (je 5, die Fragen dürfen sich wiederholen)
-    for (let i = 0; i < EXPERTEN_ZIEL / 5; i++) await duell(anna, ben, wissen.slice(0, 5), [true, true, true, true, true]);
+    // 50 richtige Pflanzenbaufragen über mehrere Duelle (je 5, die Fragen dürfen sich wiederholen)
+    for (let i = 0; i < EXPERTEN_ZIEL / 5; i++) await duell(anna, ben, pflanzenbau.slice(0, 5), [true, true, true, true, true]);
     let l = await liste(anna);
-    expect(eintrag(l, 'wissen_experte').erreichtAt).not.toBeNull();
+    expect(eintrag(l, 'pflanzenbau_experte').erreichtAt).not.toBeNull();
     expect(eintrag(l, 'blitzmerker').erreichtAt).toBeNull();
 
-    await duell(anna, ben, wissen.slice(0, 1), [true], 1500);
+    await duell(anna, ben, pflanzenbau.slice(0, 1), [true], 1500);
     l = await liste(anna);
     expect(eintrag(l, 'blitzmerker').erreichtAt).not.toBeNull();
     expect(eintrag(l, 'zehn_duelle').erreichtAt).not.toBeNull();
@@ -113,7 +113,7 @@ describe.skipIf(!mitDatenbank)('Abzeichen', () => {
   });
 
   test('Vergeben ist idempotent', async () => {
-    await duell(anna, ben, wissen.slice(0, 1), [true]);
+    await duell(anna, ben, pflanzenbau.slice(0, 1), [true]);
     await liste(anna);
     await liste(anna);
     const [zeile] = (await sqlAusfuehren(sql`select count(*)::int as anzahl from user_achievements where user_id = ${anna.id}`)) as unknown as { anzahl: number }[];

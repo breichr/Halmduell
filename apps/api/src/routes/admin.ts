@@ -88,7 +88,7 @@ const felderAus = (e: FrageBearbeiten) => ({
   status: e.status,
 });
 
-/** Nächster freier Code je Kategorie, z. B. „wissen-028“ (wie in fragen.csv) */
+/** Nächster freier Code je Kategorie, z. B. „pflanzenbau-012“ (wie in fragen.csv) */
 async function naechsterCode(tx: Tx, kategorie: FragenKategorie): Promise<string> {
   const [zeile] = await tx.execute<{ max: number | null }>(sql`
     select max(substring(code from ${`^${kategorie}-(\\d+)$`})::int) as max from questions where code like ${`${kategorie}-%`}`);

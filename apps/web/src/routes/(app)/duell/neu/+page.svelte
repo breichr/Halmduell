@@ -124,7 +124,7 @@
 	}
 	.kategorien {
 		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
+		grid-template-columns: repeat(3, minmax(0, 1fr));
 		gap: 0.6rem;
 	}
 	.kategorie,
@@ -149,6 +149,25 @@
 	.kategorie.breit {
 		grid-column: 1 / -1;
 		min-height: 62px;
+	}
+	/* drei Fach-Kategorien nebeneinander: Symbol über dem Namen */
+	.kategorie:not(.breit) {
+		flex-direction: column;
+		justify-content: center;
+		gap: 0.3rem;
+		min-height: 92px;
+		padding: 0.5rem 0.3rem;
+		font-size: 0.92rem;
+		text-align: center;
+	}
+	.kategorie:not(.breit) .name {
+		flex: none;
+		overflow-wrap: anywhere;
+	}
+	.kategorie:not(.breit) .haken {
+		position: absolute;
+		top: -10px;
+		right: -8px;
 	}
 	.kategorie .name {
 		flex: 1;

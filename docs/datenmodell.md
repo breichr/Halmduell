@@ -10,12 +10,12 @@ CHECK-Constraint in der Datenbank abgesichert.
 | Tabelle | Schlüssel | Inhalt |
 |---|---|---|
 | `users` | `id` | Spieler, `username` eindeutig (ohne Groß-/Kleinschreibung), `passwort_hash`, `wiederherstellungs_hash`, `session_version` |
-| `questions` | `id` | Frage mit `kategorie` (`kulturen`, `schaedlinge`, `krankheiten`, `wissen`), `typ` (`bild`/`text`), Bild-URL + Attribution, `schwierigkeit` 1–5, `erklaerung`, `status` (`entwurf`, `eingereicht`, `freigegeben`, `abgelehnt`), `eingereicht_von` |
+| `questions` | `id` | Frage mit `kategorie` (`landtechnik`, `pflanzenbau`, `viehzucht`), `typ` (`bild`/`text`), Bild-URL + Attribution, `schwierigkeit` 1–5, `erklaerung`, `status` (`entwurf`, `eingereicht`, `freigegeben`, `abgelehnt`), `eingereicht_von` |
 | `answer_options` | `id` | Antwortoptionen je Frage, `ist_richtig` |
 | `duels` | `id` | Duell zwischen `spieler_a_id` und `spieler_b_id` (NULL bis zum Beitritt per `einladungs_code`), `kategorie` (zusätzlich `gemischt`), `status` (`wartet_a`, `wartet_b`, `abgeschlossen`), `zug_seit` (Beginn des aktuellen Zugs, für die 3-Tage-Frist), `aufgegeben_von`, `gewertet_at` + `rating_aenderung_a/b` nach dem ELO-Update; Status zusätzlich `abgebrochen` (ohne Wertung) |
 | `duel_questions` | `duel_id`, `reihenfolge` | die 6 Fragen eines Duells (für beide Spieler identisch) |
 | `duel_answers` | `duel_id`, `user_id`, `question_id` | Antwort je Spieler und Frage: `gestellt_at` (Timer-Start), `beantwortet_at`, `antwortzeit_ms`, `ist_richtig` (NULL = noch offen); `answer_option_id` ist leer, wenn der Timer abgelaufen ist |
-| `ratings` | `user_id`, `kategorie`, `saison` | ELO je Kategorie (`gesamt`, `kulturen`, `schaedlinge`, `krankheiten`, `wissen`) und Saison (fortlaufend, quartalsweise, Saison 1 = Q1 2026), `duelle_gespielt` |
+| `ratings` | `user_id`, `kategorie`, `saison` | ELO je Kategorie (`gesamt`, `landtechnik`, `pflanzenbau`, `viehzucht`) und Saison (fortlaufend, quartalsweise, Saison 1 = Q1 2026), `duelle_gespielt` |
 | `friendships` | `user_id`, `friend_id` | Freundschaft, `status` (`angefragt`, `bestaetigt`) |
 | `achievements` | `id` | Abzeichen, eindeutiger `key` (z. B. `schaedling_experte`) |
 | `user_achievements` | `user_id`, `achievement_id` | erreichte Abzeichen mit Zeitpunkt |

@@ -11,7 +11,7 @@ export const ABZEICHEN_GRUPPEN_NAMEN: Record<AbzeichenGruppe, string> = {
 };
 
 /** Symbol der Abzeichen-Plakette (Zeichnung im Frontend) */
-export type AbzeichenIcon = 'halm' | 'garbe' | 'scheune' | 'aehre' | 'kulturen' | 'schaedlinge' | 'krankheiten' | 'wissen'
+export type AbzeichenIcon = 'halm' | 'garbe' | 'scheune' | 'aehre' | 'landtechnik' | 'pflanzenbau' | 'viehzucht' | 'wissen'
   | 'pokal' | 'krone' | 'blitz' | 'flamme' | 'freunde' | 'stern';
 
 export interface AbzeichenDefinition {
@@ -28,10 +28,9 @@ export interface AbzeichenDefinition {
 export const EXPERTEN_ZIEL = 50;
 
 export const KATEGORIE_ABZEICHEN: Record<FragenKategorie, string> = {
-  kulturen: 'kulturen_experte',
-  schaedlinge: 'schaedling_experte',
-  krankheiten: 'krankheiten_experte',
-  wissen: 'wissen_experte',
+  landtechnik: 'landtechnik_experte',
+  pflanzenbau: 'pflanzenbau_experte',
+  viehzucht: 'viehzucht_experte',
 };
 
 /**
@@ -44,10 +43,9 @@ export const ABZEICHEN: readonly AbzeichenDefinition[] = [
   { key: 'fuenfzig_duelle', titel: 'Alter Hase', beschreibung: '50 Duelle gespielt', gruppe: 'meilenstein', icon: 'scheune', ziel: 50 },
   { key: 'erster_sieg', titel: 'Erste Ernte', beschreibung: 'Das erste Duell gewonnen', gruppe: 'meilenstein', icon: 'aehre', ziel: 1 },
 
-  { key: KATEGORIE_ABZEICHEN.kulturen, titel: 'Kulturen-Kenner', beschreibung: `${EXPERTEN_ZIEL} Kulturenfragen richtig beantwortet`, gruppe: 'kategorie', icon: 'kulturen', ziel: EXPERTEN_ZIEL },
-  { key: KATEGORIE_ABZEICHEN.schaedlinge, titel: 'Schädlings-Experte', beschreibung: `${EXPERTEN_ZIEL} Schädlingsfragen richtig beantwortet`, gruppe: 'kategorie', icon: 'schaedlinge', ziel: EXPERTEN_ZIEL },
-  { key: KATEGORIE_ABZEICHEN.krankheiten, titel: 'Pflanzendoktor', beschreibung: `${EXPERTEN_ZIEL} Krankheitsfragen richtig beantwortet`, gruppe: 'kategorie', icon: 'krankheiten', ziel: EXPERTEN_ZIEL },
-  { key: KATEGORIE_ABZEICHEN.wissen, titel: 'Agrar-Professor', beschreibung: `${EXPERTEN_ZIEL} Wissensfragen richtig beantwortet`, gruppe: 'kategorie', icon: 'wissen', ziel: EXPERTEN_ZIEL },
+  { key: KATEGORIE_ABZEICHEN.landtechnik, titel: 'Technik-Profi', beschreibung: `${EXPERTEN_ZIEL} Landtechnikfragen richtig beantwortet`, gruppe: 'kategorie', icon: 'landtechnik', ziel: EXPERTEN_ZIEL },
+  { key: KATEGORIE_ABZEICHEN.pflanzenbau, titel: 'Ackerprofi', beschreibung: `${EXPERTEN_ZIEL} Pflanzenbaufragen richtig beantwortet`, gruppe: 'kategorie', icon: 'pflanzenbau', ziel: EXPERTEN_ZIEL },
+  { key: KATEGORIE_ABZEICHEN.viehzucht, titel: 'Stallmeister', beschreibung: `${EXPERTEN_ZIEL} Viehzuchtfragen richtig beantwortet`, gruppe: 'kategorie', icon: 'viehzucht', ziel: EXPERTEN_ZIEL },
 
   { key: 'liga_gold', titel: 'Goldene Ähre', beschreibung: 'In einer Saison Liga Gold erreicht (Gesamt)', gruppe: 'saison', icon: 'stern' },
   { key: 'saison_top10', titel: 'Saison-Top-10', beschreibung: 'Eine Saison unter den besten 10 abgeschlossen (Gesamt)', gruppe: 'saison', icon: 'pokal' },

@@ -41,43 +41,43 @@ describe.skipIf(!mitDatenbank)('Statistik', () => {
   let anna: User;
   let ben: User;
   let neu: User;
-  let wissen: number[];
-  let kulturen: number[];
+  let pflanzenbau: number[];
+  let landtechnik: number[];
 
   beforeAll(async () => {
     await leereDatenbank();
     [anna, ben, neu] = [await neuerUser('anna'), await neuerUser('ben'), await neuerUser('neu')];
-    await erstelleFragen(3, 'wissen');
-    await erstelleFragen(2, 'kulturen');
-    [wissen, kulturen] = [await frageIds('wissen'), await frageIds('kulturen')];
+    await erstelleFragen(3, 'pflanzenbau');
+    await erstelleFragen(2, 'landtechnik');
+    [pflanzenbau, landtechnik] = [await frageIds('pflanzenbau'), await frageIds('landtechnik')];
 
     // 1. Anna gewinnt 2:1 (älteste)
     await duell(anna, ben, 'abgeschlossen', [
-      { user: anna, frage: wissen[0]!, antwort: 'richtig', ms: 3000 },
-      { user: anna, frage: kulturen[0]!, antwort: 'richtig', ms: 5000 },
-      { user: anna, frage: wissen[1]!, antwort: 'abgelaufen' },
-      { user: ben, frage: wissen[0]!, antwort: 'richtig' },
+      { user: anna, frage: pflanzenbau[0]!, antwort: 'richtig', ms: 3000 },
+      { user: anna, frage: landtechnik[0]!, antwort: 'richtig', ms: 5000 },
+      { user: anna, frage: pflanzenbau[1]!, antwort: 'abgelaufen' },
+      { user: ben, frage: pflanzenbau[0]!, antwort: 'richtig' },
     ]);
     // 2. Unentschieden 1:1, Ben als Herausforderer
     await duel2();
     // 3. + 4. Anna verliert: nach Punkten 0:1 und durch Aufgabe trotz Führung
     await duell(anna, ben, 'abgeschlossen', [
-      { user: anna, frage: wissen[2]!, antwort: 'falsch' },
-      { user: ben, frage: wissen[2]!, antwort: 'richtig' },
+      { user: anna, frage: pflanzenbau[2]!, antwort: 'falsch' },
+      { user: ben, frage: pflanzenbau[2]!, antwort: 'richtig' },
     ]);
-    await duell(anna, ben, 'abgeschlossen', [{ user: anna, frage: kulturen[1]!, antwort: 'richtig', ms: 1000 }], anna);
+    await duell(anna, ben, 'abgeschlossen', [{ user: anna, frage: landtechnik[1]!, antwort: 'richtig', ms: 1000 }], anna);
     // Abgebrochen und laufend: zählen nicht als Duell, beantwortete Fragen aber schon
-    await duell(anna, ben, 'abgebrochen', [{ user: anna, frage: wissen[0]!, antwort: 'falsch' }]);
-    await duell(anna, ben, 'wartet_b', [{ user: anna, frage: wissen[1]!, antwort: 'offen' }]);
+    await duell(anna, ben, 'abgebrochen', [{ user: anna, frage: pflanzenbau[0]!, antwort: 'falsch' }]);
+    await duell(anna, ben, 'wartet_b', [{ user: anna, frage: pflanzenbau[1]!, antwort: 'offen' }]);
 
     await sqlAusfuehren(sql`insert into ratings (user_id, kategorie, saison, rating, duelle_gespielt)
       values (${anna.id}, 'gesamt', ${aktuelleSaison()}, 1310, 4), (${anna.id}, 'gesamt', ${aktuelleSaison() - 1}, 900, 2)`);
 
     async function duel2() {
       await duell(ben, anna, 'abgeschlossen', [
-        { user: anna, frage: kulturen[0]!, antwort: 'falsch' },
-        { user: anna, frage: wissen[1]!, antwort: 'richtig', ms: 2000 },
-        { user: ben, frage: kulturen[0]!, antwort: 'richtig' },
+        { user: anna, frage: landtechnik[0]!, antwort: 'falsch' },
+        { user: anna, frage: pflanzenbau[1]!, antwort: 'richtig', ms: 2000 },
+        { user: ben, frage: landtechnik[0]!, antwort: 'richtig' },
       ]);
     }
   });
@@ -102,10 +102,9 @@ describe.skipIf(!mitDatenbank)('Statistik', () => {
     // richtig: w0, k0, w1, k1 · falsch: k0, w2, w0 · abgelaufen: w1 · offen zählt nicht
     expect(s.fragen).toEqual({ beantwortet: 8, richtig: 4, abgelaufen: 1, schnittRichtigMs: 2750 });
     expect(s.kategorien).toEqual([
-      { kategorie: 'kulturen', beantwortet: 3, richtig: 2 },
-      { kategorie: 'schaedlinge', beantwortet: 0, richtig: 0 },
-      { kategorie: 'krankheiten', beantwortet: 0, richtig: 0 },
-      { kategorie: 'wissen', beantwortet: 5, richtig: 2 },
+      { kategorie: 'landtechnik', beantwortet: 3, richtig: 2 },
+      { kategorie: 'pflanzenbau', beantwortet: 5, richtig: 2 },
+      { kategorie: 'viehzucht', beantwortet: 0, richtig: 0 },
     ]);
   });
 

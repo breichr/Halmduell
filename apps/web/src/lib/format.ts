@@ -33,10 +33,9 @@ export function vorzeichen(zahl: number): string {
 
 /** Kachelfarbe je Kategorie (Text darauf immer dunkel) */
 export const KATEGORIE_FARBE: Record<DuellKategorie, string> = {
-	kulturen: 'var(--hellgruen)',
-	schaedlinge: 'var(--orange)',
-	krankheiten: 'var(--blau)',
-	wissen: 'var(--sonne)',
+	landtechnik: 'var(--orange)',
+	pflanzenbau: 'var(--hellgruen)',
+	viehzucht: 'var(--sonne)',
 	gemischt: '#ffffff'
 };
 

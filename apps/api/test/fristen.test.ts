@@ -5,7 +5,7 @@ import { anfrage, erstelleFragen, leereDatenbank, mitDatenbank, neuerUser, sqlAu
 
 type User = Awaited<ReturnType<typeof neuerUser>>;
 
-const neuesDuell = async (von: User, gegner: User | null, kategorie = 'wissen') =>
+const neuesDuell = async (von: User, gegner: User | null, kategorie = 'pflanzenbau') =>
   (await anfrage('/duels', { method: 'POST', cookie: von.cookie, body: { kategorie, ...(gegner ? { gegner: gegner.username } : {}) } })).json as DuellUebersicht;
 const aufgeben = (duelId: number, u: User) => anfrage(`/duels/${duelId}/aufgeben`, { method: 'POST', cookie: u.cookie });
 const details = async (duelId: number, u: User) => (await anfrage(`/duels/${duelId}`, { cookie: u.cookie })).json as DuellDetails;
@@ -20,7 +20,7 @@ describe.skipIf(!mitDatenbank)('Aufgeben und Fristen', () => {
   beforeAll(async () => {
     await leereDatenbank();
     [anna, ben] = [await neuerUser('anna'), await neuerUser('ben')];
-    await erstelleFragen(6, 'wissen');
+    await erstelleFragen(6, 'pflanzenbau');
   });
 
   test('Aufgeben: Gegner gewinnt unabhängig vom Punktestand', async () => {
@@ -97,7 +97,7 @@ describe.skipIf(!mitDatenbank)('K-Faktor über alle Saisons', () => {
   test('erfahrener Spieler hat in neuer Saison K = 20', async () => {
     await leereDatenbank();
     const [neu, erfahren] = [await neuerUser('neu'), await neuerUser('erfahren')];
-    await erstelleFragen(6, 'wissen');
+    await erstelleFragen(6, 'pflanzenbau');
     const { aktuelleSaison } = await import('@halmduell/shared');
     // 25 Duelle in der Vorsaison, Rating 1000 → Soft-Reset bleibt 1000
     await sqlAusfuehren(sql`insert into ratings values (${erfahren.id}, 'gesamt', ${aktuelleSaison() - 1}, 1000, 25)`);
@@ -123,26 +123,26 @@ describe.skipIf(!mitDatenbank)('Fragenauswahl', () => {
     [...await sqlAusfuehren(sql`select question_id from duel_questions where duel_id = ${duelId}`)].map((z) => (z as { question_id: number }).question_id);
 
   test('bereits gesehene Fragen kommen erst, wenn nichts Neues mehr da ist', async () => {
-    await erstelleFragen(12, 'kulturen');
-    const erstes = await neuesDuell(anna, ben, 'kulturen');
-    const zweites = await neuesDuell(ben, anna, 'kulturen');
+    await erstelleFragen(12, 'landtechnik');
+    const erstes = await neuesDuell(anna, ben, 'landtechnik');
+    const zweites = await neuesDuell(ben, anna, 'landtechnik');
     const [a, b] = [await fragenIds(erstes.id), await fragenIds(zweites.id)];
     expect(a.filter((id) => b.includes(id))).toEqual([]);
 
     // alle 12 gesehen → drittes Duell geht trotzdem
-    expect((await anfrage('/duels', { method: 'POST', cookie: anna.cookie, body: { kategorie: 'kulturen', gegner: ben.username } })).status).toBe(201);
+    expect((await anfrage('/duels', { method: 'POST', cookie: anna.cookie, body: { kategorie: 'landtechnik', gegner: ben.username } })).status).toBe(201);
   });
 
   test('gemischt verteilt auf alle Kategorien', async () => {
-    await erstelleFragen(10, 'wissen');
-    await erstelleFragen(10, 'krankheiten');
-    await erstelleFragen(10, 'schaedlinge');
+    await erstelleFragen(10, 'pflanzenbau');
+    await erstelleFragen(10, 'viehzucht');
+    await erstelleFragen(10, 'landtechnik');
     const fremd = await neuerUser('fremd'); // hat noch nichts gesehen
     const duel = await neuesDuell(fremd, null, 'gemischt');
     const kategorien = [...await sqlAusfuehren(sql`
       select q.kategorie, count(*)::int as n from duel_questions dq join questions q on q.id = dq.question_id
       where dq.duel_id = ${duel.id} group by q.kategorie`)] as { kategorie: string; n: number }[];
-    expect(kategorien).toHaveLength(4);
+    expect(kategorien).toHaveLength(3);
     expect(Math.max(...kategorien.map((k) => k.n))).toBe(2);
   });
 });

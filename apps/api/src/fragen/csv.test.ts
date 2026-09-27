@@ -4,7 +4,7 @@ import { leseFragenCsv } from './csv';
 const KOPF = 'code;kategorie;typ;frage;richtig;falsch1;falsch2;falsch3;erklaerung;schwierigkeit;bild_url;bild_quelle;status';
 const zeile = (felder: Partial<Record<string, string>> = {}) => {
   const werte = {
-    code: 'wissen-001', kategorie: 'wissen', typ: 'text', frage: 'Was düngt man?', richtig: 'Stickstoff',
+    code: 'pflanzenbau-001', kategorie: 'pflanzenbau', typ: 'text', frage: 'Was düngt man?', richtig: 'Stickstoff',
     falsch1: 'Sand', falsch2: 'Kies', falsch3: 'Luft', erklaerung: '', schwierigkeit: '', bild_url: '', bild_quelle: '', status: '',
     ...felder,
   };
@@ -17,7 +17,7 @@ describe('leseFragenCsv', () => {
     const { fragen, fehler } = leseFragenCsv(csv(zeile()));
     expect(fehler).toEqual([]);
     expect(fragen).toEqual([{
-      code: 'wissen-001', kategorie: 'wissen', typ: 'text', frage: 'Was düngt man?', richtig: 'Stickstoff',
+      code: 'pflanzenbau-001', kategorie: 'pflanzenbau', typ: 'text', frage: 'Was düngt man?', richtig: 'Stickstoff',
       falsch1: 'Sand', falsch2: 'Kies', falsch3: 'Luft', erklaerung: undefined, schwierigkeit: 1,
       bild_url: undefined, bild_quelle: undefined, status: 'freigegeben',
     }]);
@@ -29,12 +29,12 @@ describe('leseFragenCsv', () => {
     expect(leseFragenCsv(cp1252).fragen[0]?.frage).toBe('Welcher Käfer frisst Rüben?');
 
     const mitBom = new Uint8Array([0xef, 0xbb, 0xbf, ...new TextEncoder().encode(inhalt)]);
-    expect(leseFragenCsv(mitBom).fragen[0]?.code).toBe('wissen-001');
+    expect(leseFragenCsv(mitBom).fragen[0]?.code).toBe('pflanzenbau-001');
   });
 
   test('Komma als Trenner und Anführungszeichen mit Zeilenumbruch', () => {
     const komma = `${KOPF.replaceAll(';', ',')}\n` +
-      'wissen-001,wissen,text,"Was ist ""NPK""?",Nährstoffe,Maschine,Sorte,Krankheit,"Zeile 1\nZeile 2",2,,,';
+      'pflanzenbau-001,pflanzenbau,text,"Was ist ""NPK""?",Nährstoffe,Maschine,Sorte,Krankheit,"Zeile 1\nZeile 2",2,,,';
     const { fragen, fehler } = leseFragenCsv(new TextEncoder().encode(komma));
     expect(fehler).toEqual([]);
     expect(fragen[0]).toMatchObject({ frage: 'Was ist "NPK"?', erklaerung: 'Zeile 1\nZeile 2', schwierigkeit: 2 });
@@ -53,13 +53,13 @@ describe('leseFragenCsv', () => {
     expect(fragen).toEqual([]);
     expect(fehler).toEqual([
       'Zeile 3: code: nur Kleinbuchstaben, Ziffern, - und _',
-      'Zeile 3: kategorie: muss eine von kulturen, schaedlinge, krankheiten, wissen sein',
+      'Zeile 3: kategorie: muss eine von landtechnik, pflanzenbau, viehzucht sein',
       'Zeile 3: richtig: fehlt',
       'Zeile 4: bild_url: fehlt (typ ist "bild")',
       'Zeile 5: bild_quelle: fehlt (Urheber + Lizenz angeben)',
       'Zeile 6: die 4 Antworten müssen verschieden sein',
       'Zeile 7: schwierigkeit: muss eine Zahl von 1 bis 5 sein',
-      'Zeile 8: code "wissen-001" kommt schon in Zeile 2 vor',
+      'Zeile 8: code "pflanzenbau-001" kommt schon in Zeile 2 vor',
     ]);
   });
 
