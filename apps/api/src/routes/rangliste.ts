@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { and, asc, count, desc, eq, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, inArray, sql } from 'drizzle-orm';
 import {
   RANGLISTE_LAENGE,
   aktuelleSaison,
@@ -13,6 +13,7 @@ import {
 import { db } from '../db/client';
 import { ratings, users } from '../db/schema';
 import { requireAuth, type AuthEnv } from '../middleware/auth';
+import { freundIds } from '../services/freunde';
 
 export const ranglisteRoute = new Hono<AuthEnv>();
 
@@ -21,6 +22,8 @@ ranglisteRoute.use(requireAuth);
 /**
  * Bestenliste je Kategorie und Saison. Platziert ist, wer in der Saison in der
  * Kategorie mindestens ein gewertetes Duell hat (erst dann gibt es eine Rating-Zeile).
+ * Im Kreis „freunde“ zählen nur ich und meine bestätigten Freunde, die Plätze
+ * werden innerhalb dieses Kreises vergeben.
  */
 ranglisteRoute.get('/', async (c) => {
   const eingabe = ranglisteSchema.safeParse(c.req.query());
@@ -28,11 +31,15 @@ ranglisteRoute.get('/', async (c) => {
   if (!eingabe.success) {
     return c.json({ error: 'Ungültige Eingabe', felder: feldFehler(eingabe.error) } satisfies ApiFehler, 400);
   }
-  const { kategorie } = eingabe.data;
+  const { kategorie, kreis } = eingabe.data;
   const saison = eingabe.data.saison ?? laufend;
   if (saison > laufend) return c.json({ error: 'Diese Saison hat noch nicht begonnen' } satisfies ApiFehler, 400);
 
-  const filter = and(eq(ratings.kategorie, kategorie), eq(ratings.saison, saison));
+  const filter = and(
+    eq(ratings.kategorie, kategorie),
+    eq(ratings.saison, saison),
+    kreis === 'freunde' ? inArray(ratings.userId, [c.var.userId, ...await freundIds(c.var.userId)]) : undefined,
+  );
   const platziert = db.$with('platziert').as(
     db.select({
       id: ratings.userId,
@@ -64,6 +71,7 @@ ranglisteRoute.get('/', async (c) => {
 
   return c.json({
     kategorie,
+    kreis,
     saison,
     aktuelleSaison: laufend,
     saisons,

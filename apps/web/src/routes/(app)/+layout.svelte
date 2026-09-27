@@ -2,7 +2,7 @@
 	import { page } from '$app/state';
 	import Navigation from '$lib/components/Navigation.svelte';
 
-	let { children } = $props();
+	let { children, data } = $props();
 
 	// Beim Spielen nichts, was vom Timer ablenkt
 	const mitNavigation = $derived(!page.url.pathname.endsWith('/spielen'));
@@ -13,7 +13,7 @@
 </div>
 
 {#if mitNavigation}
-	<Navigation />
+	<Navigation offeneAnfragen={data.offeneAnfragen} />
 {/if}
 
 <style>

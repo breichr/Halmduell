@@ -36,6 +36,13 @@
       "when": 1790448495156,
       "tag": "0004_fragen_code",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790495621526,
+      "tag": "0005_freunde",
+      "breakpoints": true
     }
   ]
 }

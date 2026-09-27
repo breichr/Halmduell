@@ -171,6 +171,8 @@ export const friendships = pgTable('friendships', {
   check('friendships_nicht_selbst_check', sql`${t.userId} <> ${t.friendId}`),
   // Freundesliste/Anfragen aus Sicht des Empfängers
   index('friendships_friend_idx').on(t.friendId),
+  // je Paar nur eine Zeile, egal wer angefragt hat
+  uniqueIndex('friendships_paar_idx').on(sql`least(${t.userId}, ${t.friendId})`, sql`greatest(${t.userId}, ${t.friendId})`),
 ]);
 
 export const achievements = pgTable('achievements', {

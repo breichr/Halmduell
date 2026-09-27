@@ -50,8 +50,8 @@ halmduell/
 │       │   ├── routes/
 │       │   │   ├── duels.ts
 │       │   │   ├── questions.ts
-│       │   │   ├── ratings.ts
-│       │   │   ├── friends.ts
+│       │   │   ├── rangliste.ts
+│       │   │   ├── freunde.ts
 │       │   │   └── auth.ts
 │       │   ├── services/
 │       │   │   ├── elo.ts              # ELO-Update-Logik
@@ -91,6 +91,6 @@ kein CORS. Details und Umgebungsvariablen: README, Abschnitt „Deployment“.
 4. ~~Duell-Flow (Erstellen → Beantworten → Abschluss inkl. ELO-Update) als
    erste vertikale Funktionsscheibe umsetzen~~ ✓ (Backend)
 5. ~~Frontend-Screens gemäß `konzept.md` (Dashboard, Frage-Screen,
-   Ergebnisvergleich) aufbauen~~ ✓ (Rangliste ✓; Freunde, Statistik und
+   Ergebnisvergleich) aufbauen~~ ✓ (Rangliste ✓, Freunde ✓; Statistik und
    Abzeichen folgen mit ihren API-Endpunkten)
 6. ~~PWA-Manifest + Service Worker einrichten~~ ✓

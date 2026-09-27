@@ -122,13 +122,31 @@ Request- und Response-Typen liegen in `packages/shared/src/duell.ts`.
 | Endpunkt | Zweck |
 |---|---|
 | `GET /api/rangliste?kategorie=gesamt&saison=3` | Bestenliste einer Kategorie (`gesamt`, `kulturen`, `schaedlinge`, `krankheiten`, `wissen`) und Saison; ohne `saison` die laufende |
+| `GET /api/rangliste?kreis=freunde` | dasselbe nur für mich und meine bestätigten Freunde (Plätze innerhalb dieses Kreises) |
 
 Liefert die ersten 100 Plätze, den eigenen Platz (auch wenn er weiter hinten
 liegt), die Zahl der Platzierten und alle Saisons mit Ergebnissen (für das
 Archiv). Platziert ist, wer in der Saison in der Kategorie mindestens ein
 gewertetes Duell hat; gleiches Rating = gleicher Platz. Die Liga (Bronze bis
 Meister) kommt aus `liga()` in `packages/shared`. Oberfläche: `/rangliste`
-mit Podest, Kategorien und Saisonauswahl. Typen: `packages/shared/src/rangliste.ts`.
+mit Umschalter „Alle Spieler / Freunde“, Podest, Kategorien und Saisonauswahl.
+Typen: `packages/shared/src/rangliste.ts`.
+
+## Freunde
+
+| Endpunkt | Zweck |
+|---|---|
+| `GET /api/freunde` | Freunde (mit Gesamt-Rating der Saison und laufendem gemeinsamen Duell), Anfragen an mich, eigene offene Anfragen, Vorschläge (zuletzt gespielte Gegner) |
+| `GET /api/freunde/anfragen/anzahl` | Zahl offener Anfragen an mich (Punkt in der Navigation) |
+| `POST /api/freunde` | `{ username }` anfragen; hatte die andere Seite schon angefragt, seid ihr sofort befreundet |
+| `POST /api/freunde/:id/annehmen` | Anfrage von `:id` annehmen |
+| `DELETE /api/freunde/:id` | Anfrage ablehnen/zurückziehen oder Freundschaft beenden |
+
+Je Paar gibt es genau eine Zeile in `friendships` (Unique-Index auf
+`least/greatest`), höchstens 30 unbeantwortete Anfragen gleichzeitig.
+Oberfläche: `/freunde` mit „Herausfordern“ (füllt den Gegner beim neuen Duell
+vor) bzw. „Du bist dran“, wenn schon ein Duell läuft. Typen:
+`packages/shared/src/freunde.ts`.
 
 ## App & offline (PWA)
 
@@ -194,7 +212,7 @@ Duell-Flow steht Ende-zu-Ende, Backend und Oberfläche, installierbar als
 App (Schritte 1–6 in `docs/architektur.md`). Screens: Anmelden/Registrieren/Passwort vergessen,
 Übersicht, neues Duell (Benutzername oder Einladungslink), Einladung annehmen,
 Frage mit Timer, Frage-für-Frage-Vergleich, Rangliste (je Kategorie und
-Saison, mit Archiv), Profil. Als Nächstes: Freunde (inkl. Freunde-Rangliste),
+Saison, mit Archiv und Freunde-Ansicht), Freunde, Profil. Als Nächstes:
 Statistik, Abzeichen.
 
 ## Offene Punkte

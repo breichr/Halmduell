@@ -5,3 +5,4 @@ export * from './auth';
 export * from './duell';
 export * from './saison';
 export * from './rangliste';
+export * from './freunde';

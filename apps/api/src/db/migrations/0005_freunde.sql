@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "friendships_paar_idx" ON "friendships" USING btree (least("user_id", "friend_id"),greatest("user_id", "friend_id"));

@@ -3,9 +3,10 @@ import type { Rangliste } from '@halmduell/shared';
 import { api, ApiError } from '$lib/api';
 import type { PageLoad } from './$types';
 
-export const load: PageLoad = async ({ fetch, url }) => {
+export const load: PageLoad = async ({ fetch, url, depends }) => {
+	depends('app:freunde');
 	const query = new URLSearchParams();
-	for (const name of ['kategorie', 'saison']) {
+	for (const name of ['kategorie', 'kreis', 'saison']) {
 		const wert = url.searchParams.get(name);
 		if (wert) query.set(name, wert);
 	}
