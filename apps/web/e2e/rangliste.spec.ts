@@ -44,6 +44,14 @@ test('nach einem Duell stehen beide Spieler in der Rangliste', async ({ browser 
 	await expect(plaetze.filter({ hasText: dora.username })).toHaveCount(1);
 	await expect(clara.seite.getByTestId('eigener-platz')).toContainText(/Platz \d von \d/);
 
+	// Statistik im Profil: ein Duell, 6 beantwortete Fragen
+	await clara.seite.getByRole('navigation', { name: 'Hauptnavigation' }).getByRole('link', { name: 'Profil' }).click();
+	const bilanz = clara.seite.getByRole('region', { name: 'Bilanz' });
+	await expect(bilanz.getByRole('listitem')).toHaveCount(1);
+	await expect(clara.seite.getByRole('region', { name: 'Trefferquote' })).toContainText(/von 6 Fragen richtig/);
+	await expect(clara.seite.getByRole('region', { name: /^Ratings / }).getByRole('link', { name: /Gesamt/ })).toHaveAttribute('href', '/rangliste');
+	await clara.seite.goto('/rangliste');
+
 	// Emil ist nicht platziert und wird zum Mitspielen eingeladen
 	await emil.seite.reload();
 	await expect(emil.seite.getByText('Du bist noch nicht platziert.')).toBeVisible();

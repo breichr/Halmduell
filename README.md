@@ -148,6 +148,19 @@ Oberfläche: `/freunde` mit „Herausfordern“ (füllt den Gegner beim neuen Du
 vor) bzw. „Du bist dran“, wenn schon ein Duell läuft. Typen:
 `packages/shared/src/freunde.ts`.
 
+## Statistik
+
+| Endpunkt | Zweck |
+|---|---|
+| `GET /api/statistik` | eigene Bilanz (Siege/Unentschieden/Niederlagen), Form der letzten 10 Duelle, aktuelle Serie, Trefferquote gesamt und je Fragenkategorie, Ø Zeit bis zur richtigen Antwort, Ratings der laufenden Saison |
+
+Bilanz und Form zählen gewertete (abgeschlossene) Duelle – Aufgabe bzw.
+Fristablauf entscheidet wie bei der Wertung unabhängig von den Punkten. Die
+Trefferquote zählt jede beantwortete Frage nach ihrer eigenen Kategorie, auch
+aus abgebrochenen Duellen; abgelaufene Zeit zählt als falsch. Oberfläche: oben
+im Profil, mit Hinweis auf Stärke und Übungsbedarf (ab 5 Fragen je Kategorie).
+Typen: `packages/shared/src/statistik.ts`.
+
 ## App & offline (PWA)
 
 Halmduell lässt sich wie eine App installieren (Android/Chrome: Knopf
@@ -212,8 +225,8 @@ Duell-Flow steht Ende-zu-Ende, Backend und Oberfläche, installierbar als
 App (Schritte 1–6 in `docs/architektur.md`). Screens: Anmelden/Registrieren/Passwort vergessen,
 Übersicht, neues Duell (Benutzername oder Einladungslink), Einladung annehmen,
 Frage mit Timer, Frage-für-Frage-Vergleich, Rangliste (je Kategorie und
-Saison, mit Archiv und Freunde-Ansicht), Freunde, Profil. Als Nächstes:
-Statistik, Abzeichen.
+Saison, mit Archiv und Freunde-Ansicht), Freunde, Profil mit Statistik. Als
+Nächstes: Abzeichen.
 
 ## Offene Punkte
 

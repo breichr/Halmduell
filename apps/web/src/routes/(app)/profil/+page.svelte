@@ -6,6 +6,7 @@
 	import Feld from '$lib/components/Feld.svelte';
 	import AppInstallieren from '$lib/components/AppInstallieren.svelte';
 	import Halmi from '$lib/components/Halmi.svelte';
+	import Statistik from '$lib/components/Statistik.svelte';
 	import Wiederherstellungscode from '$lib/components/Wiederherstellungscode.svelte';
 
 	const js = hydriert();
@@ -70,6 +71,10 @@
 	</div>
 	<span class="halmi"><Halmi pose="winken" groesse={76} halm={false} /></span>
 </header>
+
+<Statistik statistik={data.statistik} />
+
+<h2 class="abschnitt-titel konto">Konto</h2>
 
 <section class="karte">
 	<h2>Passwort ändern</h2>
@@ -147,6 +152,9 @@
 	}
 	.karte > .hinweis {
 		margin-top: 0;
+	}
+	.konto {
+		margin: 2rem 0 -0.3rem;
 	}
 	.installieren {
 		margin-top: 1.1rem;

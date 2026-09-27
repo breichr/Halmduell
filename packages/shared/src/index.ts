@@ -6,3 +6,4 @@ export * from './duell';
 export * from './saison';
 export * from './rangliste';
 export * from './freunde';
+export * from './statistik';
