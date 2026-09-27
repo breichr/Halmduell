@@ -106,7 +106,15 @@
 					<span class="schwierigkeit" title="Schwierigkeit">Stufe {f.schwierigkeit}</span>
 					{#if f.meldungen}<a class="gemeldet" href="/admin/fragen/{f.id}#meldungen">⚑ {f.meldungen === 1 ? '1 Meldung' : `${f.meldungen} Meldungen`}</a>{/if}
 				</div>
-				<p class="frage">{f.typ === 'bild' ? '🖼 ' : ''}{f.frage}</p>
+				<p class="frage">{f.frage}</p>
+				{#if f.bildUrl}
+					<figure class="bild">
+						<img src={f.bildUrl} alt="Bild zu {f.code ?? `Frage ${f.id}`}" loading="lazy" />
+						{#if f.bildQuelle}<figcaption>{f.bildQuelle}</figcaption>{/if}
+					</figure>
+				{:else if f.typ === 'bild'}
+					<p class="fehlermeldung">Bildfrage ohne Bild</p>
+				{/if}
 				<ul class="antworten">
 					<li class="richtig"><span aria-hidden="true">✓</span> {f.richtig}<span class="nur-screenreader"> (richtig)</span></li>
 					{#each f.falsch as a, i (i)}<li><span aria-hidden="true">✗</span> {a}</li>{/each}
@@ -316,6 +324,24 @@
 		margin: 0;
 		font-weight: 800;
 		font-size: 1.05rem;
+	}
+	.bild {
+		margin: 0;
+		display: grid;
+		gap: 0.2rem;
+	}
+	.bild img {
+		display: block;
+		width: 100%;
+		max-height: 260px;
+		object-fit: contain;
+		background: var(--flaeche-2);
+		border: 2px solid var(--kante);
+		border-radius: var(--radius-klein);
+	}
+	.bild figcaption {
+		font-size: 0.75rem;
+		color: var(--text-2);
 	}
 	.antworten {
 		list-style: none;
