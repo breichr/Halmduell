@@ -4,7 +4,8 @@
 	import { page } from '$app/state';
 	import type { AntwortErgebnis, DuellDetails, GestellteFrage } from '@halmduell/shared';
 	import { api, ApiError } from '$lib/api';
-	import AntwortForm from '$lib/components/AntwortForm.svelte';
+	import AntwortFeedback from '$lib/components/AntwortFeedback.svelte';
+	import FrageAnsicht from '$lib/components/FrageAnsicht.svelte';
 	import Halmi from '$lib/components/Halmi.svelte';
 	import Timer from '$lib/components/Timer.svelte';
 
@@ -157,51 +158,18 @@
 			</div>
 		</div>
 
-		{#if frage.bildUrl}
-			<figure>
-				<img src={frage.bildUrl} alt="Bild zur Frage" />
-				{#if frage.bildQuelle}<figcaption>Bild: {frage.bildQuelle}</figcaption>{/if}
-				<span class="lupe"><Halmi pose="lupe" groesse={70} halm={false} /></span>
-			</figure>
-		{/if}
-
-		<h1 class="frage" data-testid="frage">{frage.frageText}</h1>
-
-		<div class="antworten">
-			{#each frage.antworten as antwort, i (antwort.id)}
-				<button
-					class="antwort farbe-{i} {kachelZustand(antwort.id)}"
-					disabled={zustand.art !== 'frage'}
-					onclick={() => antworten(antwort.id)}
-					data-testid="antwort"
-				>
-					<span class="form">
-						{#if kachelZustand(antwort.id) === 'richtig'}
-							<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10" /></svg>
-						{:else if kachelZustand(antwort.id) === 'falsch'}
-							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
-						{:else}
-							<AntwortForm index={i} />
-						{/if}
-					</span>
-					<span class="text">{antwort.text}</span>
-					<span class="nur-screenreader">(Taste {i + 1})</span>
-				</button>
-			{/each}
-		</div>
+		<FrageAnsicht {frage} zustandVon={kachelZustand} deaktiviert={zustand.art !== 'frage'} onantwort={antworten} />
 	</div>
 
 	{#if zustand.art === 'feedback'}
 		{@const e = zustand.ergebnis}
-		<div class="feedback {e.richtig ? 'gut' : 'schlecht'}" role="status" data-testid="feedback">
-			<span class="feedback-halmi"><Halmi pose={e.richtig ? 'jubeln' : 'traurig'} groesse={96} halm={false} /></span>
-			<strong>{e.richtig ? 'Richtig!' : e.zeitAbgelaufen ? 'Zeit abgelaufen!' : 'Leider falsch'}</strong>
-			{#if e.erklaerung}<p>{e.erklaerung}</p>{/if}
-			<!-- svelte-ignore a11y_autofocus -->
-			<button class="knopf breit" onclick={weiter} autofocus>
-				{e.rundeFertig ? 'Zur Auswertung' : 'Nächste Frage'}
-			</button>
-		</div>
+		<AntwortFeedback
+			gut={e.richtig}
+			titel={e.richtig ? 'Richtig!' : e.zeitAbgelaufen ? 'Zeit abgelaufen!' : 'Leider falsch'}
+			erklaerung={e.erklaerung}
+			knopf={e.rundeFertig ? 'Zur Auswertung' : 'Nächste Frage'}
+			onweiter={weiter}
+		/>
 	{/if}
 {/if}
 
@@ -274,159 +242,5 @@
 	.timer-platz {
 		width: 58px;
 		height: 58px;
-	}
-	figure {
-		position: relative;
-		margin: 0.6rem 0 0;
-	}
-	img {
-		display: block;
-		width: 100%;
-		max-height: 40vh;
-		object-fit: contain;
-		background: var(--flaeche-2);
-		border: 3px solid var(--kontur);
-		border-radius: var(--radius);
-	}
-	figcaption {
-		font-size: 0.78rem;
-		color: var(--text-2);
-		margin-top: 0.25rem;
-	}
-	.lupe {
-		position: absolute;
-		left: -0.6rem;
-		top: -2.2rem;
-	}
-	.frage {
-		font-size: 1.6rem;
-		margin: 0.3rem 0 0;
-		text-align: center;
-		overflow-wrap: anywhere;
-	}
-	.antworten {
-		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 0.6rem;
-	}
-	.antwort {
-		display: flex;
-		flex-direction: column;
-		align-items: flex-start;
-		justify-content: space-between;
-		gap: 0.5rem;
-		min-height: 104px;
-		padding: 0.7rem 0.8rem;
-		text-align: left;
-		font: inherit;
-		font-weight: 800;
-		font-size: 1.05rem;
-		line-height: 1.2;
-		color: #2a1c14;
-		border: 3px solid var(--kontur);
-		border-bottom-width: 6px;
-		border-radius: 18px;
-		cursor: pointer;
-		overflow-wrap: anywhere;
-		transition: transform 0.06s, opacity 0.2s;
-	}
-	.antwort:active:enabled {
-		transform: translateY(3px);
-		border-bottom-width: 3px;
-	}
-	.antwort:disabled {
-		cursor: default;
-	}
-	.farbe-0 {
-		background: var(--sonne);
-	}
-	.farbe-1 {
-		background: var(--blau);
-	}
-	.farbe-2 {
-		background: var(--orange);
-	}
-	.farbe-3 {
-		background: var(--hellgruen);
-	}
-	.form {
-		display: grid;
-		place-items: center;
-		width: 30px;
-		height: 30px;
-		border-radius: 50%;
-		background: rgb(255 255 255 / 55%);
-	}
-	.antwort.gewaehlt {
-		outline: 4px solid var(--fokus);
-		outline-offset: 2px;
-	}
-	.antwort.richtig {
-		background: #2f7d3b;
-		color: #ffffff;
-		transform: rotate(-2deg);
-	}
-	.antwort.richtig .form {
-		background: #ffffff;
-		color: #2f7d3b;
-	}
-	.antwort.falsch {
-		background: var(--falsch-hell);
-		color: var(--falsch);
-		border-color: var(--falsch);
-	}
-	.antwort.falsch .form {
-		background: var(--falsch);
-		color: #ffffff;
-	}
-	.antwort.aus {
-		opacity: 0.45;
-	}
-	.feedback {
-		position: fixed;
-		left: 50%;
-		transform: translateX(-50%);
-		bottom: 0;
-		width: min(30rem, 100%);
-		display: grid;
-		gap: 0.6rem;
-		padding: 1.1rem 1rem max(1rem, env(safe-area-inset-bottom));
-		border: 3px solid var(--kontur);
-		border-bottom: 0;
-		border-radius: 26px 26px 0 0;
-		animation: hoch 0.25s ease-out;
-		z-index: 5;
-	}
-	@keyframes hoch {
-		from {
-			transform: translate(-50%, 40%);
-			opacity: 0;
-		}
-	}
-	.feedback.gut {
-		background: var(--richtig-hell);
-	}
-	.feedback.schlecht {
-		background: var(--falsch-hell);
-	}
-	.feedback strong {
-		font-family: var(--schrift-titel);
-		font-size: 2rem;
-		line-height: 1;
-	}
-	.feedback.gut strong {
-		color: var(--gruen-dunkel);
-	}
-	.feedback.schlecht strong {
-		color: var(--falsch);
-	}
-	.feedback p {
-		margin: 0;
-		padding-right: 4.5rem;
-	}
-	.feedback-halmi {
-		position: absolute;
-		right: 0.5rem;
-		top: -5.2rem;
 	}
 </style>

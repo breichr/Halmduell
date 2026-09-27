@@ -199,6 +199,24 @@ Home-Bildschirm).
 Service Worker funktionieren nur über HTTPS (Coolify liefert das) oder auf
 `localhost`.
 
+## Fehler üben
+
+Fragen, die man im Duell falsch beantwortet hat (auch „Zeit abgelaufen“),
+landen zum Nachlernen unter `/ueben` – ohne Timer und ohne Wertung, alle oder
+je Kategorie. Nach **2× richtig in Folge** gilt eine Frage als gemeistert; ein
+neuer Fehler im Duell holt sie zurück. Einstieg: Karte auf der Übersicht,
+„Übungsbedarf“ in der Statistik; Abzeichen „Nachgelernt“ für 10 gemeisterte.
+
+| Endpunkt | Zweck |
+|---|---|
+| `GET /api/ueben` | offene Fragen gesamt und je Kategorie, bisher gemeistert |
+| `GET /api/ueben/frage?kategorie=&ohne=` | nächste Frage (am längsten nicht geübt zuerst, `ohne` = zuletzt geübte) oder `frage: null` |
+| `POST /api/ueben/antwort` | `{ frageId, antwortId }` → richtig?, Lösung, Erklärung, gemeistert?, noch offen |
+
+Beantworten lassen sich nur Fragen, die gerade zum Üben offen sind – so
+lässt sich über das Üben keine Lösung einer laufenden Duell-Frage nachschlagen.
+Stand je Frage: Tabelle `uebungen`.
+
 ## Benachrichtigungen (Web Push)
 
 Push-Nachrichten, wenn jemand herausfordert bzw. man dran ist, ein Duell
@@ -272,7 +290,7 @@ App (Schritte 1–6 in `docs/architektur.md`). Screens: Anmelden/Registrieren/Pa
 Übersicht, neues Duell (Benutzername oder Einladungslink), Einladung annehmen,
 Frage mit Timer, Frage-für-Frage-Vergleich, Rangliste (je Kategorie und
 Saison, mit Archiv und Freunde-Ansicht), Freunde, Profil mit Statistik und
-Abzeichen.
+Abzeichen, Fehler üben, Benachrichtigungen.
 
 ## Offene Punkte
 

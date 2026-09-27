@@ -12,7 +12,7 @@ import {
   type NeuesAbzeichen,
 } from '@halmduell/shared';
 import type { db } from '../db/client';
-import { achievements, duelAnswers, friendships, questions, ratings, userAchievements } from '../db/schema';
+import { achievements, duelAnswers, friendships, questions, ratings, uebungen, userAchievements } from '../db/schema';
 import type { Tx } from '../db/types';
 import { duellAusgaenge, laengsteSiegesserie } from './ergebnisse';
 
@@ -27,6 +27,8 @@ export interface AbzeichenWerte {
   perfektesDuell: boolean;
   blitz: boolean;
   freunde: number;
+  /** Fragen, die durch Üben gemeistert wurden */
+  gemeistert: number;
   /** höchstes Gesamt-Rating in irgendeiner Saison */
   bestesGesamt: number | null;
   /** bester Gesamt-Platz am Ende einer abgeschlossenen Saison */
@@ -34,7 +36,7 @@ export interface AbzeichenWerte {
 }
 
 export async function ermittleWerte(q: Q, ich: number): Promise<AbzeichenWerte> {
-  const [ausgaenge, richtige, [perfekt], [blitz], [freunde], [bestes], [saisonPlatz]] = await Promise.all([
+  const [ausgaenge, richtige, [perfekt], [blitz], [freunde], [gemeistert], [bestes], [saisonPlatz]] = await Promise.all([
     duellAusgaenge(q, ich),
     q.select({ kategorie: questions.kategorie, anzahl: sql<number>`count(*)::int` }).from(duelAnswers)
       .innerJoin(questions, eq(questions.id, duelAnswers.questionId))
@@ -50,6 +52,8 @@ export async function ermittleWerte(q: Q, ich: number): Promise<AbzeichenWerte> 
       .limit(1),
     q.select({ anzahl: sql<number>`count(*)::int` }).from(friendships)
       .where(and(eq(friendships.status, 'bestaetigt'), or(eq(friendships.userId, ich), eq(friendships.friendId, ich)))),
+    q.select({ anzahl: sql<number>`count(*)::int` }).from(uebungen)
+      .where(and(eq(uebungen.userId, ich), isNotNull(uebungen.gemeistertAt))),
     q.select({ rating: max(ratings.rating) }).from(ratings)
       .where(and(eq(ratings.userId, ich), eq(ratings.kategorie, 'gesamt'))),
     // Platz je abgeschlossener Saison (gleiches Rating = gleicher Platz, wie in der Rangliste)
@@ -72,6 +76,7 @@ export async function ermittleWerte(q: Q, ich: number): Promise<AbzeichenWerte> 
     perfektesDuell: !!perfekt,
     blitz: !!blitz,
     freunde: freunde?.anzahl ?? 0,
+    gemeistert: gemeistert?.anzahl ?? 0,
     bestesGesamt: bestes?.rating ?? null,
     besterSaisonPlatz: saisonPlatz?.platz ?? null,
   };
@@ -92,6 +97,8 @@ export function stand(key: string, w: AbzeichenWerte): number | null {
       return w.laengsteSerie;
     case 'gesellig':
       return w.freunde;
+    case 'nachgelernt':
+      return w.gemeistert;
     default:
       return null;
   }
