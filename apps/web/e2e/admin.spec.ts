@@ -26,6 +26,13 @@ test('Admin-Portal: Entwürfe prüfen, bearbeiten, freigeben, neue Frage, CSV', 
 	await expect(admin.seite.getByRole('navigation', { name: 'Status' }).getByRole('link', { name: 'Entwürfe' })).toHaveAttribute('aria-current', 'page');
 	await expect(admin.seite.getByTestId('admin-frage').first()).toBeVisible();
 
+	// Bildfragen zeigen ihr Bild samt Quelle direkt in der Liste
+	await admin.seite.goto('/admin?suche=schaedlinge-027');
+	const bildKarte = admin.seite.getByTestId('admin-frage');
+	await expect(bildKarte.getByRole('img', { name: 'Bild zu schaedlinge-027' })).toHaveAttribute('src', /upload\.wikimedia\.org\/.+Meligethes_aeneus01/);
+	await expect(bildKarte.locator('figcaption')).toContainText('Wikimedia Commons');
+	await admin.seite.goto('/admin');
+
 	// Suchen und freigeben → verschwindet aus den Entwürfen
 	await admin.seite.getByRole('searchbox', { name: 'Suchen' }).fill('kulturen-003');
 	await admin.seite.getByRole('button', { name: 'Suchen' }).click();
@@ -61,7 +68,7 @@ test('Admin-Portal: Entwürfe prüfen, bearbeiten, freigeben, neue Frage, CSV', 
 	await admin.seite.getByLabel('Falsche Antwort 3').fill('10.000 m²');
 	await expect(admin.seite.getByRole('region', { name: 'Vorschau' })).toContainText('Wie viele Quadratmeter hat ein Ar?');
 	await admin.seite.getByRole('button', { name: 'Frage anlegen' }).click();
-	await expect(admin.seite).toHaveURL(/status=entwurf&suche=landtechnik-001/);
+	await expect(admin.seite).toHaveURL(/status=entwurf&suche=landtechnik-026/);
 	await expect(admin.seite.getByTestId('admin-frage')).toContainText('Wie viele Quadratmeter hat ein Ar?');
 
 	// CSV-Export
@@ -69,5 +76,5 @@ test('Admin-Portal: Entwürfe prüfen, bearbeiten, freigeben, neue Frage, CSV', 
 	expect(csv.status()).toBe(200);
 	const text = await csv.text();
 	expect(text).toContain('code;kategorie;typ;frage;richtig');
-	expect(text).toContain('landtechnik-001;landtechnik;text;Wie viele Quadratmeter hat ein Ar?');
+	expect(text).toContain('landtechnik-026;landtechnik;text;Wie viele Quadratmeter hat ein Ar?');
 });
