@@ -2,6 +2,8 @@
 	import { onMount } from 'svelte';
 	import { aktuelleSaison, saisonBezeichnung } from '@halmduell/shared';
 	import AppInstallieren from '$lib/components/AppInstallieren.svelte';
+	import Benachrichtigungen from '$lib/components/Benachrichtigungen.svelte';
+	import { installation } from '$lib/installation.svelte';
 	import DuellKarte from '$lib/components/DuellKarte.svelte';
 	import Halmi from '$lib/components/Halmi.svelte';
 	import KategorieSymbol from '$lib/components/KategorieSymbol.svelte';
@@ -14,21 +16,35 @@
 	// Installationshinweis auf der Übersicht ist ausblendbar (bleibt im Profil verfügbar)
 	const HINWEIS_AUS = 'halmduell:installhinweis-aus';
 	let installHinweis = $state(false);
+	// ebenso der Hinweis auf Benachrichtigungen (Schalter bleibt im Profil)
+	const PUSH_HINWEIS_AUS = 'halmduell:pushhinweis-aus';
+	let pushHinweis = $state(false);
 	onMount(() => {
 		try {
 			installHinweis = localStorage.getItem(HINWEIS_AUS) !== '1';
+			pushHinweis = localStorage.getItem(PUSH_HINWEIS_AUS) !== '1';
 		} catch {
 			installHinweis = true;
+			pushHinweis = true;
 		}
 	});
-	function hinweisAusblenden() {
-		installHinweis = false;
+	function ausblenden(schluessel: string) {
 		try {
-			localStorage.setItem(HINWEIS_AUS, '1');
+			localStorage.setItem(schluessel, '1');
 		} catch {
 			// privater Modus o. Ä. – dann eben nur für diese Sitzung
 		}
 	}
+	function hinweisAusblenden() {
+		installHinweis = false;
+		ausblenden(HINWEIS_AUS);
+	}
+	function pushHinweisAusblenden() {
+		pushHinweis = false;
+		ausblenden(PUSH_HINWEIS_AUS);
+	}
+	// Nie zwei Hinweise übereinander – erst installieren, dann Benachrichtigungen
+	const installSichtbar = $derived(installHinweis && (installation.moeglich || installation.nurManuellIos));
 
 	const dran = $derived(data.duelle.filter((d) => d.duBistDran));
 	const wartend = $derived(data.duelle.filter((d) => !d.duBistDran && (d.status === 'wartet_a' || d.status === 'wartet_b')));
@@ -88,6 +104,9 @@
 
 {#if installHinweis}
 	<AppInstallieren schliessbar onschliessen={hinweisAusblenden} />
+{/if}
+{#if pushHinweis && !installSichtbar}
+	<Benachrichtigungen art="hinweis" onschliessen={pushHinweisAusblenden} />
 {/if}
 
 {#if data.duelle.length === 0}

@@ -15,7 +15,7 @@ const { importiereFragen, STANDARD_DATEI } = await import('../src/fragen/import'
 
 await migrate(db, { migrationsFolder: new URL('../src/db/migrations', import.meta.url).pathname });
 await db.execute(sql`truncate users, questions, answer_options, duels, duel_questions, duel_answers,
-  ratings, friendships, achievements, user_achievements restart identity`);
+  ratings, friendships, achievements, user_achievements, push_subscriptions restart identity`);
 const { fragen, fehler } = leseFragenCsv(new Uint8Array(await Bun.file(STANDARD_DATEI).arrayBuffer()));
 if (fehler.length) throw new Error(fehler.join('\n'));
 await db.transaction((tx) => importiereFragen(tx, fragen));

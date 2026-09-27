@@ -9,7 +9,9 @@ const ziele = [
 	{ quelle: 'icon.svg', datei: 'icon-512.png', groesse: 512, hintergrund: 'transparent' },
 	{ quelle: 'icon-maskable.svg', datei: 'icon-maskable-512.png', groesse: 512, hintergrund: '#CFE9FF' },
 	// iOS rundet selbst ab und mag keine Transparenz
-	{ quelle: 'icon-maskable.svg', datei: 'apple-touch-icon.png', groesse: 180, hintergrund: '#CFE9FF' }
+	{ quelle: 'icon-maskable.svg', datei: 'apple-touch-icon.png', groesse: 180, hintergrund: '#CFE9FF' },
+	// Symbol in der Android-Statusleiste bei Benachrichtigungen (einfarbig)
+	{ quelle: 'badge.svg', datei: 'badge-96.png', groesse: 96, hintergrund: 'transparent' }
 ];
 
 const browser = await chromium.launch(process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {});
