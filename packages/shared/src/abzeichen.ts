@@ -57,6 +57,7 @@ export const ABZEICHEN: readonly AbzeichenDefinition[] = [
   { key: 'blitzmerker', titel: 'Blitzmerker', beschreibung: 'Eine Frage in unter 2 Sekunden richtig beantwortet', gruppe: 'besonders', icon: 'blitz' },
   { key: 'siegesserie', titel: 'Guter Lauf', beschreibung: '3 Duelle in Folge gewonnen', gruppe: 'besonders', icon: 'flamme', ziel: 3 },
   { key: 'gesellig', titel: 'Gesellig', beschreibung: '3 Freunde gefunden', gruppe: 'besonders', icon: 'freunde', ziel: 3 },
+  { key: 'nachgelernt', titel: 'Nachgelernt', beschreibung: '10 falsch beantwortete Fragen durch Üben gemeistert', gruppe: 'besonders', icon: 'wissen', ziel: 10 },
 ];
 
 /** Antwortzeit für „Blitzmerker“ */

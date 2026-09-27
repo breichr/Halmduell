@@ -99,7 +99,7 @@
 		{#if staerke && schwaeche}
 			<p class="tipp">
 				<strong>Stärke:</strong> {kategorieName(staerke.kategorie)} · <strong>Übungsbedarf:</strong>
-				<a href="/duell/neu?kategorie={schwaeche.kategorie}">{kategorieName(schwaeche.kategorie)}</a>
+				<a href="/ueben/spielen?kategorie={schwaeche.kategorie}">{kategorieName(schwaeche.kategorie)} üben</a>
 			</p>
 		{/if}
 	</section>

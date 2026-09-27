@@ -109,6 +109,19 @@
 	<Benachrichtigungen art="hinweis" onschliessen={pushHinweisAusblenden} />
 {/if}
 
+{#if data.ueben && data.ueben.offen > 0}
+	<a class="karte ueben" href="/ueben">
+		<span class="ueben-symbol" aria-hidden="true">
+			<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 3v5h5" /></svg>
+		</span>
+		<span class="ueben-text">
+			<strong>Fehler üben</strong>
+			<span>{data.ueben.offen === 1 ? '1 Frage wartet' : `${data.ueben.offen} Fragen warten`} aufs Nachlernen</span>
+		</span>
+		<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+	</a>
+{/if}
+
 {#if data.duelle.length === 0}
 	<div class="karte leer">
 		<p><strong>Noch keine Duelle.</strong></p>
@@ -263,5 +276,32 @@
 		padding: 0;
 		display: grid;
 		gap: 0.6rem;
+	}
+	.ueben {
+		display: flex;
+		align-items: center;
+		gap: 0.8rem;
+		margin-bottom: 0.9rem;
+		color: var(--text);
+		text-decoration: none;
+	}
+	.ueben-symbol {
+		flex: none;
+		display: grid;
+		place-items: center;
+		width: 46px;
+		height: 46px;
+		border-radius: 50%;
+		background: var(--orange);
+		color: #2a1c14;
+		border: 2px solid var(--kontur);
+	}
+	.ueben-text {
+		flex: 1;
+		display: grid;
+	}
+	.ueben-text span {
+		font-size: 0.9rem;
+		color: var(--text-2);
 	}
 </style>

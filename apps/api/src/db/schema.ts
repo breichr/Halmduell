@@ -208,3 +208,16 @@ export const pushSubscriptions = pgTable('push_subscriptions', {
 }, (t) => [
   index('push_subscriptions_user_idx').on(t.userId),
 ]);
+
+// Fehler üben: Stand je Spieler und Frage (die Frage selbst kommt aus falschen Duell-Antworten)
+export const uebungen = pgTable('uebungen', {
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  questionId: integer('question_id').notNull().references(() => questions.id),
+  // richtige Antworten in Folge seit dem letzten Fehler
+  richtigInFolge: smallint('richtig_in_folge').notNull().default(0),
+  geuebtAt: zeitstempel('geuebt_at').notNull().defaultNow(),
+  // gesetzt, sobald oft genug in Folge richtig; ein späterer Fehler im Duell holt die Frage zurück
+  gemeistertAt: zeitstempel('gemeistert_at'),
+}, (t) => [
+  primaryKey({ columns: [t.userId, t.questionId] }),
+]);
