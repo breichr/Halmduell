@@ -15,9 +15,14 @@ export function liga(rating: number): Liga {
 
 // --- Requests ---
 
+/** alle Spieler oder nur ich und meine Freunde */
+export const RANGLISTE_KREISE = ['alle', 'freunde'] as const;
+export type RanglistenKreis = (typeof RANGLISTE_KREISE)[number];
+
 /** Query-Parameter von GET /api/rangliste; ohne Saison gilt die laufende */
 export const ranglisteSchema = z.object({
   kategorie: z.enum(RATING_KATEGORIEN).default('gesamt'),
+  kreis: z.enum(RANGLISTE_KREISE).default('alle'),
   saison: z.coerce.number().int().min(1).optional(),
 });
 
@@ -37,11 +42,12 @@ export interface RanglistenEintrag {
 /** GET /api/rangliste */
 export interface Rangliste {
   kategorie: RatingKategorie;
+  kreis: RanglistenKreis;
   saison: number;
   aktuelleSaison: number;
   /** Saisons, für die es Ergebnisse gibt (neueste zuerst, laufende immer dabei) */
   saisons: number[];
-  /** Anzahl platzierter Spieler insgesamt */
+  /** Anzahl platzierter Spieler insgesamt (bzw. im Freundeskreis, mich eingeschlossen) */
   spielerAnzahl: number;
   eintraege: RanglistenEintrag[];
   /** eigener Eintrag, auch wenn er außerhalb der gezeigten Plätze liegt; null = in dieser Saison/Kategorie noch nicht gespielt */

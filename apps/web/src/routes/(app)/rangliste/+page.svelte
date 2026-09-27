@@ -1,5 +1,12 @@
 <script lang="ts">
-	import { RATING_KATEGORIEN, saisonBezeichnung, saisonEnde, type RanglistenEintrag, type RatingKategorie } from '@halmduell/shared';
+	import {
+		RATING_KATEGORIEN,
+		saisonBezeichnung,
+		saisonEnde,
+		type RanglistenEintrag,
+		type RanglistenKreis,
+		type RatingKategorie
+	} from '@halmduell/shared';
 	import Halmi from '$lib/components/Halmi.svelte';
 	import { hydriert } from '$lib/hydriert.svelte';
 	import { kategorieName, restzeit } from '$lib/format';
@@ -10,6 +17,7 @@
 
 	const r = $derived(data.rangliste);
 	const laufend = $derived(r.saison === r.aktuelleSaison);
+	const freundeskreis = $derived(r.kreis === 'freunde');
 	const podest = $derived(r.eintraege.slice(0, 3));
 	const rest = $derived(r.eintraege.slice(3));
 	// Eigener Platz liegt außerhalb der gezeigten Plätze → unten extra anhängen
@@ -20,9 +28,10 @@
 	const zahl = (n: number) => n.toLocaleString('de-DE');
 	const istIch = (e: RanglistenEintrag) => e.id === r.ich?.id;
 
-	function link(kategorie: RatingKategorie, saison = r.saison) {
+	function link(kategorie: RatingKategorie, kreis: RanglistenKreis = r.kreis, saison = r.saison) {
 		const query = new URLSearchParams();
 		if (kategorie !== 'gesamt') query.set('kategorie', kategorie);
+		if (kreis !== 'alle') query.set('kreis', kreis);
 		if (saison !== r.aktuelleSaison) query.set('saison', String(saison));
 		return query.size ? `/rangliste?${query}` : '/rangliste';
 	}
@@ -41,6 +50,11 @@
 	</span>
 </header>
 
+<nav class="kreise" aria-label="Wer steht in der Liste">
+	<a href={link(r.kategorie, 'alle')} aria-current={!freundeskreis ? 'page' : undefined} data-sveltekit-noscroll data-sveltekit-replacestate>Alle Spieler</a>
+	<a href={link(r.kategorie, 'freunde')} aria-current={freundeskreis ? 'page' : undefined} data-sveltekit-noscroll data-sveltekit-replacestate>Freunde</a>
+</nav>
+
 <nav class="kategorien" aria-label="Kategorie">
 	{#each RATING_KATEGORIEN as k (k)}
 		<a href={link(k)} class="chip" aria-current={k === r.kategorie ? 'page' : undefined} data-sveltekit-noscroll data-sveltekit-replacestate>
@@ -51,7 +65,7 @@
 
 {#if r.ich}
 	<p class="ich-zeile" data-testid="eigener-platz">
-		Du bist auf <strong>Platz {r.ich.platz}</strong> von {zahl(r.spielerAnzahl)} · {zahl(r.ich.rating)} · Liga {r.ich.liga}
+		Du bist auf <strong>Platz {r.ich.platz}</strong> von {zahl(r.spielerAnzahl)}{freundeskreis ? ' unter Freunden' : ''} · {zahl(r.ich.rating)} · Liga {r.ich.liga}
 	</p>
 {/if}
 
@@ -99,6 +113,17 @@
 			{/if}
 		</ol>
 	{/if}
+{/if}
+
+{#if freundeskreis && r.eintraege.length > 0 && r.eintraege.every(istIch)}
+	<div class="karte mitmachen">
+		<Halmi pose="winken" groesse={72} halm={false} />
+		<p>
+			<strong>Hier fehlen noch deine Freunde.</strong><br />
+			<span class="hinweis">Freunde, die in dieser Saison gespielt haben, erscheinen hier.</span>
+			<a class="knopf klein zweitrangig freunde-knopf" href="/freunde">Freunde finden</a>
+		</p>
+	</div>
 {/if}
 
 {#if !r.ich && laufend && r.eintraege.length > 0}
@@ -162,6 +187,31 @@
 	.chip.saison {
 		background: var(--himmel);
 		font-size: 0.8rem;
+	}
+	.kreise {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		padding: 4px;
+		margin-bottom: 0.7rem;
+		border: 2px solid var(--kontur);
+		border-radius: 999px;
+		background: var(--flaeche);
+	}
+	.kreise a {
+		display: grid;
+		place-items: center;
+		min-height: 40px;
+		border-radius: 999px;
+		color: var(--text-2);
+		font-weight: 800;
+		text-decoration: none;
+	}
+	.kreise a[aria-current='page'] {
+		background: var(--sonne);
+		color: var(--auf-farbe);
+	}
+	.freunde-knopf {
+		margin-top: 0.5rem;
 	}
 	.kategorien {
 		display: flex;
