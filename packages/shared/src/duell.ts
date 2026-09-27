@@ -78,6 +78,8 @@ export interface DuellFrageVergleich {
     bildQuelle: string | null;
     erklaerung: string | null;
     richtigeAntwort: { id: number; text: string } | null;
+    /** ich habe die Frage gemeldet, die Meldung ist noch offen */
+    gemeldet: boolean;
   } | null;
   ich: AntwortStand | null;
   gegner: AntwortStand | null;

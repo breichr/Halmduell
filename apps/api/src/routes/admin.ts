@@ -1,22 +1,24 @@
 import { Hono } from 'hono';
-import { and, asc, eq, ilike, inArray, isNotNull, or, sql, type SQL } from 'drizzle-orm';
+import { and, asc, desc, eq, ilike, inArray, isNotNull, or, sql, type SQL } from 'drizzle-orm';
 import {
   FRAGEN_KATEGORIEN,
   adminFragenFilterSchema,
   commonsSchema,
   feldFehler,
   frageBearbeitenSchema,
+  meldungenAbschliessenSchema,
   statusSetzenSchema,
   type AdminFrage,
   type AdminFragenListe,
   type AdminKategorieStand,
+  type AdminMeldung,
   type CommonsBild,
   type ApiFehler,
   type FrageBearbeiten,
   type FragenKategorie,
 } from '@halmduell/shared';
 import { db } from '../db/client';
-import { answerOptions, duelAnswers, questions } from '../db/schema';
+import { answerOptions, duelAnswers, frageMeldungen, questions, users } from '../db/schema';
 import type { Tx } from '../db/types';
 import { schreibeFragenCsv, type FragenZeile } from '../fragen/csv';
 import { requireAuth, type AuthEnv } from '../middleware/auth';
@@ -44,21 +46,24 @@ async function ladeFragen(q: Tx | typeof db, bedingung?: SQL): Promise<AdminFrag
   const zeilen = await q.select().from(questions).where(bedingung).orderBy(asc(questions.kategorie), asc(questions.code), asc(questions.id));
   if (zeilen.length === 0) return [];
   const ids = zeilen.map((f) => f.id);
-  const [optionen, statistik] = await Promise.all([
+  const [optionen, statistik, meldungen] = await Promise.all([
     q.select().from(answerOptions).where(inArray(answerOptions.questionId, ids)).orderBy(asc(answerOptions.id)),
     q.select({
       id: duelAnswers.questionId,
       beantwortet: sql<number>`count(*)::int`,
       richtig: sql<number>`count(*) filter (where ${duelAnswers.istRichtig})::int`,
     }).from(duelAnswers).where(and(inArray(duelAnswers.questionId, ids), isNotNull(duelAnswers.istRichtig))).groupBy(duelAnswers.questionId),
+    q.select({ id: frageMeldungen.questionId, anzahl: sql<number>`count(*)::int` })
+      .from(frageMeldungen).where(and(inArray(frageMeldungen.questionId, ids), eq(frageMeldungen.status, 'offen'))).groupBy(frageMeldungen.questionId),
   ]);
   const optionenVon = new Map<number, Option[]>();
   for (const o of optionen) optionenVon.set(o.questionId, [...(optionenVon.get(o.questionId) ?? []), o]);
   const statistikVon = new Map(statistik.map((s) => [s.id, s]));
-  return zeilen.map((f) => alsAdminFrage(f, optionenVon.get(f.id) ?? [], statistikVon.get(f.id)));
+  const meldungenVon = new Map(meldungen.map((m) => [m.id, m.anzahl]));
+  return zeilen.map((f) => alsAdminFrage(f, optionenVon.get(f.id) ?? [], statistikVon.get(f.id), meldungenVon.get(f.id)));
 }
 
-function alsAdminFrage(f: Frage, optionen: Option[], statistik?: { beantwortet: number; richtig: number }): AdminFrage {
+function alsAdminFrage(f: Frage, optionen: Option[], statistik?: { beantwortet: number; richtig: number }, meldungen = 0): AdminFrage {
   const falsch = optionen.filter((o) => !o.istRichtig).map((o) => o.text);
   return {
     id: f.id,
@@ -74,6 +79,7 @@ function alsAdminFrage(f: Frage, optionen: Option[], statistik?: { beantwortet: 
     bildQuelle: f.bildQuelle,
     status: f.status,
     statistik: { beantwortet: statistik?.beantwortet ?? 0, richtig: statistik?.richtig ?? 0 },
+    meldungen,
   };
 }
 
@@ -104,14 +110,23 @@ async function uebersicht(): Promise<AdminKategorieStand[]> {
   });
 }
 
-// Liste mit Filtern (Status, Kategorie, Suche in Code/Frage/Antworten) + Übersicht je Kategorie
+async function anzahlGemeldet(): Promise<number> {
+  const [zeile] = await db.select({ n: sql<number>`count(distinct ${frageMeldungen.questionId})::int` })
+    .from(frageMeldungen).where(eq(frageMeldungen.status, 'offen'));
+  return zeile?.n ?? 0;
+}
+
+// Liste mit Filtern (Status, Kategorie, gemeldet, Suche in Code/Frage/Antworten) + Übersicht je Kategorie
 adminRoute.get('/fragen', async (c) => {
   const eingabe = adminFragenFilterSchema.safeParse(c.req.query());
   if (!eingabe.success) return c.json(ungueltig(eingabe.error), 400);
-  const { status, kategorie, suche } = eingabe.data;
+  const { status, kategorie, suche, gemeldet } = eingabe.data;
   const bedingungen: SQL[] = [];
   if (status) bedingungen.push(eq(questions.status, status));
   if (kategorie) bedingungen.push(eq(questions.kategorie, kategorie));
+  if (gemeldet) {
+    bedingungen.push(sql`exists (select 1 from ${frageMeldungen} where ${frageMeldungen.questionId} = ${questions.id} and ${frageMeldungen.status} = 'offen')`);
+  }
   if (suche) {
     const muster = `%${suche.replace(/[\\%_]/g, (z) => `\\${z}`)}%`;
     bedingungen.push(or(
@@ -120,8 +135,8 @@ adminRoute.get('/fragen', async (c) => {
       sql`exists (select 1 from ${answerOptions} where ${answerOptions.questionId} = ${questions.id} and ${answerOptions.text} ilike ${muster})`,
     )!);
   }
-  const [fragen, stand] = await Promise.all([ladeFragen(db, bedingungen.length ? and(...bedingungen) : undefined), uebersicht()]);
-  return c.json({ fragen, uebersicht: stand } satisfies AdminFragenListe);
+  const [fragen, stand, anzahl] = await Promise.all([ladeFragen(db, bedingungen.length ? and(...bedingungen) : undefined), uebersicht(), anzahlGemeldet()]);
+  return c.json({ fragen, uebersicht: stand, gemeldet: anzahl } satisfies AdminFragenListe);
 });
 
 // Alle Fragen als CSV im Format von fragen/fragen.csv (Sicherung, Excel, Git)
@@ -216,6 +231,40 @@ adminRoute.post('/fragen/:id/status', async (c) => {
   if (!geaendert.length) return c.json(fehler('Frage nicht gefunden'), 404);
   const [frage] = await ladeFragen(db, eq(questions.id, id));
   return c.json(frage! satisfies AdminFrage);
+});
+
+// Offene Meldungen einer Frage, mit der Antwort, die der Spieler zuletzt gegeben hat
+adminRoute.get('/fragen/:id/meldungen', async (c) => {
+  const id = parseId(c.req.param('id'));
+  if (!id) return c.json(fehler('Frage nicht gefunden'), 404);
+  const zeilen = await db.select({
+    id: frageMeldungen.id,
+    username: users.username,
+    grund: frageMeldungen.grund,
+    kommentar: frageMeldungen.kommentar,
+    erstelltAt: frageMeldungen.erstelltAt,
+    seineAntwort: sql<string | null>`(
+      select ao.text from ${duelAnswers} da left join ${answerOptions} ao on ao.id = da.answer_option_id
+      where da.user_id = ${frageMeldungen.userId} and da.question_id = ${frageMeldungen.questionId} and da.ist_richtig is not null
+      order by da.beantwortet_at desc limit 1)`,
+  }).from(frageMeldungen)
+    .innerJoin(users, eq(users.id, frageMeldungen.userId))
+    .where(and(eq(frageMeldungen.questionId, id), eq(frageMeldungen.status, 'offen')))
+    .orderBy(desc(frageMeldungen.erstelltAt), desc(frageMeldungen.id));
+  return c.json(zeilen.map((m) => ({ ...m, erstelltAt: m.erstelltAt.toISOString() })) satisfies AdminMeldung[]);
+});
+
+// Alle offenen Meldungen einer Frage abschließen: erledigt (Frage korrigiert) oder verworfen
+adminRoute.post('/fragen/:id/meldungen', async (c) => {
+  const id = parseId(c.req.param('id'));
+  if (!id) return c.json(fehler('Frage nicht gefunden'), 404);
+  const eingabe = meldungenAbschliessenSchema.safeParse(await c.req.json().catch(() => null));
+  if (!eingabe.success) return c.json(ungueltig(eingabe.error), 400);
+  const geschlossen = await db.update(frageMeldungen)
+    .set({ status: eingabe.data.status, abgeschlossenAt: new Date(), abgeschlossenVon: c.var.userId })
+    .where(and(eq(frageMeldungen.questionId, id), eq(frageMeldungen.status, 'offen')))
+    .returning({ id: frageMeldungen.id });
+  return c.json({ abgeschlossen: geschlossen.length });
 });
 
 // Commons-Link → Bild-URL, Urheber und Lizenz (für Bildfragen)

@@ -5,6 +5,7 @@
 	import EinladungTeilen from '$lib/components/EinladungTeilen.svelte';
 	import AbzeichenPlakette from '$lib/components/AbzeichenPlakette.svelte';
 	import Ergebnissymbol from '$lib/components/Ergebnissymbol.svelte';
+	import FrageMelden from '$lib/components/FrageMelden.svelte';
 	import Halmi from '$lib/components/Halmi.svelte';
 	import KategorieSymbol from '$lib/components/KategorieSymbol.svelte';
 	import { kategorieName, restzeit, vorzeichen } from '$lib/format';
@@ -154,6 +155,7 @@
 							{/if}
 							{#if f.frage.richtigeAntwort}<p><strong>Richtig:</strong> {f.frage.richtigeAntwort.text}</p>{/if}
 							{#if f.frage.erklaerung}<p class="hinweis">{f.frage.erklaerung}</p>{/if}
+							<FrageMelden frageId={f.frage.id} gemeldet={f.frage.gemeldet} />
 						</div>
 					</details>
 				{:else}

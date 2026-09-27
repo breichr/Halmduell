@@ -19,7 +19,7 @@ import {
   type NeuesDuell,
 } from '@halmduell/shared';
 import { db } from '../db/client';
-import { answerOptions, duelAnswers, duelQuestions, duels, questions, users } from '../db/schema';
+import { answerOptions, duelAnswers, duelQuestions, duels, frageMeldungen, questions, users } from '../db/schema';
 import type { Tx } from '../db/types';
 import { requireAuth, type AuthEnv } from '../middleware/auth';
 import {
@@ -238,6 +238,9 @@ duelsRoute.get('/:id', async (c) => {
     .from(answerOptions)
     .where(and(inArray(answerOptions.questionId, fragen.map((f) => f.id)), eq(answerOptions.istRichtig, true)));
   const antworten = await db.select().from(duelAnswers).where(eq(duelAnswers.duelId, duelId));
+  const gemeldet = new Set((await db.select({ id: frageMeldungen.questionId }).from(frageMeldungen)
+    .where(and(eq(frageMeldungen.userId, ich), eq(frageMeldungen.status, 'offen'), inArray(frageMeldungen.questionId, fragen.map((f) => f.id)))))
+    .map((m) => m.id));
 
   const gid = gegnerId(duel, ich);
   const gegner = gid === null ? null : (await ladeSpieler(db, [gid])).get(gid) ?? null;
@@ -255,7 +258,7 @@ duelsRoute.get('/:id', async (c) => {
         reihenfolge,
         beantwortet,
         // Inhalt und Lösung erst nach eigener Antwort – sonst ließe sich vorab nachschlagen
-        frage: beantwortet ? { ...frage, richtigeAntwort: richtig ? { id: richtig.id, text: richtig.text } : null } : null,
+        frage: beantwortet ? { ...frage, richtigeAntwort: richtig ? { id: richtig.id, text: richtig.text } : null, gemeldet: gemeldet.has(frage.id) } : null,
         ich: antwortStand(meine),
         gegner: beantwortet ? antwortStand(seine) : null,
       };

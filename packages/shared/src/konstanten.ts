@@ -38,3 +38,17 @@ export interface DuellWertung {
   saison: number;
   ratings: Partial<Record<RatingKategorie, { a: number; b: number }>>;
 }
+
+/** Gründe beim Melden einer Frage */
+export const MELDUNG_GRUENDE = ['antwort_falsch', 'frage_unklar', 'sonstiges'] as const;
+export type MeldungGrund = (typeof MELDUNG_GRUENDE)[number];
+
+export const MELDUNG_GRUND_NAMEN: Record<MeldungGrund, string> = {
+  antwort_falsch: 'Die richtige Antwort stimmt nicht',
+  frage_unklar: 'Frage ist unklar oder mehrdeutig',
+  sonstiges: 'Etwas anderes',
+};
+
+/** 'erledigt' = Frage korrigiert/zurückgezogen, 'verworfen' = Meldung unbegründet */
+export const MELDUNG_STATUS = ['offen', 'erledigt', 'verworfen'] as const;
+export type MeldungStatus = (typeof MELDUNG_STATUS)[number];

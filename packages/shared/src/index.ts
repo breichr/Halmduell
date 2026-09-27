@@ -11,3 +11,4 @@ export * from './abzeichen';
 export * from './push';
 export * from './ueben';
 export * from './admin';
+export * from './meldungen';

@@ -15,6 +15,7 @@
 		{ wert: 'entwurf', name: 'Entwürfe' },
 		{ wert: 'freigegeben', name: 'Freigegeben' },
 		{ wert: 'abgelehnt', name: 'Abgelehnt' },
+		{ wert: 'gemeldet', name: 'Gemeldet' },
 		{ wert: 'alle', name: 'Alle' }
 	];
 
@@ -72,7 +73,9 @@
 
 <nav class="filter" aria-label="Status">
 	{#each FILTER as f (f.wert)}
-		<a href={link(f.wert)} aria-current={data.status === f.wert ? 'page' : undefined} data-sveltekit-noscroll data-sveltekit-replacestate>{f.name}</a>
+		<a href={link(f.wert)} aria-current={data.status === f.wert ? 'page' : undefined} data-sveltekit-noscroll data-sveltekit-replacestate>
+			{f.name}{#if f.wert === 'gemeldet' && l.gemeldet}<span class="zaehler">{l.gemeldet}</span>{/if}
+		</a>
 	{/each}
 </nav>
 
@@ -101,6 +104,7 @@
 					<span class="kat" style="--farbe: {KATEGORIE_FARBE[f.kategorie]}">{kategorieName(f.kategorie)}</span>
 					<span class="status {f.status}">{STATUS_NAMEN[f.status]}</span>
 					<span class="schwierigkeit" title="Schwierigkeit">Stufe {f.schwierigkeit}</span>
+					{#if f.meldungen}<a class="gemeldet" href="/admin/fragen/{f.id}#meldungen">⚑ {f.meldungen === 1 ? '1 Meldung' : `${f.meldungen} Meldungen`}</a>{/if}
 				</div>
 				<p class="frage">{f.typ === 'bild' ? '🖼 ' : ''}{f.frage}</p>
 				<ul class="antworten">
@@ -186,8 +190,9 @@
 		margin-bottom: 0.7rem;
 	}
 	.filter a {
-		display: grid;
-		place-items: center;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
 		min-height: 40px;
 		padding: 0 0.9rem;
 		border-radius: 999px;
@@ -196,6 +201,23 @@
 		color: var(--text);
 		font-weight: 800;
 		font-size: 0.9rem;
+		text-decoration: none;
+	}
+	.zaehler {
+		min-width: 1.4rem;
+		padding: 0 0.35rem;
+		border-radius: 999px;
+		background: var(--falsch-akzent);
+		color: #ffffff;
+		font-size: 0.8rem;
+		text-align: center;
+	}
+	.gemeldet {
+		padding: 0.1rem 0.5rem;
+		border-radius: 999px;
+		border: 1.5px solid currentColor;
+		background: var(--falsch-hell);
+		color: var(--falsch);
 		text-decoration: none;
 	}
 	.filter a[aria-current='page'] {

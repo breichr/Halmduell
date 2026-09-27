@@ -225,11 +225,34 @@ Beantworten lassen sich nur Fragen, die gerade zum Üben offen sind – so
 lässt sich über das Üben keine Lösung einer laufenden Duell-Frage nachschlagen.
 Stand je Frage: Tabelle `uebungen`.
 
+## Fragen melden
+
+Im Frage-für-Frage-Vergleich kann jede Frage nach dem Aufklappen gemeldet
+werden – etwa wenn die als richtig gewertete Antwort nicht stimmt. Grund
+auswählen (Antwort falsch, Frage unklar, anderes), optional eine Anmerkung.
+
+- Melden darf nur, wer die Frage im Duell beantwortet hat.
+- Je Spieler und Frage eine offene Meldung; erneutes Melden ändert sie.
+- Höchstens 20 neue Meldungen je Spieler und Tag.
+- Im Admin-Portal: Filter „Gemeldet“ mit Zähler, Hinweis an der Frage; auf der
+  Bearbeiten-Seite stehen die Meldungen mit Anmerkung und der Antwort des
+  Spielers. Frage korrigieren, dann alle offenen Meldungen „Erledigt“ oder
+  „Verwerfen“ – danach kann dieselbe Frage erneut gemeldet werden.
+
+| Endpunkt | Zweck |
+|---|---|
+| `POST /api/fragen/:id/melden` | `{ grund, kommentar? }` → 204; 403 ohne eigene Antwort, 429 über dem Tageslimit |
+| `GET /api/admin/fragen/:id/meldungen` | offene Meldungen einer Frage |
+| `POST /api/admin/fragen/:id/meldungen` | `{ status: 'erledigt' \| 'verworfen' }` schließt alle offenen Meldungen der Frage |
+
+Tabelle `frage_meldungen`; `DuellDetails.fragen[].frage.gemeldet` zeigt eine
+eigene offene Meldung an.
+
 ## Admin-Portal (Fragen pflegen)
 
 Unter `/admin` (Link im Profil) prüfen, bearbeiten und freigeben Admins die
 Fragen: Übersicht je Kategorie (Warnung unter 6 freigegebenen), Filter
-Entwürfe/Freigegeben/Abgelehnt, Suche in Frage, Antworten und Code,
+Entwürfe/Freigegeben/Abgelehnt/Gemeldet, Suche in Frage, Antworten und Code,
 Freigeben/Ablehnen mit einem Tipp, Bearbeiten mit Vorschau wie im Spiel,
 neue Fragen (Code wird je Kategorie vergeben) und **CSV-Export** im Format
 von `fragen/fragen.csv`.
@@ -248,7 +271,7 @@ von `fragen/fragen.csv`.
 
 | Endpunkt | Zweck |
 |---|---|
-| `GET /api/admin/fragen?status=&kategorie=&suche=` | Fragen mit Antworten und Duell-Statistik, Übersicht je Kategorie |
+| `GET /api/admin/fragen?status=&kategorie=&suche=&gemeldet=1` | Fragen mit Antworten, Duell-Statistik und Zahl offener Meldungen, Übersicht je Kategorie |
 | `GET /api/admin/fragen/:id` / `PUT …` | eine Frage lesen / bearbeiten |
 | `POST /api/admin/fragen` | neue Frage |
 | `POST /api/admin/fragen/:id/status` | `{ status }` freigeben, ablehnen, Entwurf |
@@ -336,7 +359,7 @@ App (Schritte 1–6 in `docs/architektur.md`). Screens: Anmelden/Registrieren/Pa
 Übersicht, neues Duell (Benutzername oder Einladungslink), Einladung annehmen,
 Frage mit Timer, Frage-für-Frage-Vergleich, Rangliste (je Kategorie und
 Saison, mit Archiv und Freunde-Ansicht), Freunde, Profil mit Statistik und
-Abzeichen, Fehler üben, Benachrichtigungen, Admin-Portal für Fragen.
+Abzeichen, Fehler üben, Fragen melden, Benachrichtigungen, Admin-Portal für Fragen.
 
 ## Offene Punkte
 
@@ -347,10 +370,7 @@ Abzeichen, Fehler üben, Benachrichtigungen, Admin-Portal für Fragen.
   nach der Umstellung stammen fast alle Fragen aus Pflanzenbau
 - Admin-Portal erweitern: eingereichte Community-Fragen moderieren,
   Admins im Portal verwalten statt per `ADMIN_USERNAMES`
-
-- Fragen melden: nach dem Duell eine Frage melden können, wenn die als richtig
-  gewertete Antwort falsch erscheint (optional mit Begründung); Meldungen im
-  Admin-Portal sichten, Frage korrigieren oder zurückziehen
+- Fragen melden: Melder benachrichtigen, wenn ihre Meldung erledigt ist
 
 Bewusst später:
 
