@@ -130,6 +130,10 @@ Archiv). Platziert ist, wer in der Saison in der Kategorie mindestens ein
 gewertetes Duell hat; gleiches Rating = gleicher Platz. Die Liga (Bronze bis
 Meister) kommt aus `liga()` in `packages/shared`. Oberfläche: `/rangliste`
 mit Umschalter „Alle Spieler / Freunde“, Podest, Kategorien und Saisonauswahl.
+**Veränderung seit gestern** (▲ 2 / ▼ 1): Der Fristen-Job hält einmal am Tag
+(kurz nach Mitternacht, deutsche Zeit) die Plätze der laufenden Saison in
+`platz_verlauf` fest (30 Tage aufbewahrt); verglichen wird nur in „Alle
+Spieler“ der laufenden Saison (`veraenderung` je Eintrag).
 Typen: `packages/shared/src/rangliste.ts`.
 
 ## Freunde
@@ -141,6 +145,10 @@ Typen: `packages/shared/src/rangliste.ts`.
 | `POST /api/freunde` | `{ username }` anfragen; hatte die andere Seite schon angefragt, seid ihr sofort befreundet |
 | `POST /api/freunde/:id/annehmen` | Anfrage von `:id` annehmen |
 | `DELETE /api/freunde/:id` | Anfrage ablehnen/zurückziehen oder Freundschaft beenden |
+
+Freunde sehen, wann jemand zuletzt aktiv war („gerade aktiv“ mit grünem
+Punkt, „vor 3 Std. aktiv“, „gestern aktiv“): `users.zuletzt_aktiv_at` wird bei
+angemeldeten Anfragen gesetzt, höchstens alle 5 Minuten.
 
 Je Paar gibt es genau eine Zeile in `friendships` (Unique-Index auf
 `least/greatest`), höchstens 30 unbeantwortete Anfragen gleichzeitig.

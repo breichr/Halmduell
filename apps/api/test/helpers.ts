@@ -11,7 +11,7 @@ const lade = async () => ({
 export async function leereDatenbank(): Promise<void> {
   const { db } = await lade();
   await db.execute(sql`truncate users, questions, answer_options, duels, duel_questions, duel_answers,
-    ratings, friendships, achievements, user_achievements, push_subscriptions, uebungen restart identity`);
+    ratings, friendships, achievements, user_achievements, push_subscriptions, uebungen, platz_verlauf restart identity`);
 }
 
 interface Optionen {

@@ -103,4 +103,29 @@ describe.skipIf(!mitDatenbank)('Rangliste', () => {
     expect(daten.ich).toMatchObject({ platz: RANGLISTE_LAENGE + 6, liga: 'Bronze' });
   });
 
+  test('Veränderung seit gestern (Schnappschuss), nur laufende Saison und alle Spieler', async () => {
+    const { platzSchnappschuss } = await import('../src/services/verlauf');
+    // ohne Schnappschuss kein Vergleich
+    expect((await rangliste(anna)).daten.eintraege.every((e) => e.veraenderung === null)).toBe(true);
+
+    const erster = await platzSchnappschuss();
+    expect(erster.angelegt).toBeGreaterThan(0);
+    expect(await platzSchnappschuss()).toEqual({ angelegt: 0 }); // einmal am Tag
+
+    // Clara zieht vorbei
+    await sqlAusfuehren(sql`update ratings set rating = 1200 where user_id = ${clara.id} and kategorie = 'gesamt' and saison = ${saison}`);
+    const { daten } = await rangliste(anna);
+    const von = (u: User) => daten.eintraege.find((e) => e.id === u.id)!;
+    expect(von(clara)).toMatchObject({ platz: 1, veraenderung: 2 });
+    expect(von(ben)).toMatchObject({ platz: 2, veraenderung: -1 });
+    expect(daten.ich).toMatchObject({ platz: 2, veraenderung: -1 });
+
+    // Archiv und Freundeskreis: kein Vergleich
+    expect((await rangliste(anna, `?saison=${saison - 1}`)).daten.eintraege.every((e) => e.veraenderung === null)).toBe(true);
+    expect((await rangliste(anna, '?kreis=freunde')).daten.ich?.veraenderung).toBeNull();
+
+    // Wer erst heute platziert ist, hat keinen Vergleich
+    await setzeRating(neu.id, 'gesamt', saison, 900, 1);
+    expect((await rangliste(neu)).daten.ich).toMatchObject({ veraenderung: null });
+  });
 });

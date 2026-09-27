@@ -34,7 +34,9 @@ test('Freund anfragen, annehmen, herausfordern und Freunde-Rangliste', async ({ 
 	await greta.seite.getByRole('button', { name: `Anfrage von ${fritz.username} annehmen` }).click();
 	const gretasFreunde = greta.seite.getByRole('region', { name: /Deine Freunde/ });
 	await expect(gretasFreunde.getByRole('listitem')).toHaveCount(1);
-	await expect(gretasFreunde).toContainText('Diese Saison noch nicht gespielt');
+	await expect(gretasFreunde).toContainText('Saison noch nicht gespielt');
+	// Fritz war eben noch in der App
+	await expect(gretasFreunde.getByTestId('aktiv')).toHaveText('gerade aktiv');
 	await expect(gretasNav.getByRole('link', { name: 'Freunde', exact: true })).toBeVisible();
 
 	// Herausfordern füllt den Gegner vor
