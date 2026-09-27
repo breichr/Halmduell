@@ -364,10 +364,9 @@ Abzeichen, Fehler üben, Fragen melden, Benachrichtigungen, Admin-Portal für Fr
 ## Offene Punkte
 
 - Fragenkatalog prüfen und freigeben (im Admin-Portal unter „Entwürfe“): 6
-  freigegebene Beispielfragen, dazu 134 Entwürfe (davon 34 Bildfragen).
-  Kategorie-Duelle brauchen je ≥ 6 freigegebene Fragen
-- Fragen für **Landtechnik** (bisher 3) und **Viehzucht** (bisher 1) schreiben –
-  nach der Umstellung stammen fast alle Fragen aus Pflanzenbau
+  freigegebene Beispielfragen, dazu 184 Entwürfe (davon 34 Bildfragen):
+  Landtechnik 28, Pflanzenbau 130, Viehzucht 26. Kategorie-Duelle brauchen je
+  ≥ 6 freigegebene Fragen – Landtechnik und Viehzucht haben noch keine
 - Admin-Portal erweitern: eingereichte Community-Fragen moderieren,
   Admins im Portal verwalten statt per `ADMIN_USERNAMES`
 - Fragen melden: Melder benachrichtigen, wenn ihre Meldung erledigt ist
