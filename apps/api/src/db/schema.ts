@@ -98,6 +98,8 @@ export const duels = pgTable('duels', {
   // NULL, solange ein per Einladungscode erstelltes Duell noch keinen Gegner hat
   spielerBId: integer('spieler_b_id').references(() => users.id),
   einladungsCode: varchar('einladungs_code', { length: 8 }).unique(),
+  // Zufallsgegner: ohne spieler_b_id wartet das Duell im Pool, bis jemand beitritt
+  zufall: boolean('zufall').notNull().default(false),
   kategorie: varchar('kategorie', { length: 20 }).$type<DuellKategorie>().notNull(),
   status: varchar('status', { length: 20 }).$type<DuellStatus>().notNull().default('wartet_a'),
   erstelltAt: zeitstempel('erstellt_at').notNull().defaultNow(),
@@ -124,6 +126,8 @@ export const duels = pgTable('duels', {
   index('duels_spieler_b_idx').on(t.spielerBId, t.status),
   // Fristen-Job: laufende Duelle nach Zugbeginn
   index('duels_status_zug_idx').on(t.status, t.zugSeit),
+  // Zufallsgegner: wartende Duelle je Kategorie, älteste zuerst
+  index('duels_zufall_pool_idx').on(t.kategorie, t.erstelltAt).where(sql`${t.zufall} and ${t.spielerBId} is null`),
 ]);
 
 export const duelQuestions = pgTable('duel_questions', {

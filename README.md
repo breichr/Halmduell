@@ -91,7 +91,7 @@ Alle Endpunkte erfordern eine Anmeldung.
 | Endpunkt | Zweck |
 |---|---|
 | `GET /api/duels` | Dashboard: laufende + letzte 20 abgeschlossene Duelle, „du bist dran“ zuerst |
-| `POST /api/duels` | `{ kategorie, gegner? }` → Duell gegen User (Name) oder offen mit Einladungscode |
+| `POST /api/duels` | `{ kategorie, gegner? }` → Duell gegen User (Name) oder offen mit Einladungscode; `{ kategorie, zufall: true }` → Zufallsgegner (201 neu eröffnet, 200 beigetreten) |
 | `POST /api/duels/beitreten` | `{ code }` → Einladung annehmen, man wird Spieler B |
 | `GET /api/duels/:id` | Details + Frage-für-Frage-Vergleich |
 | `GET /api/duels/:id/frage` | aktuelle Frage (startet den 15-s-Timer, Neuladen setzt ihn nicht zurück) |
@@ -105,6 +105,14 @@ sieht man erst, nachdem man die jeweilige Frage selbst beantwortet hat.
 **Fristen:** Wer seinen Zug nicht innerhalb von 3 Tagen spielt, verliert (mit
 ELO-Wertung). Nicht angenommene Einladungen verfallen nach 7 Tagen ohne
 Wertung. Die API prüft das alle 10 Minuten und zusätzlich bei jedem Zug.
+
+**Zufallsgegner:** Wartet in derselben Kategorie ein Duell, dessen Ersteller
+seine Runde schon gespielt hat, tritt man als Spieler B bei und ist sofort
+dran – bevorzugt beim ähnlichsten Gesamt-Rating, sonst beim ältesten. Nicht
+gegen sich selbst und nicht gegen jemanden, mit dem schon ein Duell läuft.
+Sonst wird ein neues Zufallsduell eröffnet: man spielt zuerst und wartet, bis
+jemand beitritt (höchstens 3 offene Suchen; ohne Gegner nach 7 Tagen
+abgebrochen, ohne Wertung).
 
 **Fragenauswahl:** bevorzugt Fragen, die keiner der beiden Spieler schon
 hatte; `gemischt` verteilt die 6 Fragen reihum auf alle Kategorien.
@@ -373,7 +381,6 @@ Abzeichen, Fehler üben, Fragen melden, Benachrichtigungen, Admin-Portal für Fr
 
 Bewusst später:
 
-- Matchmaking für Zufallsgegner (MVP: nur Freund-Einladung per Code/Link)
 - Community-Fragen-Einreichung (geplant, aber erst nach MVP)
 - Visuelles Gesamtkonzept fürs Maskottchen (Farbrichtung/Stil grob skizziert,
   finales Design noch offen)

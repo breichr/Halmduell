@@ -5,7 +5,7 @@
 	let { duel }: { duel: DuellUebersicht } = $props();
 
 	const beendet = $derived(duel.status === 'abgeschlossen' || duel.status === 'abgebrochen');
-	const gegnerName = $derived(duel.gegner?.username ?? 'Offene Einladung');
+	const gegnerName = $derived(duel.gegner?.username ?? (duel.zufall ? 'Zufälliger Gegner' : 'Offene Einladung'));
 
 	const statusText = $derived.by(() => {
 		if (duel.status === 'abgebrochen') return 'Abgebrochen';
@@ -17,7 +17,7 @@
 			return 'Unentschieden';
 		}
 		if (duel.duBistDran) return 'Du bist dran';
-		if (!duel.gegner) return 'Wartet, bis jemand die Einladung annimmt';
+		if (!duel.gegner) return duel.zufall ? 'Gegner wird gesucht' : 'Wartet, bis jemand die Einladung annimmt';
 		return `Wartet auf ${duel.gegner.username}`;
 	});
 
@@ -33,6 +33,9 @@
 	<span class="avatar" class:offen={!duel.gegner} aria-hidden="true">
 		{#if duel.gegner}
 			{duel.gegner.username.slice(0, 1).toUpperCase()}
+		{:else if duel.zufall}
+			<!-- Würfel: Zufallsgegner wird noch gesucht -->
+			<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="4" /><circle cx="8.5" cy="8.5" r="1.2" fill="currentColor" /><circle cx="15.5" cy="15.5" r="1.2" fill="currentColor" /><circle cx="12" cy="12" r="1.2" fill="currentColor" /></svg>
 		{:else}
 			<!-- Link-Symbol für offene Einladungen -->
 			<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7" /><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7" /></svg>

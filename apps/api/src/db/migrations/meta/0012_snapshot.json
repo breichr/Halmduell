@@ -1,0 +1,1682 @@
+{
+  "id": "73f83b6d-627d-4543-95da-c7ba1c2fe868",
+  "prevId": "a74cacab-2d87-4609-89fe-74e34a32fc1c",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.achievements": {
+      "name": "achievements",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "achievements_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "key": {
+          "name": "key",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "titel": {
+          "name": "titel",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "beschreibung": {
+          "name": "beschreibung",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "icon": {
+          "name": "icon",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "achievements_key_unique": {
+          "name": "achievements_key_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "key"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.answer_options": {
+      "name": "answer_options",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "answer_options_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "question_id": {
+          "name": "question_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "text": {
+          "name": "text",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ist_richtig": {
+          "name": "ist_richtig",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "answer_options_question_idx": {
+          "name": "answer_options_question_idx",
+          "columns": [
+            {
+              "expression": "question_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "answer_options_eine_richtige_idx": {
+          "name": "answer_options_eine_richtige_idx",
+          "columns": [
+            {
+              "expression": "question_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"answer_options\".\"ist_richtig\"",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "answer_options_question_id_questions_id_fk": {
+          "name": "answer_options_question_id_questions_id_fk",
+          "tableFrom": "answer_options",
+          "tableTo": "questions",
+          "columnsFrom": [
+            "question_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.duel_answers": {
+      "name": "duel_answers",
+      "schema": "",
+      "columns": {
+        "duel_id": {
+          "name": "duel_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "question_id": {
+          "name": "question_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "gestellt_at": {
+          "name": "gestellt_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "beantwortet_at": {
+          "name": "beantwortet_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "answer_option_id": {
+          "name": "answer_option_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "antwortzeit_ms": {
+          "name": "antwortzeit_ms",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ist_richtig": {
+          "name": "ist_richtig",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "duel_answers_user_idx": {
+          "name": "duel_answers_user_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "duel_answers_duel_id_duels_id_fk": {
+          "name": "duel_answers_duel_id_duels_id_fk",
+          "tableFrom": "duel_answers",
+          "tableTo": "duels",
+          "columnsFrom": [
+            "duel_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "duel_answers_user_id_users_id_fk": {
+          "name": "duel_answers_user_id_users_id_fk",
+          "tableFrom": "duel_answers",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "duel_answers_question_id_questions_id_fk": {
+          "name": "duel_answers_question_id_questions_id_fk",
+          "tableFrom": "duel_answers",
+          "tableTo": "questions",
+          "columnsFrom": [
+            "question_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "duel_answers_answer_option_id_answer_options_id_fk": {
+          "name": "duel_answers_answer_option_id_answer_options_id_fk",
+          "tableFrom": "duel_answers",
+          "tableTo": "answer_options",
+          "columnsFrom": [
+            "answer_option_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "duel_answers_duel_id_user_id_question_id_pk": {
+          "name": "duel_answers_duel_id_user_id_question_id_pk",
+          "columns": [
+            "duel_id",
+            "user_id",
+            "question_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "duel_answers_beantwortet_check": {
+          "name": "duel_answers_beantwortet_check",
+          "value": "(\"duel_answers\".\"ist_richtig\" is null) = (\"duel_answers\".\"beantwortet_at\" is null)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.duel_questions": {
+      "name": "duel_questions",
+      "schema": "",
+      "columns": {
+        "duel_id": {
+          "name": "duel_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "question_id": {
+          "name": "question_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reihenfolge": {
+          "name": "reihenfolge",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "duel_questions_frage_idx": {
+          "name": "duel_questions_frage_idx",
+          "columns": [
+            {
+              "expression": "duel_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "question_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "duel_questions_question_idx": {
+          "name": "duel_questions_question_idx",
+          "columns": [
+            {
+              "expression": "question_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "duel_questions_duel_id_duels_id_fk": {
+          "name": "duel_questions_duel_id_duels_id_fk",
+          "tableFrom": "duel_questions",
+          "tableTo": "duels",
+          "columnsFrom": [
+            "duel_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "duel_questions_question_id_questions_id_fk": {
+          "name": "duel_questions_question_id_questions_id_fk",
+          "tableFrom": "duel_questions",
+          "tableTo": "questions",
+          "columnsFrom": [
+            "question_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "duel_questions_duel_id_reihenfolge_pk": {
+          "name": "duel_questions_duel_id_reihenfolge_pk",
+          "columns": [
+            "duel_id",
+            "reihenfolge"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "duel_questions_reihenfolge_check": {
+          "name": "duel_questions_reihenfolge_check",
+          "value": "\"duel_questions\".\"reihenfolge\" between 1 and 6"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.duels": {
+      "name": "duels",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "duels_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "spieler_a_id": {
+          "name": "spieler_a_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "spieler_b_id": {
+          "name": "spieler_b_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "einladungs_code": {
+          "name": "einladungs_code",
+          "type": "varchar(8)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "zufall": {
+          "name": "zufall",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "kategorie": {
+          "name": "kategorie",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'wartet_a'"
+        },
+        "erstellt_at": {
+          "name": "erstellt_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "abgeschlossen_at": {
+          "name": "abgeschlossen_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "gewertet_at": {
+          "name": "gewertet_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rating_aenderung_a": {
+          "name": "rating_aenderung_a",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rating_aenderung_b": {
+          "name": "rating_aenderung_b",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "zug_seit": {
+          "name": "zug_seit",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "aufgegeben_von": {
+          "name": "aufgegeben_von",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "erinnert_at": {
+          "name": "erinnert_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "angestupst_at": {
+          "name": "angestupst_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "duels_spieler_a_idx": {
+          "name": "duels_spieler_a_idx",
+          "columns": [
+            {
+              "expression": "spieler_a_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "duels_spieler_b_idx": {
+          "name": "duels_spieler_b_idx",
+          "columns": [
+            {
+              "expression": "spieler_b_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "duels_status_zug_idx": {
+          "name": "duels_status_zug_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "zug_seit",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "duels_zufall_pool_idx": {
+          "name": "duels_zufall_pool_idx",
+          "columns": [
+            {
+              "expression": "kategorie",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "erstellt_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"duels\".\"zufall\" and \"duels\".\"spieler_b_id\" is null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "duels_spieler_a_id_users_id_fk": {
+          "name": "duels_spieler_a_id_users_id_fk",
+          "tableFrom": "duels",
+          "tableTo": "users",
+          "columnsFrom": [
+            "spieler_a_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "duels_spieler_b_id_users_id_fk": {
+          "name": "duels_spieler_b_id_users_id_fk",
+          "tableFrom": "duels",
+          "tableTo": "users",
+          "columnsFrom": [
+            "spieler_b_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "duels_aufgegeben_von_users_id_fk": {
+          "name": "duels_aufgegeben_von_users_id_fk",
+          "tableFrom": "duels",
+          "tableTo": "users",
+          "columnsFrom": [
+            "aufgegeben_von"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "duels_einladungs_code_unique": {
+          "name": "duels_einladungs_code_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "einladungs_code"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "duels_kategorie_check": {
+          "name": "duels_kategorie_check",
+          "value": "\"duels\".\"kategorie\" in ('landtechnik', 'pflanzenbau', 'viehzucht', 'gemischt')"
+        },
+        "duels_status_check": {
+          "name": "duels_status_check",
+          "value": "\"duels\".\"status\" in ('wartet_a', 'wartet_b', 'abgeschlossen', 'abgebrochen')"
+        },
+        "duels_verschiedene_spieler_check": {
+          "name": "duels_verschiedene_spieler_check",
+          "value": "\"duels\".\"spieler_a_id\" <> \"duels\".\"spieler_b_id\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.frage_meldungen": {
+      "name": "frage_meldungen",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "frage_meldungen_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "question_id": {
+          "name": "question_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "grund": {
+          "name": "grund",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kommentar": {
+          "name": "kommentar",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'offen'"
+        },
+        "erstellt_at": {
+          "name": "erstellt_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "abgeschlossen_at": {
+          "name": "abgeschlossen_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "abgeschlossen_von": {
+          "name": "abgeschlossen_von",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "frage_meldungen_offen_idx": {
+          "name": "frage_meldungen_offen_idx",
+          "columns": [
+            {
+              "expression": "question_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"frage_meldungen\".\"status\" = 'offen'",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "frage_meldungen_user_idx": {
+          "name": "frage_meldungen_user_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "erstellt_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "frage_meldungen_question_id_questions_id_fk": {
+          "name": "frage_meldungen_question_id_questions_id_fk",
+          "tableFrom": "frage_meldungen",
+          "tableTo": "questions",
+          "columnsFrom": [
+            "question_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "frage_meldungen_user_id_users_id_fk": {
+          "name": "frage_meldungen_user_id_users_id_fk",
+          "tableFrom": "frage_meldungen",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "frage_meldungen_abgeschlossen_von_users_id_fk": {
+          "name": "frage_meldungen_abgeschlossen_von_users_id_fk",
+          "tableFrom": "frage_meldungen",
+          "tableTo": "users",
+          "columnsFrom": [
+            "abgeschlossen_von"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "frage_meldungen_grund_check": {
+          "name": "frage_meldungen_grund_check",
+          "value": "\"frage_meldungen\".\"grund\" in ('antwort_falsch', 'frage_unklar', 'sonstiges')"
+        },
+        "frage_meldungen_status_check": {
+          "name": "frage_meldungen_status_check",
+          "value": "\"frage_meldungen\".\"status\" in ('offen', 'erledigt', 'verworfen')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.friendships": {
+      "name": "friendships",
+      "schema": "",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "friend_id": {
+          "name": "friend_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'angefragt'"
+        },
+        "erstellt_at": {
+          "name": "erstellt_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "friendships_friend_idx": {
+          "name": "friendships_friend_idx",
+          "columns": [
+            {
+              "expression": "friend_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "friendships_paar_idx": {
+          "name": "friendships_paar_idx",
+          "columns": [
+            {
+              "expression": "least(\"user_id\", \"friend_id\")",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "greatest(\"user_id\", \"friend_id\")",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "friendships_user_id_users_id_fk": {
+          "name": "friendships_user_id_users_id_fk",
+          "tableFrom": "friendships",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "friendships_friend_id_users_id_fk": {
+          "name": "friendships_friend_id_users_id_fk",
+          "tableFrom": "friendships",
+          "tableTo": "users",
+          "columnsFrom": [
+            "friend_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "friendships_user_id_friend_id_pk": {
+          "name": "friendships_user_id_friend_id_pk",
+          "columns": [
+            "user_id",
+            "friend_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "friendships_status_check": {
+          "name": "friendships_status_check",
+          "value": "\"friendships\".\"status\" in ('angefragt', 'bestaetigt')"
+        },
+        "friendships_nicht_selbst_check": {
+          "name": "friendships_nicht_selbst_check",
+          "value": "\"friendships\".\"user_id\" <> \"friendships\".\"friend_id\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.platz_verlauf": {
+      "name": "platz_verlauf",
+      "schema": "",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kategorie": {
+          "name": "kategorie",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "saison": {
+          "name": "saison",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tag": {
+          "name": "tag",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "platz": {
+          "name": "platz",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "platz_verlauf_tag_idx": {
+          "name": "platz_verlauf_tag_idx",
+          "columns": [
+            {
+              "expression": "tag",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "platz_verlauf_user_id_users_id_fk": {
+          "name": "platz_verlauf_user_id_users_id_fk",
+          "tableFrom": "platz_verlauf",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "platz_verlauf_user_id_kategorie_saison_tag_pk": {
+          "name": "platz_verlauf_user_id_kategorie_saison_tag_pk",
+          "columns": [
+            "user_id",
+            "kategorie",
+            "saison",
+            "tag"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.push_subscriptions": {
+      "name": "push_subscriptions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "push_subscriptions_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "endpoint": {
+          "name": "endpoint",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "p256dh": {
+          "name": "p256dh",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "auth": {
+          "name": "auth",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "erstellt_at": {
+          "name": "erstellt_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "push_subscriptions_user_idx": {
+          "name": "push_subscriptions_user_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "push_subscriptions_user_id_users_id_fk": {
+          "name": "push_subscriptions_user_id_users_id_fk",
+          "tableFrom": "push_subscriptions",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "push_subscriptions_endpoint_unique": {
+          "name": "push_subscriptions_endpoint_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "endpoint"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.questions": {
+      "name": "questions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "questions_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "code": {
+          "name": "code",
+          "type": "varchar(40)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "kategorie": {
+          "name": "kategorie",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "typ": {
+          "name": "typ",
+          "type": "varchar(10)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "frage_text": {
+          "name": "frage_text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "bild_url": {
+          "name": "bild_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bild_quelle": {
+          "name": "bild_quelle",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "schwierigkeit": {
+          "name": "schwierigkeit",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "erklaerung": {
+          "name": "erklaerung",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'freigegeben'"
+        },
+        "eingereicht_von": {
+          "name": "eingereicht_von",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "questions_kategorie_status_idx": {
+          "name": "questions_kategorie_status_idx",
+          "columns": [
+            {
+              "expression": "kategorie",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "questions_eingereicht_von_users_id_fk": {
+          "name": "questions_eingereicht_von_users_id_fk",
+          "tableFrom": "questions",
+          "tableTo": "users",
+          "columnsFrom": [
+            "eingereicht_von"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "questions_code_unique": {
+          "name": "questions_code_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "code"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "questions_kategorie_check": {
+          "name": "questions_kategorie_check",
+          "value": "\"questions\".\"kategorie\" in ('landtechnik', 'pflanzenbau', 'viehzucht')"
+        },
+        "questions_typ_check": {
+          "name": "questions_typ_check",
+          "value": "\"questions\".\"typ\" in ('bild', 'text')"
+        },
+        "questions_status_check": {
+          "name": "questions_status_check",
+          "value": "\"questions\".\"status\" in ('entwurf', 'eingereicht', 'freigegeben', 'abgelehnt')"
+        },
+        "questions_schwierigkeit_check": {
+          "name": "questions_schwierigkeit_check",
+          "value": "\"questions\".\"schwierigkeit\" between 1 and 5"
+        },
+        "questions_bild_check": {
+          "name": "questions_bild_check",
+          "value": "\"questions\".\"typ\" <> 'bild' or \"questions\".\"bild_url\" is not null"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.ratings": {
+      "name": "ratings",
+      "schema": "",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kategorie": {
+          "name": "kategorie",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "saison": {
+          "name": "saison",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rating": {
+          "name": "rating",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1000
+        },
+        "duelle_gespielt": {
+          "name": "duelle_gespielt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        }
+      },
+      "indexes": {
+        "ratings_bestenliste_idx": {
+          "name": "ratings_bestenliste_idx",
+          "columns": [
+            {
+              "expression": "kategorie",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "saison",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "rating",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "ratings_user_id_users_id_fk": {
+          "name": "ratings_user_id_users_id_fk",
+          "tableFrom": "ratings",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "ratings_user_id_kategorie_saison_pk": {
+          "name": "ratings_user_id_kategorie_saison_pk",
+          "columns": [
+            "user_id",
+            "kategorie",
+            "saison"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "ratings_kategorie_check": {
+          "name": "ratings_kategorie_check",
+          "value": "\"ratings\".\"kategorie\" in ('gesamt', 'landtechnik', 'pflanzenbau', 'viehzucht')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.uebungen": {
+      "name": "uebungen",
+      "schema": "",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "question_id": {
+          "name": "question_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "richtig_in_folge": {
+          "name": "richtig_in_folge",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "geuebt_at": {
+          "name": "geuebt_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "gemeistert_at": {
+          "name": "gemeistert_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "uebungen_user_id_users_id_fk": {
+          "name": "uebungen_user_id_users_id_fk",
+          "tableFrom": "uebungen",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "uebungen_question_id_questions_id_fk": {
+          "name": "uebungen_question_id_questions_id_fk",
+          "tableFrom": "uebungen",
+          "tableTo": "questions",
+          "columnsFrom": [
+            "question_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "uebungen_user_id_question_id_pk": {
+          "name": "uebungen_user_id_question_id_pk",
+          "columns": [
+            "user_id",
+            "question_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.user_achievements": {
+      "name": "user_achievements",
+      "schema": "",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "achievement_id": {
+          "name": "achievement_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "erreicht_at": {
+          "name": "erreicht_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "duel_id": {
+          "name": "duel_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "user_achievements_user_id_users_id_fk": {
+          "name": "user_achievements_user_id_users_id_fk",
+          "tableFrom": "user_achievements",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "user_achievements_achievement_id_achievements_id_fk": {
+          "name": "user_achievements_achievement_id_achievements_id_fk",
+          "tableFrom": "user_achievements",
+          "tableTo": "achievements",
+          "columnsFrom": [
+            "achievement_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "user_achievements_duel_id_duels_id_fk": {
+          "name": "user_achievements_duel_id_duels_id_fk",
+          "tableFrom": "user_achievements",
+          "tableTo": "duels",
+          "columnsFrom": [
+            "duel_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "user_achievements_user_id_achievement_id_pk": {
+          "name": "user_achievements_user_id_achievement_id_pk",
+          "columns": [
+            "user_id",
+            "achievement_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.users": {
+      "name": "users",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "users_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "username": {
+          "name": "username",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "passwort_hash": {
+          "name": "passwort_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wiederherstellungs_hash": {
+          "name": "wiederherstellungs_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "session_version": {
+          "name": "session_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "zuletzt_aktiv_at": {
+          "name": "zuletzt_aktiv_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "users_username_lower_idx": {
+          "name": "users_username_lower_idx",
+          "columns": [
+            {
+              "expression": "lower(\"username\")",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

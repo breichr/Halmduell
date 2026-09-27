@@ -18,7 +18,7 @@
 	let kategorie = $state<DuellKategorie>(
 		(DUELL_KATEGORIEN as readonly string[]).includes(vorgabeKategorie ?? '') ? (vorgabeKategorie as DuellKategorie) : 'gemischt'
 	);
-	let art = $state<'name' | 'einladung'>(vorgabeGegner ? 'name' : 'einladung');
+	let art = $state<'zufall' | 'name' | 'einladung'>(vorgabeGegner ? 'name' : 'zufall');
 	let gegner = $state(vorgabeGegner);
 	let fehler = $state('');
 	let laeuft = $state(false);
@@ -30,7 +30,8 @@
 		try {
 			const duel = await api().post<DuellUebersicht>('/duels', {
 				kategorie,
-				...(art === 'name' ? { gegner: gegner.trim() } : {})
+				...(art === 'name' ? { gegner: gegner.trim() } : {}),
+				...(art === 'zufall' ? { zufall: true } : {})
 			});
 			await invalidate('app:duelle');
 			await goto(`/duell/${duel.id}`, { replaceState: true });
@@ -76,6 +77,11 @@
 	<fieldset>
 		<legend class="frage">Gegen wen?</legend>
 		<div class="arten">
+			<label class="art" class:gewaehlt={art === 'zufall'}>
+				<input type="radio" name="art" value="zufall" bind:group={art} />
+				<span class="art-symbol" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4" /><circle cx="8.5" cy="8.5" r="1.3" fill="currentColor" /><circle cx="15.5" cy="8.5" r="1.3" fill="currentColor" /><circle cx="12" cy="12" r="1.3" fill="currentColor" /><circle cx="8.5" cy="15.5" r="1.3" fill="currentColor" /><circle cx="15.5" cy="15.5" r="1.3" fill="currentColor" /></svg></span>
+				<span class="art-text"><strong>Zufälliger Gegner</strong><span>Gegen jemanden mit ähnlichem Rating – sofort losspielen.</span></span>
+			</label>
 			<label class="art" class:gewaehlt={art === 'einladung'}>
 				<input type="radio" name="art" value="einladung" bind:group={art} />
 				<span class="art-symbol" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7" /><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7" /></svg></span>
@@ -96,7 +102,7 @@
 
 	{#if fehler}<p class="fehlermeldung" role="alert">{fehler}</p>{/if}
 	<button class="knopf breit" disabled={!js.bereit || laeuft}>
-		{laeuft ? 'Wird erstellt …' : art === 'einladung' ? 'Link erstellen & losspielen' : 'Herausfordern'}
+		{laeuft ? 'Wird erstellt …' : art === 'zufall' ? 'Gegner suchen & losspielen' : art === 'einladung' ? 'Link erstellen & losspielen' : 'Herausfordern'}
 	</button>
 </form>
 
