@@ -5,6 +5,8 @@
 	import { hydriert } from '$lib/hydriert.svelte';
 	import Feld from '$lib/components/Feld.svelte';
 	import AppInstallieren from '$lib/components/AppInstallieren.svelte';
+	import Benachrichtigungen from '$lib/components/Benachrichtigungen.svelte';
+	import { push } from '$lib/push.svelte';
 	import Halmi from '$lib/components/Halmi.svelte';
 	import Statistik from '$lib/components/Statistik.svelte';
 	import AbzeichenUebersicht from '$lib/components/AbzeichenUebersicht.svelte';
@@ -56,6 +58,8 @@
 	}
 
 	async function abmelden(ueberall: boolean) {
+		// Dieses Gerät soll keine Nachrichten für das abgemeldete Konto mehr bekommen
+		await push.deaktivieren();
 		await api().post(ueberall ? '/auth/logout-alle' : '/auth/logout');
 		await invalidateAll();
 		await goto('/anmelden', { replaceState: true });
@@ -77,6 +81,8 @@
 <AbzeichenUebersicht liste={data.abzeichen} />
 
 <h2 class="abschnitt-titel konto">Konto</h2>
+
+<Benachrichtigungen />
 
 <section class="karte">
 	<h2>Passwort ändern</h2>

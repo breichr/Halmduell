@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto, invalidate } from '$app/navigation';
+	import type { AnstupsenErgebnis } from '@halmduell/shared';
 	import { api, ApiError } from '$lib/api';
 	import EinladungTeilen from '$lib/components/EinladungTeilen.svelte';
 	import AbzeichenPlakette from '$lib/components/AbzeichenPlakette.svelte';
@@ -45,6 +46,26 @@
 
 	let fehler = $state('');
 	let aufgebenOffen = $state(false);
+
+	// Anstupsen: Gegner ist am Zug; nach dem Stupsen 12 Stunden Pause
+	let angestupst = $state<AnstupsenErgebnis | null>(null);
+	let stupstGerade = $state(false);
+	const jetzt = Date.now();
+	const stupsenGesperrt = $derived(
+		angestupst !== null || (duel.anstupsenAb !== null && new Date(duel.anstupsenAb).getTime() > jetzt)
+	);
+
+	async function anstupsen() {
+		fehler = '';
+		stupstGerade = true;
+		try {
+			angestupst = await api().post<AnstupsenErgebnis>(`/duels/${duel.id}/anstupsen`);
+		} catch (e) {
+			fehler = e instanceof ApiError ? e.message : 'Anstupsen fehlgeschlagen';
+		} finally {
+			stupstGerade = false;
+		}
+	}
 
 	async function aufgeben() {
 		fehler = '';
@@ -153,6 +174,21 @@
 <div class="unten">
 	{#if !laufend && duel.gegner}
 		<a class="knopf breit" href="/duell/neu?gegner={encodeURIComponent(duel.gegner.username)}&kategorie={duel.kategorie}">Revanche!</a>
+	{/if}
+	{#if duel.anstupsenAb !== null}
+		<button type="button" class="knopf zweitrangig breit" disabled={stupsenGesperrt || stupstGerade} onclick={anstupsen}>
+			<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" /></svg>
+			{stupsenGesperrt ? 'Angestupst' : `${gegnerName} anstupsen`}
+		</button>
+		{#if angestupst}
+			<p class="stups-info" role="status">
+				{angestupst.zugestellt
+					? `${gegnerName} bekommt eine Benachrichtigung.`
+					: `${gegnerName} hat keine Benachrichtigungen an – vielleicht kurz per Nachricht erinnern?`}
+			</p>
+		{:else if stupsenGesperrt}
+			<p class="stups-info">Wieder möglich in {restzeit(duel.anstupsenAb!).replace('noch ', '')}.</p>
+		{/if}
 	{/if}
 	{#if laufend && !duel.duBistDran}
 		<a class="knopf sonne breit" href="/duell/neu">Währenddessen: neues Duell</a>
@@ -387,5 +423,11 @@
 	.abzeichen-namen {
 		font-size: 0.9rem;
 		font-weight: 700;
+	}
+	.stups-info {
+		margin: -0.3rem 0 0;
+		text-align: center;
+		font-size: 0.9rem;
+		color: var(--text-2);
 	}
 </style>

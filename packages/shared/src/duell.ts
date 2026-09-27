@@ -88,6 +88,8 @@ export interface DuellDetails extends DuellUebersicht {
   fragen: DuellFrageVergleich[];
   /** durch dieses Duell neu erreichte eigene Abzeichen */
   neueAbzeichen: NeuesAbzeichen[];
+  /** Gegner ist am Zug: ab wann ich anstupsen darf (Zeitpunkt in der Vergangenheit = jetzt); sonst null */
+  anstupsenAb: string | null;
 }
 
 /** GET /api/duels/:id/frage */

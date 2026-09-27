@@ -54,6 +54,7 @@ halmduell/
 │       │   │   ├── freunde.ts
 │       │   │   ├── statistik.ts
 │       │   │   ├── abzeichen.ts
+│       │   │   ├── push.ts
 │       │   │   └── auth.ts
 │       │   ├── services/
 │       │   │   ├── elo.ts              # ELO-Update-Logik

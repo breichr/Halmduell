@@ -15,7 +15,9 @@ import { db } from '../db/client';
 import { duels, friendships, ratings, users } from '../db/schema';
 import { requireAuth, type AuthEnv } from '../middleware/auth';
 import { pruefeAbzeichen } from '../services/abzeichen';
+import { nachricht } from '../services/benachrichtigungen';
 import { andere } from '../services/freunde';
+import { spaeterSenden } from '../services/push';
 
 /** Wie viele zuletzt gespielte Gegner als Vorschlag erscheinen */
 const VORSCHLAEGE = 5;
@@ -25,6 +27,11 @@ export const freundeRoute = new Hono<AuthEnv>();
 freundeRoute.use(requireAuth);
 
 const fehler = (error: string): ApiFehler => ({ error });
+
+async function eigenerName(ich: number): Promise<string> {
+  const [u] = await db.select({ username: users.username }).from(users).where(eq(users.id, ich));
+  return u?.username ?? 'Jemand';
+}
 
 function parseId(roh: string): number | null {
   const id = Number(roh);
@@ -137,6 +144,7 @@ freundeRoute.post('/', async (c) => {
     if (bestehend) {
       await db.update(friendships).set({ status: 'bestaetigt' }).where(paar(ich, ziel.id));
       await Promise.all([pruefeAbzeichen(db, ich), pruefeAbzeichen(db, ziel.id)]);
+      spaeterSenden([{ an: ziel.id, nachricht: nachricht.anfrageAngenommen(await eigenerName(ich)) }]);
       return c.json({ ...ziel, status: 'bestaetigt' } satisfies FreundHinzugefuegt);
     }
 
@@ -148,7 +156,10 @@ freundeRoute.post('/', async (c) => {
 
     const eingefuegt = await db.insert(friendships).values({ userId: ich, friendId: ziel.id })
       .onConflictDoNothing().returning({ id: friendships.friendId });
-    if (eingefuegt.length) return c.json({ ...ziel, status: 'angefragt' } satisfies FreundHinzugefuegt, 201);
+    if (eingefuegt.length) {
+      spaeterSenden([{ an: ziel.id, nachricht: nachricht.freundschaftsanfrage(await eigenerName(ich)) }]);
+      return c.json({ ...ziel, status: 'angefragt' } satisfies FreundHinzugefuegt, 201);
+    }
   }
   return c.json(fehler('Bitte versuch es noch einmal'), 409);
 });
@@ -163,6 +174,7 @@ freundeRoute.post('/:id/annehmen', async (c) => {
     .returning({ id: friendships.userId });
   if (!angenommen.length) return c.json(fehler('Anfrage nicht gefunden'), 404);
   await Promise.all([pruefeAbzeichen(db, ich), pruefeAbzeichen(db, id)]);
+  spaeterSenden([{ an: id, nachricht: nachricht.anfrageAngenommen(await eigenerName(ich)) }]);
   return c.body(null, 204);
 });
 

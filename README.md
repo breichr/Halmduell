@@ -199,6 +199,35 @@ Home-Bildschirm).
 Service Worker funktionieren nur über HTTPS (Coolify liefert das) oder auf
 `localhost`.
 
+## Benachrichtigungen (Web Push)
+
+Push-Nachrichten, wenn jemand herausfordert bzw. man dran ist, ein Duell
+endet (Ergebnis, Aufgabe, verpasste Frist), der eigene Zug nur noch 24 Stunden
+läuft, bei Freundschaftsanfragen – und beim **Anstupsen**: Wer auf den Gegner
+wartet, kann ihn höchstens alle 12 Stunden erinnern.
+
+Einrichten (einmalig, danach nicht mehr ändern – neue Schlüssel machen alle
+Abos ungültig; die App meldet Geräte dann beim nächsten Öffnen neu an):
+
+```sh
+cd apps/api && bun run push:schluessel
+# VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY und VAPID_SUBJECT (mailto:…) beim API-Service setzen
+```
+
+Ohne diese Variablen ist Web Push aus und die Oberfläche blendet es aus.
+Eingeschaltet wird je Gerät im Profil (oder über den Hinweis auf der
+Übersicht). Auf dem iPhone geht das nur in der installierten App (iOS 16.4+).
+
+| Endpunkt | Zweck |
+|---|---|
+| `GET /api/push/schluessel` | öffentlicher VAPID-Schlüssel (`null` = aus) |
+| `POST /api/push/abo` / `DELETE /api/push/abo` | Gerät an-/abmelden (`PushSubscription.toJSON()` bzw. `{ endpoint }`) |
+| `POST /api/duels/:id/anstupsen` | Gegner am Zug erinnern; `zugestellt: false`, wenn er keine Benachrichtigungen an hat |
+
+Nachrichten gehen erst nach dem Commit raus und blockieren keine Anfrage;
+vom Push-Dienst abgelehnte Abos (404/410) werden gelöscht. Texte:
+`apps/api/src/services/benachrichtigungen.ts`.
+
 ## Deployment (Coolify)
 
 Eine Domain für alles: Nur der **Web**-Service bekommt eine öffentliche
@@ -208,7 +237,7 @@ selbst braucht keine Domain.
 | Service | Dockerfile | Umgebungsvariablen |
 |---|---|---|
 | PostgreSQL | Coolify-Datenbank | – |
-| API | `Dockerfile.api` | `DATABASE_URL` (Internal URL der Datenbank), `JWT_SECRET` (geheim, `openssl rand -base64 48`), `TRUST_PROXY=true` |
+| API | `Dockerfile.api` | `DATABASE_URL` (Internal URL der Datenbank), `JWT_SECRET` (geheim, `openssl rand -base64 48`), `TRUST_PROXY=true`, optional `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT` (Web Push, siehe unten) |
 | Web | `Dockerfile.web` | `API_URL=http://halmduell-api:3000`, `ORIGIN` (öffentliche URL, z. B. `https://halmduell.example`) |
 
 Beim API-Service unter **Configuration → General** das Feld **Domains** leer

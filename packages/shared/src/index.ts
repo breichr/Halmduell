@@ -8,3 +8,4 @@ export * from './rangliste';
 export * from './freunde';
 export * from './statistik';
 export * from './abzeichen';
+export * from './push';

@@ -104,6 +104,10 @@ export const duels = pgTable('duels', {
   zugSeit: zeitstempel('zug_seit').notNull().defaultNow(),
   // gesetzt bei Aufgabe oder Fristablauf; dieser Spieler verliert unabhängig von den Punkten
   aufgegebenVon: integer('aufgegeben_von').references(() => users.id),
+  // Push: Erinnerung vor Fristablauf für den aktuellen Zug verschickt (gilt, solange >= zug_seit)
+  erinnertAt: zeitstempel('erinnert_at'),
+  // Push: zuletzt angestupst (Sperre gegen Dauer-Anstupsen)
+  angestupstAt: zeitstempel('angestupst_at'),
 }, (t) => [
   check('duels_kategorie_check', erlaubteWerte(t.kategorie, DUELL_KATEGORIEN)),
   check('duels_status_check', erlaubteWerte(t.status, DUELL_STATUS)),
@@ -191,4 +195,16 @@ export const userAchievements = pgTable('user_achievements', {
   duelId: integer('duel_id').references(() => duels.id, { onDelete: 'set null' }),
 }, (t) => [
   primaryKey({ columns: [t.userId, t.achievementId] }),
+]);
+
+// Web-Push-Abos: eins je Gerät/Browser
+export const pushSubscriptions = pgTable('push_subscriptions', {
+  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  endpoint: text('endpoint').notNull().unique(),
+  p256dh: text('p256dh').notNull(),
+  auth: text('auth').notNull(),
+  erstelltAt: zeitstempel('erstellt_at').notNull().defaultNow(),
+}, (t) => [
+  index('push_subscriptions_user_idx').on(t.userId),
 ]);

@@ -44,7 +44,12 @@ export default defineConfig({
 				DATABASE_URL: testDb ?? '',
 				JWT_SECRET: 'e2e-secret-e2e-secret-e2e-secret-1234',
 				TRUST_PROXY: 'true',
-				NODE_ENV: 'test'
+				NODE_ENV: 'test',
+				// Web Push eingerichtet (nur für die Oberfläche; ohne Abo wird nichts verschickt).
+				// Reine Testschlüssel – in Produktion eigene erzeugen: bun run push:schluessel
+				VAPID_PUBLIC_KEY: 'BAF0hffujHfg4oyISju_tjbPZ0nX6CGYHuDNBwCz5_YvOM4iSbkI_nM8Z1WM3hVMYDK8ivI2Gz0RlvxQUNtIE8c',
+				VAPID_PRIVATE_KEY: 'WJKsrfl_-VAoMB6boMd_rLULHd5d1KvGdP8nzDMCm8M',
+				VAPID_SUBJECT: 'mailto:e2e@halmduell.invalid'
 			}
 		},
 		{

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Benachrichtigungs-Badge (Android-Statusleiste): nur Form zählt, einfarbig weiß auf transparent -->
+  <path d="M12 22V9" />
+  <path d="M12 9c-1.6-.6-2.5-2-2.5-3.6C11 5.8 12 7 12 9zm0 0c1.6-.6 2.5-2 2.5-3.6C13 5.8 12 7 12 9zM12 13c-1.8-.6-3-2-3-3.8 1.8.4 3 1.8 3 3.8zm0 0c1.8-.6 3-2 3-3.8-1.8.4-3 1.8-3 3.8zM12 17c-2-.6-3.3-2-3.3-4 2 .4 3.3 1.9 3.3 4zm0 0c2-.6 3.3-2 3.3-4-2 .4-3.3 1.9-3.3 4zM12 4.5V2" fill="#ffffff" />
+</svg>

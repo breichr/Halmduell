@@ -28,6 +28,10 @@ services:
       JWT_SECRET: nur-fuer-lokale-entwicklung-bitte-aendern-1234567890
       # Aufrufe kommen nur über den Web-Container, der X-Forwarded-For setzt
       TRUST_PROXY: "true"
+      # Web Push (optional): cd apps/api && bun run push:schluessel
+      # VAPID_PUBLIC_KEY: …
+      # VAPID_PRIVATE_KEY: …
+      # VAPID_SUBJECT: mailto:du@example.org
     ports:
       - "3000:3000"
     depends_on:

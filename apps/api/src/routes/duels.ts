@@ -1,12 +1,14 @@
 import { Hono } from 'hono';
 import { and, asc, desc, eq, inArray, isNotNull, isNull, or, sql } from 'drizzle-orm';
 import {
+  ANSTUPSEN_SPERRE_MS,
   ANTWORTZEIT_MS,
   FRAGEN_PRO_DUELL,
   antwortSchema,
   beitretenSchema,
   feldFehler,
   neuesDuellSchema,
+  type AnstupsenErgebnis,
   type AntwortErgebnis,
   type ApiFehler,
   type DuellDetails,
@@ -32,7 +34,9 @@ import {
   zugBis,
 } from '../services/duell';
 import { abzeichenAusDuell } from '../services/abzeichen';
+import { nachricht } from '../services/benachrichtigungen';
 import { beendeVorzeitig } from '../services/duell-ende';
+import { hatPushAbo, pushAktiv, spaeterSenden, type Versand } from '../services/push';
 import { werteDuell } from '../services/wertung';
 
 /** Toleranz für die Netzwerklaufzeit zwischen Anzeige der Frage und Eintreffen der Antwort */
@@ -54,6 +58,11 @@ async function ladeSpieler(tx: Tx | typeof db, ids: number[]): Promise<Map<numbe
   if (ids.length === 0) return new Map();
   const zeilen = await tx.select({ id: users.id, username: users.username }).from(users).where(inArray(users.id, ids));
   return new Map(zeilen.map((u) => [u.id, u]));
+}
+
+/** Ab wann wieder angestupst werden darf; null = sofort */
+function anstupsenAb(duel: Duell): Date | null {
+  return duel.angestupstAt ? new Date(duel.angestupstAt.getTime() + ANSTUPSEN_SPERRE_MS) : null;
 }
 
 function gegnerId(duel: Duell, userId: number): number | null {
@@ -236,6 +245,7 @@ duelsRoute.get('/:id', async (c) => {
   const details: DuellDetails = {
     ...baueUebersicht(duel, ich, gegner, antworten),
     neueAbzeichen: duel.gewertetAt ? await abzeichenAusDuell(db, ich, duel.id) : [],
+    anstupsenAb: istLaufend(duel) && gid !== null && istAmZug(duel, gid) ? (anstupsenAb(duel) ?? new Date()).toISOString() : null,
     fragen: fragen.map(({ reihenfolge, ...frage }) => {
       const meine = antworten.find((a) => a.userId === ich && a.questionId === frage.id);
       const seine = antworten.find((a) => a.userId === gid && a.questionId === frage.id);
@@ -320,8 +330,9 @@ duelsRoute.post('/:id/antwort', async (c) => {
   }
   const { frageId, antwortId } = eingabe.data;
   const ich = c.var.userId;
+  const benachrichtigen: Versand[] = [];
 
-  return db.transaction(async (tx) => {
+  const antwort = await db.transaction(async (tx) => {
     const geladen = await ladeEigenesDuell(tx, duelId, ich);
     if (!geladen.duel) return c.json(geladen.fehler, geladen.status);
     const duel = geladen.duel;
@@ -360,13 +371,21 @@ duelsRoute.post('/:id/antwort', async (c) => {
       status = 'wartet_b';
       // Bs Frist beginnt jetzt (bei offener Einladung erst mit dem Beitritt)
       await tx.update(duels).set({ status, zugSeit: jetzt }).where(eq(duels.id, duelId));
+      if (duel.spielerBId !== null) {
+        const ichName = (await ladeSpieler(tx, [ich])).get(ich)?.username ?? 'Dein Gegner';
+        benachrichtigen.push({ an: duel.spielerBId, nachricht: nachricht.herausgefordert(duelId, ichName, duel.kategorie) });
+      }
     } else if (rundeFertig && status === 'wartet_b') {
       status = 'abgeschlossen';
       const [abgeschlossen] = await tx.update(duels)
         .set({ status, abgeschlossenAt: jetzt })
         .where(eq(duels.id, duelId))
         .returning();
-      await werteDuell(tx, abgeschlossen!);
+      const { punkteA, punkteB } = await werteDuell(tx, abgeschlossen!);
+      // A erfährt das Ergebnis (B hat gerade selbst zu Ende gespielt)
+      const ichName = (await ladeSpieler(tx, [ich])).get(ich)?.username ?? 'Dein Gegner';
+      const ausgang = punkteA > punkteB ? 'sieg' : punkteA < punkteB ? 'niederlage' : 'unentschieden';
+      benachrichtigen.push({ an: duel.spielerAId, nachricht: nachricht.beendet(duelId, ichName, punkteA, punkteB, ausgang) });
     }
 
     const [frage] = await tx.select({ erklaerung: questions.erklaerung }).from(questions).where(eq(questions.id, frageId));
@@ -379,6 +398,8 @@ duelsRoute.post('/:id/antwort', async (c) => {
       status,
     } satisfies AntwortErgebnis);
   });
+  spaeterSenden(benachrichtigen);
+  return antwort;
 });
 
 // Aufgeben: der Gegner gewinnt; ohne Gegner (offene Einladung) wird das Duell abgebrochen
@@ -386,16 +407,51 @@ duelsRoute.post('/:id/aufgeben', async (c) => {
   const duelId = parseId(c.req.param('id'));
   if (duelId === null) return c.json(fehler('Ungültige Duell-ID'), 400);
   const ich = c.var.userId;
+  const benachrichtigen: Versand[] = [];
 
-  return db.transaction(async (tx) => {
+  const antwort = await db.transaction(async (tx) => {
     const geladen = await ladeEigenesDuell(tx, duelId, ich);
     if (!geladen.duel) return c.json(geladen.fehler, geladen.status);
     if (!istLaufend(geladen.duel)) return c.json(fehler('Das Duell ist bereits beendet'), 409);
 
     const beendet = await beendeVorzeitig(tx, geladen.duel, ich);
     const gid = gegnerId(beendet, ich);
-    const gegner = gid === null ? null : (await ladeSpieler(tx, [gid])).get(gid) ?? null;
+    const spieler = await ladeSpieler(tx, [ich, ...(gid === null ? [] : [gid])]);
+    const gegner = gid === null ? null : spieler.get(gid) ?? null;
+    if (gid !== null) {
+      benachrichtigen.push({ an: gid, nachricht: nachricht.aufgegeben(duelId, spieler.get(ich)?.username ?? 'Dein Gegner') });
+    }
     const antworten = await tx.select().from(duelAnswers).where(eq(duelAnswers.duelId, duelId));
     return c.json(baueUebersicht(beendet, ich, gegner, antworten) satisfies DuellUebersicht);
   });
+  spaeterSenden(benachrichtigen);
+  return antwort;
+});
+
+// Anstupsen: den Gegner, der am Zug ist, per Push erinnern (höchstens alle 12 Stunden)
+duelsRoute.post('/:id/anstupsen', async (c) => {
+  const duelId = parseId(c.req.param('id'));
+  if (duelId === null) return c.json(fehler('Ungültige Duell-ID'), 400);
+  const ich = c.var.userId;
+  const jetzt = new Date();
+
+  const ergebnis = await db.transaction(async (tx) => {
+    const geladen = await ladeEigenesDuell(tx, duelId, ich);
+    if (!geladen.duel) return { fehler: geladen.fehler, status: geladen.status };
+    const duel = geladen.duel;
+    const gid = gegnerId(duel, ich);
+    if (!istLaufend(duel) || gid === null || !istAmZug(duel, gid)) {
+      return { fehler: fehler('Anstupsen geht nur, solange dein Gegner am Zug ist'), status: 409 as const };
+    }
+    const ab = anstupsenAb(duel);
+    if (ab && ab > jetzt) return { fehler: fehler('Du hast gerade erst angestupst'), status: 429 as const };
+    await tx.update(duels).set({ angestupstAt: jetzt }).where(eq(duels.id, duelId));
+    const name = (await ladeSpieler(tx, [ich])).get(ich)?.username ?? 'Dein Gegner';
+    return { gid, name };
+  });
+  if ('fehler' in ergebnis) return c.json(ergebnis.fehler, ergebnis.status);
+
+  const zugestellt = pushAktiv() && await hatPushAbo(ergebnis.gid);
+  spaeterSenden([{ an: ergebnis.gid, nachricht: nachricht.angestupst(duelId, ergebnis.name) }]);
+  return c.json({ zugestellt, wiederAb: new Date(jetzt.getTime() + ANSTUPSEN_SPERRE_MS).toISOString() } satisfies AnstupsenErgebnis);
 });
