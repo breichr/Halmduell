@@ -302,8 +302,13 @@ Abzeichen, Fehler üben, Benachrichtigungen.
 
 ## Offene Punkte
 
-- Fragenkatalog füllen (`fragen/fragen.csv`, kuratiert): bisher 6
-  Beispielfragen – Kategorie-Duelle brauchen je ≥ 6 freigegebene Fragen
+- Fragenkatalog prüfen und freigeben (`fragen/fragen.csv`, kuratiert): 6
+  freigegebene Beispielfragen, dazu 100 Entwürfe (je 25 pro Kategorie,
+  `status` = `entwurf`) – nach Prüfung auf `freigegeben` setzen.
+  Kategorie-Duelle brauchen je ≥ 6 freigegebene Fragen; Bildfragen fehlen noch
+- Admin-Panel: Fragen im Browser prüfen, bearbeiten und freigeben (statt nur
+  per CSV), später auch eingereichte Community-Fragen moderieren; dazu eine
+  Admin-Rolle für Konten
 
 Bewusst später:
 
