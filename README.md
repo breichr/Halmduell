@@ -253,6 +253,14 @@ von `fragen/fragen.csv`.
 | `POST /api/admin/fragen` | neue Frage |
 | `POST /api/admin/fragen/:id/status` | `{ status }` freigeben, ablehnen, Entwurf |
 | `GET /api/admin/fragen.csv` | Export aller Fragen |
+| `POST /api/admin/commons` | `{ link }` zu einer Datei auf Wikimedia Commons → Bild-URL (1024 px), Urheber, Lizenz, Dateiseite |
+
+**Bildfragen:** Im Formular „Bildfrage“ anhaken und den Link zur Datei auf
+Wikimedia Commons einfügen (Dateiseite, Wikipedia-Medienansicht oder direkter
+Bildlink) – Bild-URL und „Urheber, Lizenz, Wikimedia Commons“ werden
+übernommen. Die Lizenz auf der verlinkten Dateiseite kurz prüfen. Die API
+braucht dafür Zugang zu `commons.wikimedia.org`, die Spieler laden das Bild von
+`upload.wikimedia.org`.
 
 ## Benachrichtigungen (Web Push)
 
