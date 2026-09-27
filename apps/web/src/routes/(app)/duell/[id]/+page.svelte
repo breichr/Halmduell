@@ -3,6 +3,7 @@
 	import { api, ApiError } from '$lib/api';
 	import EinladungTeilen from '$lib/components/EinladungTeilen.svelte';
 	import Ergebnissymbol from '$lib/components/Ergebnissymbol.svelte';
+	import Halmi from '$lib/components/Halmi.svelte';
 	import KategorieSymbol from '$lib/components/KategorieSymbol.svelte';
 	import { kategorieName, restzeit, vorzeichen } from '$lib/format';
 
@@ -23,6 +24,24 @@
 		return { art: 'neutral', titel: 'Unentschieden', text: 'Gleichstand – Revanche?' };
 	});
 
+	const pose = $derived(
+		ergebnis?.art === 'sieg' ? 'jubeln'
+		: ergebnis?.art === 'niederlage' ? 'traurig'
+		: ergebnis ? 'denken'
+		: duel.duBistDran ? 'winken'
+		: 'schlafen'
+	);
+	const titel = $derived(
+		ergebnis ? ergebnis.titel
+		: duel.duBistDran ? 'Du bist dran!'
+		: duel.gegner ? `${gegnerName} ist am Zug`
+		: 'Warte auf einen Gegner'
+	);
+
+	// B spielt nach A: solange das Duell läuft, hat der Gegner nur dann schon gespielt,
+	// wenn ich als B dran bin
+	const gegnerHatNichtGespielt = $derived(laufend && !(duel.status === 'wartet_b' && duel.duBistDran));
+
 	let fehler = $state('');
 	let aufgebenOffen = $state(false);
 
@@ -40,41 +59,42 @@
 
 <svelte:head><title>Duell gegen {gegnerName} – Halmduell</title></svelte:head>
 
-<a href="/" class="zurueck">← Übersicht</a>
+<div class="kopfzeile">
+	<a href="/" class="zurueck-knopf" aria-label="Zurück zur Übersicht">
+		<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6" /></svg>
+	</a>
+	<span class="kategorie"><KategorieSymbol kategorie={duel.kategorie} groesse={22} /> {kategorieName(duel.kategorie)}{duel.gegner ? ` · gegen ${duel.gegner.username}` : ''}</span>
+</div>
 
-<header class="kopf">
-	<div class="kategorie"><KategorieSymbol kategorie={duel.kategorie} groesse={22} /> {kategorieName(duel.kategorie)}</div>
-	<div class="spielstand" aria-label="Du {duel.meinePunkte}, {gegnerName} {duel.gegnerPunkte}">
-		<div class="spieler">
-			<span class="name">Du</span>
-			<span class="zahl" data-testid="meine-punkte">{duel.meinePunkte}</span>
-		</div>
-		<span class="trenner" aria-hidden="true">:</span>
-		<div class="spieler">
-			<span class="name">{duel.gegner?.username ?? 'Offen'}</span>
-			<span class="zahl">{duel.gegnerPunkte}</span>
-		</div>
-	</div>
-	{#if laufend && duel.zugBis}
-		<p class="hinweis frist">
-			{duel.duBistDran ? 'Du bist dran' : duel.gegner ? `${gegnerName} ist dran` : 'Wartet auf einen Gegner'} ·
-			{restzeit(duel.zugBis)}
+<header class="buehne {ergebnis?.art ?? (duel.duBistDran ? 'dran' : 'warten')}" data-testid={ergebnis ? 'ergebnis' : undefined}>
+	<Halmi {pose} groesse={120} />
+	<h1>{titel}</h1>
+	{#if ergebnis}
+		<p class="untertitel">
+			{ergebnis.text}
+			{#if duel.ratingAenderung !== null}<span class="rating">Rating {vorzeichen(duel.ratingAenderung)}</span>{/if}
+		</p>
+	{:else if laufend && duel.zugBis}
+		<p class="untertitel">
+			{duel.duBistDran ? 'Du bist dran' : duel.gegner ? `${gegnerName} ist dran` : 'Wartet auf einen Gegner'} · {restzeit(duel.zugBis)}
 		</p>
 	{/if}
 </header>
 
-{#if ergebnis}
-	<div class="ergebnis {ergebnis.art}" data-testid="ergebnis">
-		<strong>{ergebnis.titel}</strong>
-		<span>{ergebnis.text}</span>
-		{#if duel.ratingAenderung !== null}
-			<span class="rating">Rating {vorzeichen(duel.ratingAenderung)}</span>
-		{/if}
+<div class="spielstand" aria-label="Du {duel.meinePunkte}, {gegnerName} {duel.gegnerPunkte}">
+	<div class="spieler">
+		<span class="name">Du</span>
+		<span class="zahl" data-testid="meine-punkte">{duel.meinePunkte}</span>
 	</div>
-{/if}
+	<span class="trenner" aria-hidden="true">:</span>
+	<div class="spieler">
+		<span class="name">{duel.gegner?.username ?? 'Offen'}</span>
+		<span class="zahl gegner">{gegnerHatNichtGespielt ? '?' : duel.gegnerPunkte}</span>
+	</div>
+</div>
 
 {#if duel.duBistDran}
-	<a href="/duell/{duel.id}/spielen" class="knopf breit spielen">{angefangen ? 'Weiterspielen' : 'Runde spielen'}</a>
+	<a href="/duell/{duel.id}/spielen" class="knopf breit spielen" data-sveltekit-preload-data="off">{angefangen ? 'Weiterspielen' : 'Runde spielen'}</a>
 {/if}
 
 {#if duel.einladungsCode}
@@ -82,10 +102,10 @@
 {/if}
 
 <section>
-	<h2>Fragen</h2>
+	<h2 class="abschnitt-titel">Fragen</h2>
 	<ol class="fragen">
 		{#each duel.fragen as f (f.reihenfolge)}
-			<li class="karte frage">
+			<li class="frage">
 				{#if f.frage}
 					<details>
 						<summary>
@@ -119,15 +139,18 @@
 
 <div class="unten">
 	{#if !laufend && duel.gegner}
-		<a class="knopf breit" href="/duell/neu?gegner={encodeURIComponent(duel.gegner.username)}&kategorie={duel.kategorie}">Revanche</a>
+		<a class="knopf breit" href="/duell/neu?gegner={encodeURIComponent(duel.gegner.username)}&kategorie={duel.kategorie}">Revanche!</a>
+	{/if}
+	{#if laufend && !duel.duBistDran}
+		<a class="knopf sonne breit" href="/duell/neu">Währenddessen: neues Duell</a>
 	{/if}
 	{#if laufend}
 		{#if aufgebenOffen}
 			<div class="karte bestaetigen" role="alertdialog" aria-labelledby="aufgeben-titel">
 				<p id="aufgeben-titel"><strong>Wirklich aufgeben?</strong> {duel.gegner ? `${gegnerName} gewinnt dann das Duell.` : 'Die Einladung wird zurückgezogen.'}</p>
 				<div class="aktionen">
-					<button class="knopf zweitrangig" onclick={() => (aufgebenOffen = false)}>Abbrechen</button>
-					<button class="knopf gefahr" onclick={aufgeben}>Aufgeben</button>
+					<button class="knopf zweitrangig klein" onclick={() => (aufgebenOffen = false)}>Abbrechen</button>
+					<button class="knopf gefahr klein" onclick={aufgeben}>Aufgeben</button>
 				</div>
 			</div>
 		{:else}
@@ -138,28 +161,63 @@
 </div>
 
 <style>
-	.zurueck {
-		display: inline-block;
-		margin-bottom: 0.5rem;
-		text-decoration: none;
-	}
-	.kopf {
-		text-align: center;
-		margin-bottom: 1rem;
-	}
 	.kategorie {
 		display: inline-flex;
 		align-items: center;
 		gap: 0.35rem;
-		color: var(--gruen);
-		font-weight: 600;
+		font-weight: 800;
+		min-width: 0;
+	}
+	.buehne {
+		display: grid;
+		justify-items: center;
+		text-align: center;
+		gap: 0.2rem;
+		padding: 0.8rem 1rem 1rem;
+		border: 3px solid var(--kontur);
+		border-radius: var(--radius);
+		background: var(--himmel);
+	}
+	.buehne.sieg {
+		background: var(--richtig-hell);
+	}
+	.buehne.niederlage {
+		background: var(--falsch-hell);
+	}
+	.buehne.warten {
+		background: var(--nacht);
+	}
+	.buehne.dran {
+		background: var(--sonne-hell);
+	}
+	.buehne h1 {
+		margin: 0.2rem 0 0;
+		font-size: 2.2rem;
+	}
+	.untertitel {
+		margin: 0;
+		display: grid;
+		gap: 0.2rem;
+		font-weight: 800;
+	}
+	.rating {
+		justify-self: center;
+		padding: 0.15rem 0.7rem;
+		border-radius: 999px;
+		background: var(--sonne);
+		color: #2a1c14;
+		border: 2px solid var(--kontur);
 	}
 	.spielstand {
 		display: flex;
-		justify-content: center;
-		align-items: flex-end;
-		gap: 1.25rem;
-		margin: 0.5rem 0;
+		justify-content: space-around;
+		align-items: center;
+		margin: 0.9rem 0;
+		padding: 0.6rem 1rem;
+		background: var(--flaeche);
+		border: 3px solid var(--kontur);
+		border-bottom-width: 6px;
+		border-radius: var(--radius);
 	}
 	.spieler {
 		display: grid;
@@ -167,62 +225,32 @@
 		min-width: 5rem;
 	}
 	.spieler .name {
-		color: var(--text-2);
-		font-weight: 500;
+		font-weight: 800;
 		max-width: 9rem;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
 	.zahl {
-		font-size: 3rem;
+		font-family: var(--schrift-titel);
+		font-size: 3.2rem;
 		font-weight: 800;
 		line-height: 1;
 		font-variant-numeric: tabular-nums;
 	}
-	.trenner {
-		font-size: 2.2rem;
-		font-weight: 700;
+	.zahl.gegner {
 		color: var(--text-2);
-		padding-bottom: 0.2rem;
 	}
-	.frist {
-		margin: 0;
-	}
-	.ergebnis {
-		display: grid;
-		justify-items: center;
-		gap: 0.15rem;
-		text-align: center;
-		padding: 1rem;
-		border-radius: var(--radius);
-		margin-bottom: 1rem;
-		background: var(--flaeche-2);
-	}
-	.ergebnis strong {
-		font-size: 1.4rem;
-	}
-	.ergebnis.sieg {
-		background: var(--richtig-hell);
-		color: var(--richtig);
-	}
-	.ergebnis.niederlage {
-		background: var(--falsch-hell);
-		color: var(--falsch);
-	}
-	.ergebnis span {
-		color: var(--text);
-	}
-	.ergebnis .rating {
-		font-weight: 700;
+	.trenner {
+		font-family: var(--schrift-titel);
+		font-size: 2rem;
+		font-weight: 800;
+		color: var(--text-2);
 	}
 	.spielen {
 		margin-bottom: 1rem;
-		font-size: 1.1rem;
-		min-height: 56px;
-	}
-	section {
-		margin-top: 1.5rem;
+		min-height: 60px;
+		font-size: 1.35rem;
 	}
 	.fragen {
 		list-style: none;
@@ -232,15 +260,17 @@
 		gap: 0.5rem;
 	}
 	.frage {
-		padding: 0;
+		background: var(--flaeche);
+		border: 2px solid var(--kante);
+		border-radius: 16px;
 	}
 	summary,
 	.zeile {
 		display: grid;
 		grid-template-columns: auto 1fr auto;
 		align-items: center;
-		gap: 0.75rem;
-		padding: 0.7rem 0.9rem;
+		gap: 0.7rem;
+		padding: 0.6rem 0.8rem;
 		min-height: 56px;
 	}
 	summary {
@@ -253,16 +283,17 @@
 	.nr {
 		display: grid;
 		place-items: center;
-		width: 1.6rem;
-		height: 1.6rem;
+		width: 1.7rem;
+		height: 1.7rem;
 		border-radius: 50%;
 		background: var(--flaeche-2);
-		font-size: 0.85rem;
-		font-weight: 700;
+		font-family: var(--schrift-titel);
+		font-weight: 800;
 		color: var(--text-2);
 	}
 	.text {
 		font-size: 0.95rem;
+		font-weight: 800;
 		overflow: hidden;
 		display: -webkit-box;
 		-webkit-line-clamp: 2;
@@ -274,6 +305,7 @@
 	}
 	.verdeckt {
 		color: var(--text-2);
+		font-weight: 600;
 		font-style: italic;
 	}
 	.symbole {
@@ -281,7 +313,7 @@
 		gap: 0.3rem;
 	}
 	.details {
-		padding: 0 0.9rem 0.9rem 3.25rem;
+		padding: 0 0.8rem 0.8rem 3.2rem;
 		display: grid;
 		gap: 0.4rem;
 	}
@@ -291,6 +323,7 @@
 	.details img {
 		max-width: 100%;
 		border-radius: var(--radius-klein);
+		border: 2px solid var(--kante);
 	}
 	.quelle {
 		font-size: 0.8rem;
@@ -302,7 +335,7 @@
 	}
 	.unten {
 		display: grid;
-		gap: 0.6rem;
+		gap: 0.7rem;
 		margin-top: 1.5rem;
 	}
 	.bestaetigen {

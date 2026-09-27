@@ -4,10 +4,20 @@ PWA-Quizduell-Spiel mit landwirtschaftlichen Fragen – Wissensfragen und
 Bilderkennung (Kulturen, Krankheiten, Schädlinge). Spielprinzip angelehnt an
 Quizduell: asynchrones 1v1, 6 Fragen pro Runde, danach Frage-für-Frage-Vergleich.
 
-## Maskottchen
+## Maskottchen und Design
 
-Ein grüner Grashüpfer/Heuschrecke, sitzt auf einem Getreidehalm (Wortspiel:
-"Halm" + "Duell"), hält für Bilderkennungs-Fragen optional eine Lupe.
+**Halmi**, ein grüner Grashüpfer auf einem Getreidehalm (Wortspiel:
+"Halm" + "Duell"). Er ist als Svelte-Komponente umgesetzt
+(`apps/web/src/lib/components/Halmi.svelte`) mit sechs Posen: `winken`,
+`lupe` (Bildfragen), `jubeln` (richtig, Sieg), `traurig` (falsch, Niederlage),
+`schlafen` (Gegner am Zug), `denken` (neues Duell, leere Listen). Die Zeichnung
+ist ein Entwurf – eine finale Illustration ersetzt nur diese eine Datei.
+
+Design „Heuschreck“: verspielt, dicke Konturen, „drückbare“ Knöpfe,
+Himmel-und-Wiesen-Landschaft, Schriften Baloo 2 + Nunito (selbst gehostet,
+nur lateinisch, 3 Schnitte ≈ 60 KB). Farben und Hell/Dunkel stehen als Tokens in
+`apps/web/src/app.css`. Antwortkacheln unterscheiden sich zusätzlich zur Farbe
+durch Formen (Kreis, Dreieck, Quadrat, Raute).
 
 ## Dokumente
 

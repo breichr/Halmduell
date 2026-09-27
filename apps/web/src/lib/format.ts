@@ -30,3 +30,12 @@ function startDesTages(d: Date): number {
 export function vorzeichen(zahl: number): string {
 	return zahl > 0 ? `+${zahl}` : String(zahl);
 }
+
+/** Kachelfarbe je Kategorie (Text darauf immer dunkel) */
+export const KATEGORIE_FARBE: Record<DuellKategorie, string> = {
+	kulturen: 'var(--hellgruen)',
+	schaedlinge: 'var(--orange)',
+	krankheiten: 'var(--blau)',
+	wissen: 'var(--sonne)',
+	gemischt: '#ffffff'
+};

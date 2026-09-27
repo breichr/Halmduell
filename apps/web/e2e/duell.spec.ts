@@ -3,6 +3,9 @@ import { expect, test, type Page } from '@playwright/test';
 const PASSWORT = 'geheim123';
 
 async function registrieren(seite: Page, username: string) {
+	// nach Klick auf einen Link erst die neue Seite abwarten (die Anmeldeseite hat auch ein Benutzername-Feld)
+	await expect(seite).toHaveURL(/\/registrieren/);
+	await expect(seite.getByRole('heading', { name: 'Konto erstellen' })).toBeVisible();
 	await seite.getByLabel('Benutzername').fill(username);
 	await seite.getByLabel('Passwort').fill(PASSWORT);
 	await seite.getByRole('button', { name: 'Konto erstellen' }).click();
@@ -38,9 +41,9 @@ test('zwei Spieler: Einladung per Link, beide spielen, Ergebnis', async ({ brows
 	await expect(anna.getByText('Noch keine Duelle.')).toBeVisible();
 
 	// Neues Duell mit Einladungslink
-	await anna.getByRole('link', { name: /Neues Duell/ }).click();
+	await anna.getByRole('link', { name: /Neues Duell starten/ }).click();
 	await anna.getByRole('radio', { name: 'Gemischt' }).check();
-	await anna.getByRole('button', { name: 'Duell starten' }).click();
+	await anna.getByRole('button', { name: 'Link erstellen & losspielen' }).click();
 	const link = await anna.getByTestId('einladungslink').textContent();
 	expect(link).toMatch(/\/einladung\/[A-Z2-9]{8}$/);
 
@@ -107,7 +110,7 @@ test('Anmelden, Timer läuft ab, Aufgeben', async ({ page, browser }) => {
 	await page.goto('/duell/neu');
 	await page.getByRole('radio', { name: /^Benutzername/ }).check();
 	await page.getByLabel('Benutzername des Gegners').fill(`gegner_${lauf}`);
-	await page.getByRole('button', { name: 'Duell starten' }).click();
+	await page.getByRole('button', { name: 'Herausfordern' }).click();
 	await page.getByRole('link', { name: 'Runde spielen' }).click();
 	await expect(page.getByRole('timer')).toBeVisible();
 	await page.clock.runFor(16_000);

@@ -85,6 +85,13 @@
 {/if}
 
 <style>
+	section {
+		text-align: center;
+	}
+	section h1 {
+		font-size: 1.6rem;
+		margin: 0 0 0.2rem;
+	}
 	section p {
 		margin: 0;
 	}

@@ -4,6 +4,7 @@
 	import { api, ApiError } from '$lib/api';
 	import { hydriert } from '$lib/hydriert.svelte';
 	import Feld from '$lib/components/Feld.svelte';
+	import Halmi from '$lib/components/Halmi.svelte';
 	import Wiederherstellungscode from '$lib/components/Wiederherstellungscode.svelte';
 
 	const js = hydriert();
@@ -60,9 +61,14 @@
 
 <svelte:head><title>Profil – Halmduell</title></svelte:head>
 
-<a href="/" class="zurueck">← Übersicht</a>
-<h1>{data.user.username}</h1>
-<p class="hinweis">Saison {saisonBezeichnung(aktuelleSaison())}</p>
+<header class="kopf">
+	<span class="avatar" aria-hidden="true">{data.user.username.slice(0, 1).toUpperCase()}</span>
+	<div>
+		<h1>{data.user.username}</h1>
+		<p class="hinweis">Saison {saisonBezeichnung(aktuelleSaison())}</p>
+	</div>
+	<span class="halmi"><Halmi pose="winken" groesse={76} halm={false} /></span>
+</header>
 
 <section class="karte">
 	<h2>Passwort ändern</h2>
@@ -95,33 +101,52 @@
 </section>
 
 <style>
-	.zurueck {
-		display: inline-block;
-		margin-bottom: 0.5rem;
-		text-decoration: none;
+	.kopf {
+		display: flex;
+		align-items: center;
+		gap: 0.9rem;
+		padding-top: 1rem;
 	}
-	h1 + .hinweis {
-		margin-top: -0.3rem;
+	.kopf > div {
+		flex: 1;
+		min-width: 0;
+	}
+	.kopf h1 {
+		margin: 0;
+		overflow-wrap: anywhere;
+	}
+	.kopf .hinweis {
+		margin: 0;
+	}
+	.avatar {
+		flex: none;
+		display: grid;
+		place-items: center;
+		width: 72px;
+		height: 72px;
+		border-radius: 50%;
+		background: var(--sonne);
+		color: #2a1c14;
+		border: 4px solid var(--kontur);
+		box-shadow: 0 0 0 4px var(--grund), 0 0 0 7px var(--gruen);
+		font-family: var(--schrift-titel);
+		font-size: 2rem;
+		font-weight: 800;
+	}
+	.halmi {
+		align-self: flex-end;
 	}
 	section {
-		margin-top: 1.25rem;
+		margin-top: 1.1rem;
 	}
 	.karte h2 {
-		margin-bottom: 0.8rem;
+		margin-bottom: 0.7rem;
 	}
 	.karte > .hinweis {
 		margin-top: 0;
 	}
-	.erfolg {
-		background: var(--richtig-hell);
-		color: var(--richtig);
-		border-radius: var(--radius-klein);
-		padding: 0.7em 0.9em;
-		margin: 0;
-		font-weight: 500;
-	}
 	.abmelden {
 		display: grid;
-		gap: 0.6rem;
+		gap: 0.7rem;
 	}
 </style>

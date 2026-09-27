@@ -40,17 +40,27 @@
 	.einladung {
 		display: grid;
 		gap: 0.7rem;
-		background: var(--weizen-hell);
-		box-shadow: none;
-		border: 1.5px dashed var(--weizen);
+		margin-bottom: 1rem;
+		background: var(--sonne);
+		color: #2a1c14;
+		border-color: var(--kontur);
+		border-bottom-width: 6px;
 	}
 	h2,
 	p {
 		margin: 0;
 	}
+	.hinweis {
+		color: #4a3a30;
+	}
 	.link {
 		font-family: ui-monospace, Menlo, monospace;
-		font-size: 0.9rem;
+		font-size: 0.85rem;
+		font-weight: 700;
+		padding: 0.5rem 0.7rem;
+		background: #ffffff;
+		border: 2px dashed #2a1c14;
+		border-radius: 12px;
 		word-break: break-all;
 		user-select: all;
 	}

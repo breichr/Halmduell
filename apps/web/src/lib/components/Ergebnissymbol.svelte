@@ -10,7 +10,7 @@
 </script>
 
 <span class="symbol {art}" title={text}>
-	<span aria-hidden="true">{art === 'richtig' ? '✓' : art === 'falsch' ? '✗' : '·'}</span>
+	<span aria-hidden="true">{art === 'richtig' ? '✓' : art === 'falsch' ? '✗' : '?'}</span>
 	<span class="nur-screenreader">{text}</span>
 </span>
 
@@ -21,19 +21,23 @@
 		width: 2rem;
 		height: 2rem;
 		border-radius: 50%;
+		border: 2px solid var(--kante);
 		font-weight: 800;
 		font-size: 1rem;
 	}
 	.richtig {
-		background: var(--richtig-hell);
-		color: var(--richtig);
+		background: #2f7d3b;
+		border-color: #2a1c14;
+		color: #ffffff;
 	}
 	.falsch {
-		background: var(--falsch-hell);
-		color: var(--falsch);
+		background: var(--falsch-akzent);
+		border-color: #2a1c14;
+		color: #ffffff;
 	}
 	.offen {
-		background: var(--flaeche-2);
+		background: var(--flaeche);
+		border-style: dashed;
 		color: var(--text-2);
 	}
 </style>

@@ -68,20 +68,17 @@
 		display: grid;
 		grid-template-columns: auto 1fr auto;
 		align-items: center;
-		gap: 0.85rem;
+		gap: 0.8rem;
 		color: var(--text);
 		text-decoration: none;
-		padding: 0.9rem 1rem;
-		border: 2px solid transparent;
-		transition: border-color 0.15s;
-	}
-	@media (hover: hover) {
-		.duell:hover {
-			border-color: var(--linie);
-		}
+		font-weight: 600;
+		padding: 0.7rem 0.9rem;
+		border-width: 2px;
+		border-radius: 16px;
 	}
 	.dran {
 		border-color: var(--gruen);
+		border-width: 3px;
 	}
 	.avatar {
 		display: grid;
@@ -89,21 +86,21 @@
 		width: 2.6rem;
 		height: 2.6rem;
 		border-radius: 50%;
-		background: var(--gruen-hell);
-		color: var(--gruen);
-		font-weight: 700;
-		font-size: 1.1rem;
+		background: var(--himmel);
+		border: 2px solid var(--kante);
+		font-family: var(--schrift-titel);
+		font-weight: 800;
+		font-size: 1.15rem;
 	}
 	.avatar.offen {
-		background: var(--weizen-hell);
-		color: var(--weizen);
+		background: var(--sonne-hell);
 	}
 	.mitte {
 		display: grid;
 		min-width: 0;
 	}
 	.gegner {
-		font-weight: 650;
+		font-weight: 800;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
@@ -114,28 +111,31 @@
 		color: var(--text-2);
 	}
 	.dran .status {
-		color: var(--gruen);
-		font-weight: 600;
+		color: var(--gruen-dunkel);
+		font-weight: 800;
 	}
 	.status.sieg {
 		color: var(--richtig);
-		font-weight: 600;
+		font-weight: 800;
 	}
 	.status.niederlage {
 		color: var(--falsch);
+		font-weight: 800;
 	}
 	.rechts {
 		display: grid;
 		justify-items: end;
 	}
 	.punkte {
-		font-size: 1.25rem;
-		font-weight: 700;
+		font-family: var(--schrift-titel);
+		font-size: 1.4rem;
+		font-weight: 800;
 		font-variant-numeric: tabular-nums;
+		line-height: 1.1;
 	}
 	.rating {
 		font-size: 0.85rem;
-		font-weight: 600;
+		font-weight: 800;
 		color: var(--text-2);
 	}
 	.rating.plus {

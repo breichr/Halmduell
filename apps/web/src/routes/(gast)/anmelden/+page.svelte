@@ -34,10 +34,7 @@
 
 <svelte:head><title>Anmelden – Halmduell</title></svelte:head>
 
-<section class="intro">
-	<h1>Willkommen zurück</h1>
-	<p class="hinweis">Fordere Freunde zum Agrar-Quiz heraus – Kulturen, Schädlinge, Krankheiten und Fachwissen.</p>
-</section>
+<h1 class="titel">Willkommen zurück!</h1>
 
 <form method="post" class="karte formular" onsubmit={anmelden}>
 	{#if fehler}<p class="fehlermeldung" role="alert">{fehler}</p>{/if}
@@ -47,14 +44,18 @@
 	<a href={mitWeiter('/passwort-vergessen')} class="vergessen">Passwort vergessen?</a>
 </form>
 
-<p class="unten">Neu hier? <a href={mitWeiter('/registrieren')}>Konto erstellen</a></p>
+<a class="knopf sonne breit" href={mitWeiter('/registrieren')}>Neu hier? Konto erstellen</a>
 
 <style>
-	.intro p {
+	.titel {
 		margin: 0;
+		text-align: center;
+		font-size: 1.6rem;
 	}
 	.vergessen {
 		justify-self: center;
-		font-size: 0.95rem;
+		min-height: 44px;
+		display: flex;
+		align-items: center;
 	}
 </style>

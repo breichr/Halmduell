@@ -31,8 +31,8 @@
 	</p>
 	<p class="code" data-testid="wiederherstellungscode">{code}</p>
 	<div class="aktionen">
-		<button type="button" class="knopf zweitrangig" onclick={kopieren}>{kopiert ? 'Kopiert ✓' : 'Kopieren'}</button>
-		<button type="button" class="knopf zweitrangig" onclick={herunterladen}>Als Datei speichern</button>
+		<button type="button" class="knopf zweitrangig klein" onclick={kopieren}>{kopiert ? 'Kopiert ✓' : 'Kopieren'}</button>
+		<button type="button" class="knopf zweitrangig klein" onclick={herunterladen}>Als Datei speichern</button>
 	</div>
 	<label class="bestaetigung">
 		<input type="checkbox" bind:checked={bestaetigt} />
@@ -45,18 +45,21 @@
 	.code-karte {
 		display: grid;
 		gap: 0.9rem;
+		border-bottom-width: 6px;
 	}
+	.code-karte h2,
 	.code-karte p {
 		margin: 0;
 	}
 	.code {
 		font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
 		font-size: 1.15rem;
+		font-weight: 700;
 		letter-spacing: 0.04em;
 		text-align: center;
 		padding: 0.9rem;
-		background: var(--weizen-hell);
-		border: 1.5px dashed var(--weizen);
+		background: var(--sonne-hell);
+		border: 3px dashed var(--kante);
 		border-radius: var(--radius-klein);
 		user-select: all;
 		word-break: break-all;
@@ -71,11 +74,11 @@
 		align-items: center;
 		gap: 0.6rem;
 		min-height: 44px;
-		font-weight: 500;
+		font-weight: 800;
 	}
 	.bestaetigung input {
-		width: 1.3rem;
-		height: 1.3rem;
+		width: 1.4rem;
+		height: 1.4rem;
 		accent-color: var(--gruen);
 	}
 </style>

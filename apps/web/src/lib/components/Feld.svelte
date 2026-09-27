@@ -34,22 +34,28 @@
 		gap: 0.3rem;
 	}
 	label {
-		font-weight: 600;
+		font-weight: 800;
 		font-size: 0.95rem;
 	}
 	input {
 		font: inherit;
-		min-height: 48px;
-		padding: 0.6em 0.8em;
-		border: 1.5px solid var(--linie);
+		font-weight: 800;
+		font-size: 1.05rem;
+		min-height: 52px;
+		padding: 0.5em 0.9em;
+		border: 3px solid var(--kante);
 		border-radius: var(--radius-klein);
-		background: var(--flaeche);
+		background: var(--grund);
 		color: var(--text);
 	}
+	input::placeholder {
+		color: var(--text-2);
+		font-weight: 600;
+	}
 	input:focus {
-		border-color: var(--gruen);
 		outline: none;
-		box-shadow: 0 0 0 3px var(--gruen-hell);
+		border-color: var(--gruen);
+		box-shadow: 0 0 0 4px var(--gruen-hell);
 	}
 	input[aria-invalid] {
 		border-color: var(--falsch);
@@ -60,5 +66,6 @@
 	}
 	.fehler {
 		color: var(--falsch);
+		font-weight: 800;
 	}
 </style>

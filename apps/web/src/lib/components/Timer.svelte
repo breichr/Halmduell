@@ -1,7 +1,7 @@
 <script lang="ts">
 	let { restMs, gesamtMs }: { restMs: number; gesamtMs: number } = $props();
 
-	const RADIUS = 20;
+	const RADIUS = 21;
 	const UMFANG = 2 * Math.PI * RADIUS;
 	const anteil = $derived(Math.max(0, Math.min(1, restMs / gesamtMs)));
 	const sekunden = $derived(Math.ceil(restMs / 1000));
@@ -9,9 +9,9 @@
 </script>
 
 <div class="timer" class:knapp role="timer" aria-label="Noch {sekunden} Sekunden">
-	<svg viewBox="0 0 48 48" aria-hidden="true">
-		<circle cx="24" cy="24" r={RADIUS} class="spur" />
-		<circle cx="24" cy="24" r={RADIUS} class="rest" stroke-dasharray={UMFANG} stroke-dashoffset={UMFANG * (1 - anteil)} />
+	<svg viewBox="0 0 54 54" aria-hidden="true">
+		<circle cx="27" cy="27" r="25" class="rand" />
+		<circle cx="27" cy="27" r={RADIUS} class="rest" stroke-dasharray={UMFANG} stroke-dashoffset={UMFANG * (1 - anteil)} />
 	</svg>
 	<span aria-hidden="true">{sekunden}</span>
 </div>
@@ -19,34 +19,44 @@
 <style>
 	.timer {
 		position: relative;
-		width: 3.2rem;
-		height: 3.2rem;
+		width: 58px;
+		height: 58px;
 		display: grid;
 		place-items: center;
+		font-family: var(--schrift-titel);
 		font-weight: 800;
 		font-variant-numeric: tabular-nums;
-		font-size: 1.1rem;
+		font-size: 1.45rem;
+		color: #2a1c14;
 	}
 	svg {
 		position: absolute;
 		inset: 0;
 		transform: rotate(-90deg);
 	}
-	circle {
-		fill: none;
-		stroke-width: 4;
+	span {
+		position: relative;
 	}
-	.spur {
-		stroke: var(--flaeche-2);
+	.rand {
+		fill: #ffffff;
+		stroke: var(--kontur);
+		stroke-width: 3;
 	}
 	.rest {
-		stroke: var(--gruen);
+		fill: none;
+		stroke: var(--wiese);
+		stroke-width: 5;
 		stroke-linecap: round;
 	}
 	.knapp {
-		color: var(--falsch);
+		animation: puls 1s ease-in-out infinite;
 	}
 	.knapp .rest {
-		stroke: var(--falsch);
+		stroke: var(--falsch-akzent);
+	}
+	@keyframes puls {
+		50% {
+			transform: scale(1.08);
+		}
 	}
 </style>
