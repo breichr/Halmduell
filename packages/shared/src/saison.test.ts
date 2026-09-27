@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { aktuelleSaison, saisonBezeichnung } from './saison';
+import { aktuelleSaison, saisonBeginn, saisonBezeichnung, saisonEnde } from './saison';
 
 test('Saisons sind Kalenderquartale ab Q1 2026', () => {
   expect(aktuelleSaison(new Date('2026-02-15T12:00:00Z'))).toBe(1);
@@ -29,5 +29,16 @@ test('saisonBezeichnung', () => {
     const datum = new Date(`${d}T12:00:00Z`);
     const q = Math.floor(datum.getUTCMonth() / 3) + 1;
     expect(saisonBezeichnung(aktuelleSaison(datum))).toBe(`Q${q} ${datum.getUTCFullYear()}`);
+  }
+});
+
+test('saisonBeginn/saisonEnde liegen auf Mitternacht deutscher Zeit', () => {
+  expect(saisonBeginn(1).toISOString()).toBe('2025-12-31T23:00:00.000Z'); // MEZ
+  expect(saisonBeginn(2).toISOString()).toBe('2026-03-31T22:00:00.000Z'); // MESZ
+  expect(saisonEnde(3).toISOString()).toBe('2026-09-30T22:00:00.000Z');
+  expect(saisonEnde(4).toISOString()).toBe('2026-12-31T23:00:00.000Z');
+  for (let s = 1; s <= 40; s++) {
+    expect(aktuelleSaison(saisonBeginn(s))).toBe(s);
+    expect(aktuelleSaison(new Date(saisonEnde(s).getTime() - 1))).toBe(s);
   }
 });
