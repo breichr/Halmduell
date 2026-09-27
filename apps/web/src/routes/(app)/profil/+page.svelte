@@ -4,6 +4,7 @@
 	import { api, ApiError } from '$lib/api';
 	import { hydriert } from '$lib/hydriert.svelte';
 	import Feld from '$lib/components/Feld.svelte';
+	import AppInstallieren from '$lib/components/AppInstallieren.svelte';
 	import Halmi from '$lib/components/Halmi.svelte';
 	import Wiederherstellungscode from '$lib/components/Wiederherstellungscode.svelte';
 
@@ -95,6 +96,8 @@
 	{/if}
 </section>
 
+<div class="installieren"><AppInstallieren /></div>
+
 <section class="abmelden">
 	<button class="knopf zweitrangig breit" onclick={() => abmelden(false)}>Abmelden</button>
 	<button class="knopf gefahr breit" onclick={() => abmelden(true)}>Auf allen Geräten abmelden</button>
@@ -144,6 +147,9 @@
 	}
 	.karte > .hinweis {
 		margin-top: 0;
+	}
+	.installieren {
+		margin-top: 1.1rem;
 	}
 	.abmelden {
 		display: grid;

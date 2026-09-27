@@ -1,5 +1,7 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { aktuelleSaison, saisonBezeichnung } from '@halmduell/shared';
+	import AppInstallieren from '$lib/components/AppInstallieren.svelte';
 	import DuellKarte from '$lib/components/DuellKarte.svelte';
 	import Halmi from '$lib/components/Halmi.svelte';
 	import KategorieSymbol from '$lib/components/KategorieSymbol.svelte';
@@ -8,6 +10,25 @@
 	import { kategorieName, restzeit } from '$lib/format';
 
 	let { data } = $props();
+
+	// Installationshinweis auf der Übersicht ist ausblendbar (bleibt im Profil verfügbar)
+	const HINWEIS_AUS = 'halmduell:installhinweis-aus';
+	let installHinweis = $state(false);
+	onMount(() => {
+		try {
+			installHinweis = localStorage.getItem(HINWEIS_AUS) !== '1';
+		} catch {
+			installHinweis = true;
+		}
+	});
+	function hinweisAusblenden() {
+		installHinweis = false;
+		try {
+			localStorage.setItem(HINWEIS_AUS, '1');
+		} catch {
+			// privater Modus o. Ä. – dann eben nur für diese Sitzung
+		}
+	}
 
 	const dran = $derived(data.duelle.filter((d) => d.duBistDran));
 	const wartend = $derived(data.duelle.filter((d) => !d.duBistDran && (d.status === 'wartet_a' || d.status === 'wartet_b')));
@@ -64,6 +85,10 @@
 {/each}
 
 <a href="/duell/neu" class="knopf sonne breit neu">＋ Neues Duell starten</a>
+
+{#if installHinweis}
+	<AppInstallieren schliessbar onschliessen={hinweisAusblenden} />
+{/if}
 
 {#if data.duelle.length === 0}
 	<div class="karte leer">

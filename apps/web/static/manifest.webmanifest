@@ -1,0 +1,29 @@
+{
+	"name": "Halmduell – das Agrar-Quiz",
+	"short_name": "Halmduell",
+	"description": "Quizduell für die Landwirtschaft: Kulturen, Schädlinge, Krankheiten und Fachwissen – gegen Freunde.",
+	"lang": "de",
+	"dir": "ltr",
+	"id": "/",
+	"start_url": "/",
+	"scope": "/",
+	"display": "standalone",
+	"orientation": "portrait",
+	"background_color": "#FFF8EA",
+	"theme_color": "#CFE9FF",
+	"categories": ["games", "education"],
+	"icons": [
+		{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+		{ "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+		{ "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+		{ "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+	],
+	"shortcuts": [
+		{
+			"name": "Neues Duell",
+			"short_name": "Neues Duell",
+			"url": "/duell/neu",
+			"icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+		}
+	]
+}

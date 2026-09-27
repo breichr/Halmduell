@@ -8,7 +8,7 @@
 | Runtime | Bun | schnell, natives TypeScript ohne Build-Schritt |
 | Backend/API | Hono.js | modern, minimal, TypeScript-first, läuft auf Bun |
 | ORM/DB | Drizzle ORM + PostgreSQL | typsicher, kein separater Codegen-Schritt |
-| PWA-Tooling | vite-plugin-pwa | Standard für Svelte/Vite, Service Worker + Manifest |
+| PWA | SvelteKit-eigener Service Worker (`src/service-worker.ts`) + statisches Manifest | kein Zusatz-Plugin; kennt die gebauten Dateien direkt |
 | Auth | JWT im httpOnly-Cookie (hono/jwt), Passwörter mit argon2id (Bun.password) | leichtgewichtig, kein Vendor-Lock-in |
 | Notifications | Web Push | reicht für asynchrones Spiel, kein WebSocket-Server nötig |
 | Bilder-Storage | Wikimedia-Referenzen (extern), später ggf. MinIO für Community-Uploads | spart initialen Storage-Aufwand |
@@ -40,9 +40,9 @@ halmduell/
 │   │   │   │   └── api.ts             # Fetch-Wrapper für Hono-Backend
 │   │   │   └── app.html
 │   │   ├── static/
-│   │   │   ├── manifest.json           # PWA-Manifest
+│   │   │   ├── manifest.webmanifest    # PWA-Manifest (+ icons/, offline.html)
 │   │   │   └── icons/
-│   │   └── vite.config.ts              # inkl. vite-plugin-pwa
+│   │   └── vite.config.ts              # SvelteKit (Service Worker: src/service-worker.ts)
 │   │
 │   └── api/                      # Hono-Backend
 │       ├── src/
@@ -93,4 +93,4 @@ kein CORS. Details und Umgebungsvariablen: README, Abschnitt „Deployment“.
 5. ~~Frontend-Screens gemäß `konzept.md` (Dashboard, Frage-Screen,
    Ergebnisvergleich) aufbauen~~ ✓ (Rangliste, Freunde, Statistik und
    Abzeichen folgen mit ihren API-Endpunkten)
-6. PWA-Manifest + Service Worker einrichten
+6. ~~PWA-Manifest + Service Worker einrichten~~ ✓

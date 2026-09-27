@@ -117,6 +117,27 @@ deutscher Zeit; Saison 1 = Q1 2026. `saisonBezeichnung()` in
 (über alle Saisons gezählt), danach 20.
 Request- und Response-Typen liegen in `packages/shared/src/duell.ts`.
 
+## App & offline (PWA)
+
+Halmduell lässt sich wie eine App installieren (Android/Chrome: Knopf
+„Installieren“ auf der Übersicht bzw. im Profil; iPhone: Teilen → Zum
+Home-Bildschirm).
+
+- `apps/web/static/manifest.webmanifest`: Name, Farben, Icons, Kurzbefehl
+  „Neues Duell“
+- `apps/web/src/service-worker.ts`: speichert die App-Shell (JS, CSS,
+  Schriften, Icons) für einen schnellen Start. **API-Antworten werden nie
+  gecacht.** Ohne Netz zeigt er `static/offline.html`.
+- Neue Version: die App prüft alle 5 Minuten und zeigt „Neue Version verfügbar –
+  Neu laden“; der neue Service Worker übernimmt erst nach dem Tippen, nie mitten
+  im Spiel.
+- Icons: Quelle `apps/web/static/icons/icon*.svg`; PNGs neu erzeugen mit
+  `cd apps/web && node scripts/icons-erzeugen.mjs` (nutzt das Chromium von
+  Playwright; die PNGs sind eingecheckt).
+
+Service Worker funktionieren nur über HTTPS (Coolify liefert das) oder auf
+`localhost`.
+
 ## Deployment (Coolify)
 
 Eine Domain für alles: Nur der **Web**-Service bekommt eine öffentliche
@@ -156,11 +177,11 @@ könnten Clients ihre IP für die Rate-Limits fälschen.
 
 ## Status
 
-Duell-Flow steht Ende-zu-Ende, Backend und Oberfläche (Schritte 1–5 in
-`docs/architektur.md`). Screens: Anmelden/Registrieren/Passwort vergessen,
+Duell-Flow steht Ende-zu-Ende, Backend und Oberfläche, installierbar als
+App (Schritte 1–6 in `docs/architektur.md`). Screens: Anmelden/Registrieren/Passwort vergessen,
 Übersicht, neues Duell (Benutzername oder Einladungslink), Einladung annehmen,
-Frage mit Timer, Frage-für-Frage-Vergleich, Profil. Als Nächstes: PWA
-(Manifest, Service Worker), danach Rangliste, Freunde, Statistik, Abzeichen.
+Frage mit Timer, Frage-für-Frage-Vergleich, Profil. Als Nächstes: Rangliste,
+Freunde, Statistik, Abzeichen.
 
 ## Offene Punkte
 
