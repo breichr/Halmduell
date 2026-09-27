@@ -3,12 +3,14 @@ import { and, asc, eq, ilike, inArray, isNotNull, or, sql, type SQL } from 'driz
 import {
   FRAGEN_KATEGORIEN,
   adminFragenFilterSchema,
+  commonsSchema,
   feldFehler,
   frageBearbeitenSchema,
   statusSetzenSchema,
   type AdminFrage,
   type AdminFragenListe,
   type AdminKategorieStand,
+  type CommonsBild,
   type ApiFehler,
   type FrageBearbeiten,
   type FragenKategorie,
@@ -19,6 +21,7 @@ import type { Tx } from '../db/types';
 import { schreibeFragenCsv, type FragenZeile } from '../fragen/csv';
 import { requireAuth, type AuthEnv } from '../middleware/auth';
 import { requireAdmin } from '../services/admin';
+import { CommonsFehler, commonsBild } from '../services/commons';
 
 /** Admin-Portal: Fragen prüfen, bearbeiten, freigeben. Die Datenbank ist maßgeblich. */
 export const adminRoute = new Hono<AuthEnv>();
@@ -213,4 +216,16 @@ adminRoute.post('/fragen/:id/status', async (c) => {
   if (!geaendert.length) return c.json(fehler('Frage nicht gefunden'), 404);
   const [frage] = await ladeFragen(db, eq(questions.id, id));
   return c.json(frage! satisfies AdminFrage);
+});
+
+// Commons-Link → Bild-URL, Urheber und Lizenz (für Bildfragen)
+adminRoute.post('/commons', async (c) => {
+  const eingabe = commonsSchema.safeParse(await c.req.json().catch(() => null));
+  if (!eingabe.success) return c.json(ungueltig(eingabe.error), 400);
+  try {
+    return c.json((await commonsBild(eingabe.data.link)) satisfies CommonsBild);
+  } catch (e) {
+    if (e instanceof CommonsFehler) return c.json(fehler(e.message), e.status);
+    throw e;
+  }
 });

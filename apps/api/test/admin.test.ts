@@ -118,4 +118,57 @@ describe.skipIf(!mitDatenbank)('Admin-Portal', () => {
     expect(fragen.map((f) => f.code)).toEqual(['kulturen-007', 'kulturen-008', 'wissen-001']);
     expect(fragen[0]).toMatchObject({ frage: 'Korrigierte Frage?', richtig: 'Jawohl', falsch1: 'Nein', schwierigkeit: 3, status: 'freigegeben' });
   });
+  test('Commons-Link: Bild-URL, Urheber und Lizenz übernehmen', async () => {
+    const { setzeCommonsFetch } = await import('../src/services/commons');
+    const aufrufe: string[] = [];
+    setzeCommonsFetch(async (url, init) => {
+      aufrufe.push(url);
+      expect(new Headers(init.headers).get('user-agent')).toContain('Halmduell');
+      const titel = new URL(url).searchParams.get('titles');
+      if (titel === 'File:Gibt es nicht.jpg') return Response.json({ query: { pages: [{ title: titel, missing: true }] } });
+      if (titel === 'File:Ohne Lizenz.jpg') {
+        return Response.json({ query: { pages: [{ imageinfo: [{ thumburl: 'https://upload.wikimedia.org/x.jpg', descriptionurl: 'https://commons.wikimedia.org/wiki/File:Ohne_Lizenz.jpg', extmetadata: {} }] }] } });
+      }
+      if (titel === 'File:Kaputt.jpg') return new Response('Fehler', { status: 503 });
+      return Response.json({ query: { pages: [{ title: titel, imageinfo: [{
+        thumburl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Kaefer.jpg/1024px-Kaefer.jpg',
+        url: 'https://upload.wikimedia.org/wikipedia/commons/0/0b/Kaefer.jpg',
+        descriptionurl: 'https://commons.wikimedia.org/wiki/File:Kaefer.jpg',
+        extmetadata: {
+          LicenseShortName: { value: 'CC BY-SA 4.0' },
+          Artist: { value: '<a href="//commons.wikimedia.org/wiki/User:Muster">Max &amp; Moritz Muster</a>' },
+        },
+      }] }] } });
+    });
+    try {
+      const commons = (link: string, cookie = admin.cookie) => anfrage('/admin/commons', { method: 'POST', cookie, body: { link } });
+
+      const ok = await commons('https://commons.wikimedia.org/wiki/File:Kaefer.jpg');
+      expect(ok.status).toBe(200);
+      expect(ok.json).toEqual({
+        bildUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Kaefer.jpg/1024px-Kaefer.jpg',
+        bildQuelle: 'Max & Moritz Muster, CC BY-SA 4.0, Wikimedia Commons',
+        urheber: 'Max & Moritz Muster',
+        lizenz: 'CC BY-SA 4.0',
+        seite: 'https://commons.wikimedia.org/wiki/File:Kaefer.jpg',
+      });
+      expect(new URL(aufrufe[0]!).searchParams.get('iiurlwidth')).toBe('1024');
+
+      expect((await commons('https://example.org/bild.jpg')).status).toBe(400);
+      expect((await commons('Datei:Gibt_es_nicht.jpg')).status).toBe(404);
+      expect((await commons('Datei:Ohne_Lizenz.jpg')).status).toBe(422);
+      expect((await commons('Datei:Kaputt.jpg')).status).toBe(502);
+      expect((await commons('Datei:Kaefer.jpg', spieler.cookie)).status).toBe(403);
+
+      // Übernommene Daten ergeben eine gültige Bildfrage
+      const neu = await anfrage('/admin/fragen', {
+        method: 'POST', cookie: admin.cookie,
+        body: neueFrage({ typ: 'bild', frage: 'Welcher Käfer ist hier zu sehen?', richtig: 'Kartoffelkäfer', bildUrl: ok.json.bildUrl, bildQuelle: ok.json.bildQuelle }),
+      });
+      expect(neu.status).toBe(201);
+      expect(neu.json).toMatchObject({ typ: 'bild', bildQuelle: 'Max & Moritz Muster, CC BY-SA 4.0, Wikimedia Commons' });
+    } finally {
+      setzeCommonsFetch(null);
+    }
+  });
 });

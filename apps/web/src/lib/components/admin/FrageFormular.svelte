@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import {
 		FRAGE_STATUS,
 		FRAGEN_KATEGORIEN,
@@ -8,7 +9,8 @@
 		type FrageStatus,
 		type FrageTyp
 	} from '@halmduell/shared';
-	import { ApiError } from '$lib/api';
+	import type { CommonsBild } from '@halmduell/shared';
+	import { api, ApiError } from '$lib/api';
 	import { hydriert } from '$lib/hydriert.svelte';
 	import { kategorieName } from '$lib/format';
 	import FrageAnsicht from '$lib/components/FrageAnsicht.svelte';
@@ -22,8 +24,8 @@
 
 	const js = hydriert();
 
-	// Startwerte einmalig aus der geladenen Frage übernehmen
-	const start = frage;
+	// Startwerte einmalig aus der geladenen Frage übernehmen (die Seite setzt das Formular per {#key} neu auf)
+	const start = untrack(() => frage);
 	let kategorie = $state<FragenKategorie>(start?.kategorie ?? 'kulturen');
 	let typ = $state<FrageTyp>(start?.typ ?? 'text');
 	let text = $state(start?.frage ?? '');
@@ -67,6 +69,29 @@
 	}
 
 	const f = (name: string) => fehler[name]?.join(' · ');
+
+	// Commons-Link → Bild-URL, Urheber und Lizenz
+	let commonsLink = $state('');
+	let commonsLaeuft = $state(false);
+	let commonsMeldung = $state('');
+	let commonsSeite = $state('');
+
+	async function vonCommons() {
+		commonsLaeuft = true;
+		commonsMeldung = '';
+		try {
+			const bild = await api().post<CommonsBild>('/admin/commons', { link: commonsLink });
+			bildUrl = bild.bildUrl;
+			bildQuelle = bild.bildQuelle;
+			commonsSeite = bild.seite;
+			typ = 'bild';
+			commonsLink = '';
+		} catch (e) {
+			commonsMeldung = e instanceof ApiError ? e.message : 'Übernehmen fehlgeschlagen';
+		} finally {
+			commonsLaeuft = false;
+		}
+	}
 </script>
 
 <form class="formular" onsubmit={absenden}>
@@ -122,6 +147,31 @@
 		Bildfrage
 	</label>
 	{#if typ === 'bild' || bildUrl}
+		<div class="commons">
+			<label>
+				<span>Von Wikimedia Commons übernehmen <small>(Link zur Datei einfügen)</small></span>
+				<span class="commons-zeile">
+					<input
+						type="url"
+						bind:value={commonsLink}
+						placeholder="https://commons.wikimedia.org/wiki/File:…"
+						onkeydown={(e) => {
+							if (e.key === 'Enter') {
+								e.preventDefault();
+								if (commonsLink.trim()) void vonCommons();
+							}
+						}}
+					/>
+					<button type="button" class="knopf klein zweitrangig" disabled={!js.bereit || commonsLaeuft || !commonsLink.trim()} onclick={vonCommons}>
+						{commonsLaeuft ? 'Lädt …' : 'Übernehmen'}
+					</button>
+				</span>
+			</label>
+			{#if commonsMeldung}<small class="fehler" role="alert">{commonsMeldung}</small>{/if}
+			{#if commonsSeite}
+				<small class="gefunden" role="status">Übernommen – Lizenz prüfen: <a href={commonsSeite} target="_blank" rel="noopener noreferrer">Dateiseite auf Commons</a></small>
+			{/if}
+		</div>
 		<label>
 			<span>Bild-URL <small>(https, z. B. Wikimedia Commons)</small></span>
 			<input type="url" bind:value={bildUrl} aria-invalid={!!f('bildUrl') || undefined} />
@@ -162,8 +212,7 @@
 		padding: 0;
 		margin-bottom: 0.3rem;
 	}
-	label small,
-	legend small {
+	label small {
 		font-weight: 600;
 		color: var(--text-2);
 	}
@@ -206,6 +255,25 @@
 	.haken input {
 		width: 20px;
 		height: 20px;
+	}
+	.commons {
+		display: grid;
+		gap: 0.3rem;
+		padding: 0.7rem;
+		border: 2px dashed var(--linie-leise);
+		border-radius: var(--radius-klein);
+	}
+	.commons-zeile {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		gap: 0.4rem;
+	}
+	.gefunden {
+		color: var(--richtig);
+		font-weight: 800;
+	}
+	.gefunden a {
+		color: inherit;
 	}
 	.vorschau {
 		margin-top: 1.6rem;

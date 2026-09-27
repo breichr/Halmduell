@@ -253,6 +253,14 @@ von `fragen/fragen.csv`.
 | `POST /api/admin/fragen` | neue Frage |
 | `POST /api/admin/fragen/:id/status` | `{ status }` freigeben, ablehnen, Entwurf |
 | `GET /api/admin/fragen.csv` | Export aller Fragen |
+| `POST /api/admin/commons` | `{ link }` zu einer Datei auf Wikimedia Commons → Bild-URL (1024 px), Urheber, Lizenz, Dateiseite |
+
+**Bildfragen:** Im Formular „Bildfrage“ anhaken und den Link zur Datei auf
+Wikimedia Commons einfügen (Dateiseite, Wikipedia-Medienansicht oder direkter
+Bildlink) – Bild-URL und „Urheber, Lizenz, Wikimedia Commons“ werden
+übernommen. Die Lizenz auf der verlinkten Dateiseite kurz prüfen. Die API
+braucht dafür Zugang zu `commons.wikimedia.org`, die Spieler laden das Bild von
+`upload.wikimedia.org`.
 
 ## Benachrichtigungen (Web Push)
 
@@ -337,6 +345,15 @@ Abzeichen, Fehler üben, Benachrichtigungen, Admin-Portal für Fragen.
   Kategorie-Duelle brauchen je ≥ 6 freigegebene Fragen; Bildfragen fehlen noch
 - Admin-Portal erweitern: eingereichte Community-Fragen moderieren,
   Admins im Portal verwalten statt per `ADMIN_USERNAMES`
+
+- Kategorien umstellen – neu: **Gemischt, Landtechnik, Pflanzenbau,
+  Viehwirtschaft** (statt Kulturen, Schädlinge, Krankheiten, Wissen). Betrifft:
+  `FRAGEN_KATEGORIEN`/`KATEGORIE_NAMEN` in `packages/shared`, CHECK-Constraints
+  (Migration), Zuordnung der vorhandenen Fragen (Kulturen/Schädlinge/Krankheiten
+  → Pflanzenbau, Wissen je Frage neu einordnen), Codes in `fragen.csv`,
+  Ratings und Rangliste je Kategorie (Umgang mit bisherigen Kategorie-Ratings),
+  Fachwissen-Abzeichen, Farben/Symbole je Kategorie; für Landtechnik und
+  Viehwirtschaft fehlen noch Fragen
 
 Bewusst später:
 

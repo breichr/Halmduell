@@ -40,7 +40,22 @@ export const adminFragenFilterSchema = z.object({
   suche: z.string().trim().max(100).optional(),
 });
 
+/** POST /api/admin/commons – Link zu einer Datei auf Wikimedia Commons */
+export const commonsSchema = z.object({ link: z.string().trim().min(1, 'fehlt').max(1000) });
+
 // --- Responses ---
+
+/** Bilddaten einer Commons-Datei, fertig für bildUrl/bildQuelle */
+export interface CommonsBild {
+  /** verkleinertes Bild (max. 1024 px breit) auf upload.wikimedia.org */
+  bildUrl: string;
+  /** „Urheber, Lizenz, Wikimedia Commons“ */
+  bildQuelle: string;
+  urheber: string;
+  lizenz: string;
+  /** Beschreibungsseite der Datei (Nachweis der Lizenz) */
+  seite: string;
+}
 
 export interface AdminFrage {
   id: number;

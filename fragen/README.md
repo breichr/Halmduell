@@ -52,6 +52,12 @@ die richtige immer in der Spalte `richtig`.
 - **Frage entfernen:** ablehnen. Gelöscht wird nie (sie könnte in Duellen
   vorkommen).
 
+## Bildfragen
+
+Am einfachsten im Admin-Portal: „Bildfrage“ anhaken, Link zur Datei auf
+Wikimedia Commons einfügen, „Übernehmen“ – `bild_url` und `bild_quelle`
+werden aus den Commons-Angaben (Urheber, Lizenz) gefüllt.
+
 ## Speichern
 
 In Excel „CSV UTF-8 (durch Trennzeichen getrennt)“ wählen. Normales „CSV“
