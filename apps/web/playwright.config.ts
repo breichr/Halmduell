@@ -29,6 +29,9 @@ export default defineConfig({
 			use: {
 				...devices['Pixel 7'],
 				// im Sandbox-/CI-Container vorinstalliertes Chromium verwenden, falls gesetzt
+				// Volles Chromium (neuer Headless-Modus) statt der Headless-Shell: nur dieses kennt
+				// Web Push (PushManager) wie ein echter Browser
+				...(process.env.PW_CHROMIUM ? {} : { channel: 'chromium' }),
 				launchOptions: process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {}
 			}
 		}
