@@ -41,6 +41,7 @@ export function api(f: Fetch = fetch) {
 	return {
 		get: <T>(pfad: string) => anfrage<T>(f, 'GET', pfad),
 		post: <T = void>(pfad: string, body?: unknown) => anfrage<T>(f, 'POST', pfad, body),
+		put: <T = void>(pfad: string, body?: unknown) => anfrage<T>(f, 'PUT', pfad, body),
 		delete: (pfad: string) => anfrage<void>(f, 'DELETE', pfad)
 	};
 }

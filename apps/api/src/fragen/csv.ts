@@ -101,3 +101,18 @@ export function leseFragenCsv(bytes: Uint8Array): { fragen: FragenZeile[]; fehle
 
   return fehler.length ? { fragen: [], fehler } : { fragen, fehler };
 }
+
+/** Ein Feld für die CSV: in Anführungszeichen, sobald Trenner, Anführungszeichen, Umbrüche oder Randleerzeichen vorkommen */
+function feld(wert: string | number | null | undefined): string {
+  const text = wert === null || wert === undefined ? '' : String(wert);
+  return /[;"\r\n]|^\s|\s$/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+}
+
+/**
+ * Schreibt Fragen im Format von fragen/fragen.csv (UTF-8 mit BOM, `;`, CRLF) –
+ * so öffnet Excel die Datei direkt, und leseFragenCsv liest sie wieder ein.
+ */
+export function schreibeFragenCsv(fragen: FragenZeile[]): string {
+  const zeilen = [SPALTEN.join(';'), ...fragen.map((f) => SPALTEN.map((s) => feld(f[s])).join(';'))];
+  return `\uFEFF${zeilen.join('\r\n')}\r\n`;
+}

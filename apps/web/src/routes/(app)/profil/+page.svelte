@@ -82,6 +82,13 @@
 
 <h2 class="abschnitt-titel konto">Konto</h2>
 
+{#if data.user.istAdmin}
+	<a class="karte admin-link" href="/admin">
+		<strong>Admin-Portal</strong>
+		<span class="hinweis">Fragen prüfen, bearbeiten und freigeben</span>
+	</a>
+{/if}
+
 <Benachrichtigungen />
 
 <section class="karte">
@@ -163,6 +170,17 @@
 	}
 	.konto {
 		margin: 2rem 0 -0.3rem;
+	}
+	.admin-link {
+		display: grid;
+		gap: 0.1rem;
+		margin-top: 1.1rem;
+		color: var(--text);
+		text-decoration: none;
+		border-left: 8px solid var(--sonne);
+	}
+	.admin-link .hinweis {
+		font-size: 0.9rem;
 	}
 	.installieren {
 		margin-top: 1.1rem;

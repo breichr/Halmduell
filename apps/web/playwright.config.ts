@@ -52,7 +52,9 @@ export default defineConfig({
 				// Reine Testschlüssel – in Produktion eigene erzeugen: bun run push:schluessel
 				VAPID_PUBLIC_KEY: 'BAF0hffujHfg4oyISju_tjbPZ0nX6CGYHuDNBwCz5_YvOM4iSbkI_nM8Z1WM3hVMYDK8ivI2Gz0RlvxQUNtIE8c',
 				VAPID_PRIVATE_KEY: 'WJKsrfl_-VAoMB6boMd_rLULHd5d1KvGdP8nzDMCm8M',
-				VAPID_SUBJECT: 'mailto:e2e@halmduell.invalid'
+				VAPID_SUBJECT: 'mailto:e2e@halmduell.invalid',
+				// Admin-Portal (e2e/admin.spec.ts)
+				ADMIN_USERNAMES: 'redaktion'
 			}
 		},
 		{

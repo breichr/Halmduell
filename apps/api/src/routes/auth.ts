@@ -22,6 +22,7 @@ import {
   pruefePasswort,
   setzeSession,
 } from '../services/auth';
+import { istAdmin } from '../services/admin';
 import { clientIp } from '../services/client-ip';
 import { erstelleLimiter } from '../services/rate-limit';
 
@@ -75,7 +76,7 @@ authRoute.post('/register', async (c) => {
   if (!user) return c.json({ error: 'Benutzername ist bereits vergeben' } satisfies ApiFehler, 409);
 
   await setzeSession(c, user.id, user.sessionVersion);
-  return c.json({ id: user.id, username: user.username, wiederherstellungsCode: wiederherstellung.code } satisfies UserMitWiederherstellungscode, 201);
+  return c.json({ id: user.id, username: user.username, istAdmin: istAdmin(user.username), wiederherstellungsCode: wiederherstellung.code } satisfies UserMitWiederherstellungscode, 201);
 });
 
 authRoute.post('/login', async (c) => {
@@ -90,7 +91,7 @@ authRoute.post('/login', async (c) => {
   if (!user || !ok) return c.json({ error: 'Benutzername oder Passwort falsch' } satisfies ApiFehler, 401);
 
   await setzeSession(c, user.id, user.sessionVersion);
-  return c.json({ id: user.id, username: user.username } satisfies AngemeldeterUser);
+  return c.json({ id: user.id, username: user.username, istAdmin: istAdmin(user.username) } satisfies AngemeldeterUser);
 });
 
 // Passwort vergessen: mit Wiederherstellungscode ein neues Passwort setzen
@@ -114,7 +115,7 @@ authRoute.post('/zuruecksetzen', async (c) => {
   }).where(eq(users.id, user.id)).returning({ sessionVersion: users.sessionVersion });
 
   await setzeSession(c, user.id, aktualisiert!.sessionVersion);
-  return c.json({ id: user.id, username: user.username, wiederherstellungsCode: wiederherstellung.code } satisfies UserMitWiederherstellungscode);
+  return c.json({ id: user.id, username: user.username, istAdmin: istAdmin(user.username), wiederherstellungsCode: wiederherstellung.code } satisfies UserMitWiederherstellungscode);
 });
 
 authRoute.post('/logout', (c) => {
@@ -134,7 +135,7 @@ authRoute.get('/me', requireAuth, async (c) => {
     where: eq(users.id, c.var.userId),
     columns: { id: true, username: true },
   });
-  return c.json(user! satisfies AngemeldeterUser);
+  return c.json({ ...user!, istAdmin: istAdmin(user!.username) } satisfies AngemeldeterUser);
 });
 
 // Passwort ändern; andere Geräte werden abgemeldet, dieses bekommt eine neue Session
