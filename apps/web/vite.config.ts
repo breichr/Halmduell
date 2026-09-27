@@ -11,7 +11,9 @@ export default defineConfig({
 					filename.split(/[/\\]/).includes('node_modules') ? undefined : true
 			},
 			// Node-Adapter: läuft als eigener Container auf Coolify (mit Bun)
-			adapter: adapter()
+			adapter: adapter(),
+			// alle 5 Minuten prüfen, ob eine neue Version deployt wurde (Hinweis „Neu laden“)
+			version: { pollInterval: 5 * 60 * 1000 }
 		})
 	]
 	// /api/* wird in src/hooks.server.ts an die API weitergereicht (dev und Produktion)

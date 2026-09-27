@@ -2,6 +2,10 @@ import { defineConfig, devices } from '@playwright/test';
 
 // End-to-End-Tests gegen echte API + Postgres (TEST_DATABASE_URL, wird geleert).
 //   TEST_DATABASE_URL=… bun run test:e2e
+// Netzwerk-Anfragen des Service Workers über context.route() abfangbar machen
+// (context.setOffline() wirkt in Chromium nicht auf den Service Worker)
+process.env.PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS = '1';
+
 const API_PORT = 3100;
 const WEB_PORT = 4173;
 const testDb = process.env.TEST_DATABASE_URL;

@@ -1,6 +1,9 @@
 <script lang="ts">
 	import '../app.css';
 	import favicon from '$lib/assets/favicon.svg';
+	import UpdateHinweis from '$lib/components/UpdateHinweis.svelte';
+	// fängt das Installationsangebot des Browsers früh ab
+	import '$lib/installation.svelte';
 
 	let { children } = $props();
 </script>
@@ -11,6 +14,7 @@
 </svelte:head>
 
 <main>
+	<UpdateHinweis />
 	{@render children()}
 </main>
 
