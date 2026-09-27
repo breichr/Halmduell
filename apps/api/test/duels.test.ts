@@ -155,6 +155,11 @@ describe.skipIf(!mitDatenbank)('Duell-Flow', () => {
     expect((await frageHolen(duel.id, anna)).status).toBe(200);
 
     const code = duel.einladungsCode!;
+    const vorschau = await anfrage(`/duels/einladung/${code.toLowerCase()}`, { cookie: fremd.cookie });
+    expect(vorschau.json).toEqual({ duelId: duel.id, kategorie: 'gemischt', von: { id: anna.id, username: anna.username } });
+    expect((await anfrage('/duels/einladung/AAAAAAAA', { cookie: fremd.cookie })).status).toBe(404);
+    expect((await anfrage('/duels/einladung/kurz', { cookie: fremd.cookie })).status).toBe(400);
+
     expect((await anfrage('/duels/beitreten', { method: 'POST', cookie: anna.cookie, body: { code } })).status).toBe(400);
     const beitritt = await anfrage('/duels/beitreten', { method: 'POST', cookie: fremd.cookie, body: { code: code.toLowerCase() } });
     expect(beitritt.status).toBe(200);
@@ -162,6 +167,7 @@ describe.skipIf(!mitDatenbank)('Duell-Flow', () => {
 
     // Code ist danach verbraucht
     expect((await anfrage('/duels/beitreten', { method: 'POST', cookie: ben.cookie, body: { code } })).status).toBe(404);
+    expect((await anfrage(`/duels/einladung/${code}`, { cookie: ben.cookie })).status).toBe(404);
     const annaSicht = (await anfrage(`/duels/${duel.id}`, { cookie: anna.cookie })).json as DuellDetails;
     expect(annaSicht.gegner?.username).toBe(fremd.username);
   });

@@ -1,0 +1,283 @@
+/* Design „Heuschreck“: verspielt, dicke Konturen, Maskottchen Halmi.
+   Schriften selbst gehostet (nur lateinisch, 3 Schnitte) – offline-fähig, kein Google-Request. */
+@import '@fontsource/baloo-2/latin-800.css';
+@import '@fontsource/nunito/latin-600.css';
+@import '@fontsource/nunito/latin-800.css';
+
+:root {
+	--schrift-titel: 'Baloo 2', 'Nunito', system-ui, sans-serif;
+	--schrift: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+	--grund: #fff8ea;
+	--flaeche: #ffffff;
+	--flaeche-2: #f1ece2;
+	--text: #2a1c14;
+	--text-2: #6b5344;
+	/* dicke Kontur um Knöpfe, Kacheln, Karten */
+	--kontur: #2a1c14;
+	--kante: #2a1c14;
+	--linie-leise: #e3dccf;
+
+	--himmel: #cfe9ff;
+	--wiese-hell: #8fd18f;
+	--wiese: #58b85f;
+	--sonne: #ffc93c;
+	--sonne-hell: #ffe7a3;
+	--orange: #f59a5e;
+	--blau: #7ccbf0;
+	--hellgruen: #a8db8a;
+	--nacht: #e4ddf5;
+
+	/* Knopf-Grün: dunkler als die Wiese, damit weiße Schrift ≥ 4,5:1 hat */
+	--gruen: #2f7d3b;
+	--gruen-text: #ffffff;
+	--gruen-dunkel: #1f5a28;
+	--gruen-hell: #ddf3d8;
+	--auf-farbe: #2a1c14;
+
+	--richtig: #2f7d3b;
+	--richtig-hell: #ddf3d8;
+	--falsch: #9e2f14;
+	--falsch-akzent: #e4572e;
+	--falsch-hell: #fcd9c4;
+	--fokus: #1f5fbf;
+
+	--radius: 20px;
+	--radius-klein: 14px;
+	color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		--grund: #111a14;
+		--flaeche: #1f2b22;
+		--flaeche-2: #26352a;
+		--text: #eef3ea;
+		--text-2: #b3c2b0;
+		--kontur: #0b120c;
+		--kante: #3c5140;
+		--linie-leise: #2f4033;
+
+		--himmel: #17243a;
+		--wiese-hell: #23452b;
+		--wiese: #1a3521;
+		--sonne-hell: #3a3314;
+		--nacht: #1c1f33;
+
+		--gruen: #5fae66;
+		--gruen-text: #0b120c;
+		--gruen-dunkel: #8fe08f;
+		--gruen-hell: #1f3a25;
+
+		--richtig: #8fe08f;
+		--richtig-hell: #1f3a25;
+		--falsch: #ff9a80;
+		--falsch-hell: #45241e;
+		--fokus: #8ab4ff;
+		color-scheme: dark;
+	}
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html {
+	-webkit-text-size-adjust: 100%;
+}
+
+body {
+	margin: 0;
+	background: var(--grund);
+	color: var(--text);
+	font-family: var(--schrift);
+	font-weight: 600;
+	font-size: 16px;
+	line-height: 1.45;
+}
+
+h1,
+h2,
+h3 {
+	font-family: var(--schrift-titel);
+	font-weight: 800;
+	line-height: 1.1;
+	margin: 0 0 0.4em;
+}
+
+h1 {
+	font-size: 2rem;
+}
+
+h2 {
+	font-size: 1.3rem;
+}
+
+b,
+strong {
+	font-weight: 800;
+}
+
+a {
+	color: var(--gruen-dunkel);
+	font-weight: 800;
+}
+
+:focus-visible {
+	outline: 3px solid var(--fokus);
+	outline-offset: 3px;
+}
+
+/* Knöpfe: dicke Kontur, unten kräftiger – wirken „drückbar“ */
+.knopf {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5em;
+	min-height: 54px;
+	padding: 0.5em 1.2em;
+	border: 3px solid var(--kontur);
+	border-bottom-width: 6px;
+	border-radius: 16px;
+	background: var(--gruen);
+	color: var(--gruen-text);
+	font-family: var(--schrift-titel);
+	font-size: 1.2rem;
+	font-weight: 800;
+	line-height: 1.1;
+	text-align: center;
+	text-decoration: none;
+	cursor: pointer;
+	transition: transform 0.06s, border-bottom-width 0.06s;
+}
+
+.knopf:active:not(:disabled) {
+	transform: translateY(3px);
+	border-bottom-width: 3px;
+}
+
+.knopf:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.knopf.breit {
+	width: 100%;
+}
+
+.knopf.sonne {
+	background: var(--sonne);
+	color: var(--auf-farbe);
+}
+
+.knopf.zweitrangig {
+	background: var(--flaeche);
+	color: var(--text);
+}
+
+.knopf.gefahr {
+	background: var(--flaeche);
+	color: var(--falsch);
+	border-color: currentColor;
+}
+
+.knopf.klein {
+	min-height: 44px;
+	font-size: 1rem;
+	border-bottom-width: 4px;
+	border-radius: 12px;
+	padding: 0.3em 0.9em;
+}
+
+/* Karten */
+.karte {
+	background: var(--flaeche);
+	border: 3px solid var(--kante);
+	border-radius: var(--radius);
+	padding: 1rem;
+}
+
+.formular {
+	display: grid;
+	gap: 0.9rem;
+}
+
+.hinweis {
+	color: var(--text-2);
+	font-size: 0.95rem;
+}
+
+.fehlermeldung {
+	background: var(--falsch-hell);
+	color: var(--falsch);
+	border: 2px solid currentColor;
+	border-radius: var(--radius-klein);
+	padding: 0.6em 0.9em;
+	margin: 0;
+	font-weight: 800;
+}
+
+.erfolg {
+	background: var(--richtig-hell);
+	color: var(--richtig);
+	border: 2px solid currentColor;
+	border-radius: var(--radius-klein);
+	padding: 0.6em 0.9em;
+	margin: 0;
+	font-weight: 800;
+}
+
+/* Kopfzeile mit Zurück-Knopf auf Unterseiten */
+.kopfzeile {
+	display: flex;
+	align-items: center;
+	gap: 0.7rem;
+	margin-bottom: 1rem;
+}
+
+.kopfzeile h1 {
+	margin: 0;
+	font-size: 1.75rem;
+}
+
+.zurueck-knopf {
+	flex: none;
+	display: grid;
+	place-items: center;
+	width: 44px;
+	height: 44px;
+	border-radius: 14px;
+	background: var(--flaeche);
+	border: 2px solid var(--kante);
+	color: var(--text);
+}
+
+.abschnitt-titel {
+	font-family: var(--schrift);
+	font-size: 0.85rem;
+	font-weight: 800;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	color: var(--text-2);
+	margin: 1.4rem 0 0.6rem;
+}
+
+.nur-screenreader {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		transition-duration: 0.01ms !important;
+	}
+}

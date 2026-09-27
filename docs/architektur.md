@@ -90,6 +90,7 @@ kein CORS. Details und Umgebungsvariablen: README, Abschnitt „Deployment“.
 3. ~~Basis-Auth (JWT) implementieren~~ ✓ (Benutzername/Passwort, JWT im httpOnly-Cookie)
 4. ~~Duell-Flow (Erstellen → Beantworten → Abschluss inkl. ELO-Update) als
    erste vertikale Funktionsscheibe umsetzen~~ ✓ (Backend)
-5. Frontend-Screens gemäß `konzept.md` (Dashboard, Frage-Screen,
-   Ergebnisvergleich) aufbauen
+5. ~~Frontend-Screens gemäß `konzept.md` (Dashboard, Frage-Screen,
+   Ergebnisvergleich) aufbauen~~ ✓ (Rangliste, Freunde, Statistik und
+   Abzeichen folgen mit ihren API-Endpunkten)
 6. PWA-Manifest + Service Worker einrichten
