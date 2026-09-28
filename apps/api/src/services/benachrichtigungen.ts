@@ -82,6 +82,20 @@ export const nachricht = {
     tag: 'meldungen',
   }),
 
+  frageFreigegeben: (frage: string, rueckmeldung: string | null): PushNachricht => ({
+    titel: 'Deine Frage ist im Spiel!',
+    text: `„${kurz(frage)}“ wurde freigegeben.${rueckmeldung ? ` ${rueckmeldung}` : ''}`,
+    url: '/fragen/eigene',
+    tag: 'eigene-fragen',
+  }),
+
+  frageAbgelehnt: (frage: string, rueckmeldung: string | null): PushNachricht => ({
+    titel: 'Deine Frage wurde nicht übernommen',
+    text: `„${kurz(frage)}“${rueckmeldung ? ` – ${rueckmeldung}` : ' passt leider nicht in den Katalog.'}`,
+    url: '/fragen/eigene',
+    tag: 'eigene-fragen',
+  }),
+
   anfrageAngenommen: (von: string): PushNachricht => ({
     titel: `Du und ${von} seid jetzt Freunde`,
     text: 'Fordere gleich zu einem Duell heraus!',

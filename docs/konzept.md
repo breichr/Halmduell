@@ -95,10 +95,10 @@ Liga-Grenzen (Vorschlag):
 
 ## Fragen-Pool
 
-Vorerst selbst kuratiert. Später soll eine Community-Einreichung mit Review-
-Prozess möglich sein (dafür ist im Datenmodell bereits ein `status`-Feld auf
-`questions` vorgesehen: `entwurf`, `eingereicht`, `freigegeben`, `abgelehnt`,
-plus `eingereicht_von`).
+Grundstock selbst kuratiert (`fragen/fragen.csv`, Admin-Portal). Dazu reichen
+Spieler eigene Textfragen ein; Admins prüfen sie im Portal (Status
+`eingereicht` → `freigegeben` oder `abgelehnt`, mit Rückmeldung und
+Push-Nachricht an den Einreicher).
 
 ## Belohnungen / Fortschritt
 

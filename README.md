@@ -240,6 +240,31 @@ Beantworten lassen sich nur Fragen, die gerade zum Üben offen sind – so
 lässt sich über das Üben keine Lösung einer laufenden Duell-Frage nachschlagen.
 Stand je Frage: Tabelle `uebungen`.
 
+## Community-Fragen
+
+Spieler reichen eigene Textfragen ein (Profil → „Eigene Fragen“ →
+„Frage einreichen“): Kategorie, Frage, richtige und drei falsche Antworten,
+optional eine Erklärung, mit Vorschau wie im Spiel.
+
+- Eingereichte Fragen haben den Status `eingereicht` und werden erst nach
+  Freigabe gespielt. Höchstens 10 ungeprüfte je Spieler; eine Frage mit
+  gleichem Text wird abgelehnt (409). Solange ungeprüft, lässt sie sich
+  zurückziehen.
+- „Meine Fragen“ zeigt den Status (wird geprüft, wird überarbeitet, im Spiel,
+  nicht übernommen) und die Rückmeldung des Admins.
+- Admin-Portal: Filter „Eingereicht“ mit Zähler, „von …“ an der Karte,
+  optionale Rückmeldung an den Einreicher. Beim Freigeben oder Ablehnen
+  (Schnellknopf oder Bearbeiten-Formular) bekommt der Einreicher eine
+  Push-Nachricht; freigegebene Fragen ohne Code erhalten einen festen Code
+  (`viehzucht-027`), damit sie im CSV-Export stabil sind.
+
+| Endpunkt | Zweck |
+|---|---|
+| `POST /api/fragen` | `{ kategorie, frage, richtig, falsch[3], erklaerung? }` → Frage einreichen |
+| `GET /api/fragen/eigene` | eigene eingereichte Fragen mit Status und Rückmeldung |
+| `DELETE /api/fragen/eigene/:id` | ungeprüfte Frage zurückziehen |
+| `POST /api/admin/fragen/:id/status` | `{ status, rueckmeldung? }` – Rückmeldung an den Einreicher |
+
 ## Fragen melden
 
 Im Frage-für-Frage-Vergleich kann jede Frage nach dem Aufklappen gemeldet
@@ -385,16 +410,10 @@ App (Schritte 1–6 in `docs/architektur.md`). Screens: Anmelden/Registrieren/Pa
 Übersicht, neues Duell (Benutzername oder Einladungslink), Einladung annehmen,
 Frage mit Timer, Frage-für-Frage-Vergleich, Rangliste (je Kategorie und
 Saison, mit Archiv und Freunde-Ansicht), Freunde, Profil mit Statistik und
-Abzeichen, Fehler üben, Fragen melden, Benachrichtigungen, Admin-Portal für Fragen.
+Abzeichen, Fehler üben, Fragen melden, eigene Fragen einreichen, Benachrichtigungen,
+Admin-Portal für Fragen.
 
 ## Offene Punkte
 
-- Fragenkatalog prüfen und freigeben (im Admin-Portal unter „Entwürfe“): 6
-  freigegebene Beispielfragen, dazu 184 Entwürfe (davon 34 Bildfragen):
-  Landtechnik 28, Pflanzenbau 130, Viehzucht 26. Kategorie-Duelle brauchen je
-  ≥ 6 freigegebene Fragen – Landtechnik und Viehzucht haben noch keine
-- Admin-Portal erweitern: eingereichte Community-Fragen moderieren
-
-Bewusst später:
-
-- Community-Fragen-Einreichung (geplant, aber erst nach MVP)
+- Community-Fragen: Bildfragen einreichen (Commons-Link), Abzeichen für
+  freigegebene eigene Fragen

@@ -13,6 +13,7 @@
 
 	const FILTER: { wert: string; name: string }[] = [
 		{ wert: 'entwurf', name: 'Entwürfe' },
+		{ wert: 'eingereicht', name: 'Eingereicht' },
 		{ wert: 'freigegeben', name: 'Freigegeben' },
 		{ wert: 'abgelehnt', name: 'Abgelehnt' },
 		{ wert: 'gemeldet', name: 'Gemeldet' },
@@ -30,11 +31,15 @@
 	let beschaeftigt = $state<number | null>(null);
 	let fehler = $state('');
 
+	// Rückmeldung an den Einreicher je Frage (nur bei Community-Fragen)
+	let rueckmeldungen = $state<Record<number, string>>({});
+
 	async function statusSetzen(f: AdminFrage, status: FrageStatus) {
 		beschaeftigt = f.id;
 		fehler = '';
 		try {
-			await api().post(`/admin/fragen/${f.id}/status`, { status });
+			await api().post(`/admin/fragen/${f.id}/status`, { status, rueckmeldung: rueckmeldungen[f.id] ?? '' });
+			delete rueckmeldungen[f.id];
 			await invalidate('app:admin');
 		} catch (e) {
 			fehler = e instanceof ApiError ? e.message : 'Status konnte nicht gesetzt werden';
@@ -45,6 +50,8 @@
 
 	const quote = (f: AdminFrage) => (f.statistik.beantwortet ? Math.round((f.statistik.richtig / f.statistik.beantwortet) * 100) : null);
 	const offen = $derived(l.uebersicht.reduce((s, k) => s + k.entwurf + k.eingereicht, 0));
+	const eingereicht = $derived(l.uebersicht.reduce((s, k) => s + k.eingereicht, 0));
+	const zaehler = (wert: string) => (wert === 'gemeldet' ? l.gemeldet : wert === 'eingereicht' ? eingereicht : 0);
 </script>
 
 <svelte:head><title>Admin-Portal – Halmduell</title></svelte:head>
@@ -75,7 +82,7 @@
 <nav class="filter" aria-label="Status">
 	{#each FILTER as f (f.wert)}
 		<a href={link(f.wert)} aria-current={data.status === f.wert ? 'page' : undefined} data-sveltekit-noscroll data-sveltekit-replacestate>
-			{f.name}{#if f.wert === 'gemeldet' && l.gemeldet}<span class="zaehler">{l.gemeldet}</span>{/if}
+			{f.name}{#if zaehler(f.wert)}<span class="zaehler">{zaehler(f.wert)}</span>{/if}
 		</a>
 	{/each}
 </nav>
@@ -105,6 +112,7 @@
 					<span class="kat" style="--farbe: {KATEGORIE_FARBE[f.kategorie]}">{kategorieName(f.kategorie)}</span>
 					<span class="status {f.status}">{STATUS_NAMEN[f.status]}</span>
 					<span class="schwierigkeit" title="Schwierigkeit">Stufe {f.schwierigkeit}</span>
+					{#if f.eingereichtVon}<span class="von">von {f.eingereichtVon}</span>{/if}
 					{#if f.meldungen}<a class="gemeldet" href="/admin/fragen/{f.id}#meldungen">⚑ {f.meldungen === 1 ? '1 Meldung' : `${f.meldungen} Meldungen`}</a>{/if}
 				</div>
 				<p class="frage">{f.frage}</p>
@@ -121,6 +129,14 @@
 					{#each f.falsch as a, i (i)}<li><span aria-hidden="true">✗</span> {a}</li>{/each}
 				</ul>
 				{#if f.erklaerung}<p class="erklaerung">{f.erklaerung}</p>{/if}
+				{#if f.eingereichtVon && (f.status === 'eingereicht' || f.status === 'entwurf')}
+					<label class="rueckmeldung">
+						<span>Rückmeldung an {f.eingereichtVon} <small>(optional, beim Freigeben oder Ablehnen)</small></span>
+						<textarea bind:value={rueckmeldungen[f.id]} rows="2" maxlength="300"></textarea>
+					</label>
+				{:else if f.rueckmeldung}
+					<p class="erklaerung">Rückmeldung an {f.eingereichtVon ?? 'Einreicher'}: {f.rueckmeldung}</p>
+				{/if}
 				<div class="zeile-fuss">
 					<span class="statistik">
 						{f.statistik.beantwortet ? `${f.statistik.beantwortet}× gespielt · ${quote(f)} % richtig` : 'noch nicht gespielt'}
@@ -211,6 +227,32 @@
 		font-weight: 800;
 		font-size: 0.9rem;
 		text-decoration: none;
+	}
+	.von {
+		padding: 0.1rem 0.5rem;
+		border-radius: 999px;
+		border: 1.5px solid var(--linie-leise);
+		color: var(--text-2);
+	}
+	.rueckmeldung {
+		display: grid;
+		gap: 0.3rem;
+		font-weight: 800;
+		font-size: 0.85rem;
+	}
+	.rueckmeldung small {
+		font-weight: 600;
+		color: var(--text-2);
+	}
+	.rueckmeldung textarea {
+		font: inherit;
+		font-weight: 400;
+		padding: 0.45rem 0.6rem;
+		border: 2px solid var(--kante);
+		border-radius: var(--radius-klein);
+		background: var(--flaeche);
+		color: var(--text);
+		resize: vertical;
 	}
 	.zaehler {
 		min-width: 1.4rem;

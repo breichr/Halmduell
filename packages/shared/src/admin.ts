@@ -30,8 +30,8 @@ export const frageBearbeitenSchema = z.object({
 });
 export type FrageBearbeiten = z.infer<typeof frageBearbeitenSchema>;
 
-/** POST /api/admin/fragen/:id/status */
-export const statusSetzenSchema = z.object({ status: z.enum(FRAGE_STATUS) });
+/** POST /api/admin/fragen/:id/status – bei eingereichten Fragen optional mit Rückmeldung an den Einreicher */
+export const statusSetzenSchema = z.object({ status: z.enum(FRAGE_STATUS), rueckmeldung: optional(300) });
 
 /** GET /api/admin/fragen – Filter */
 export const adminFragenFilterSchema = z.object({
@@ -77,6 +77,10 @@ export interface AdminFrage {
   statistik: { beantwortet: number; richtig: number };
   /** offene Meldungen von Spielern */
   meldungen: number;
+  /** Benutzername, falls von einem Spieler eingereicht */
+  eingereichtVon: string | null;
+  /** Rückmeldung an den Einreicher */
+  rueckmeldung: string | null;
 }
 
 export interface AdminKategorieStand {
