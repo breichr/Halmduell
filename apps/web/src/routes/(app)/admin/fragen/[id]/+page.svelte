@@ -49,6 +49,8 @@
 	<h1>{f.code ?? `Frage ${f.id}`}</h1>
 </div>
 
+{#if f.eingereichtVon}<p class="hinweis">Eingereicht von <strong>{f.eingereichtVon}</strong>. Beim Freigeben oder Ablehnen bekommt {f.eingereichtVon} eine Nachricht.</p>{/if}
+
 <p class="hinweis">
 	{f.statistik.beantwortet ? `${f.statistik.beantwortet}× in Duellen beantwortet, ${quote} % richtig.` : 'Noch in keinem Duell gestellt.'}
 	{#if f.statistik.beantwortet}Bei inhaltlich anderer Frage besser eine neue anlegen und diese ablehnen – sonst passen alte Duelle nicht mehr.{/if}

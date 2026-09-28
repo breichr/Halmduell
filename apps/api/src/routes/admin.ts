@@ -18,6 +18,7 @@ import {
   type ApiFehler,
   type FrageBearbeiten,
   type FragenKategorie,
+  type FrageStatus,
   type MeldungenAbgeschlossen,
 } from '@halmduell/shared';
 import { db } from '../db/client';
@@ -27,7 +28,7 @@ import { schreibeFragenCsv, type FragenZeile } from '../fragen/csv';
 import { requireAuth, type AuthEnv } from '../middleware/auth';
 import { istAdmin, istFesterAdmin, requireAdmin } from '../services/admin';
 import { nachricht } from '../services/benachrichtigungen';
-import { hatPushAbo, pushAktiv, spaeterSenden } from '../services/push';
+import { hatPushAbo, pushAktiv, spaeterSenden, type Versand } from '../services/push';
 import { CommonsFehler, commonsBild } from '../services/commons';
 
 /** Admin-Portal: Fragen prüfen, bearbeiten, freigeben. Die Datenbank ist maßgeblich. */
@@ -65,10 +66,17 @@ async function ladeFragen(q: Tx | typeof db, bedingung?: SQL): Promise<AdminFrag
   for (const o of optionen) optionenVon.set(o.questionId, [...(optionenVon.get(o.questionId) ?? []), o]);
   const statistikVon = new Map(statistik.map((s) => [s.id, s]));
   const meldungenVon = new Map(meldungen.map((m) => [m.id, m.anzahl]));
-  return zeilen.map((f) => alsAdminFrage(f, optionenVon.get(f.id) ?? [], statistikVon.get(f.id), meldungenVon.get(f.id)));
+  const einreicherIds = [...new Set(zeilen.map((f) => f.eingereichtVon).filter((id): id is number => id !== null))];
+  const einreicher = einreicherIds.length === 0 ? [] : await q.select({ id: users.id, username: users.username }).from(users).where(inArray(users.id, einreicherIds));
+  const nameVon = new Map(einreicher.map((u) => [u.id, u.username]));
+  return zeilen.map((f) => alsAdminFrage(
+    f, optionenVon.get(f.id) ?? [], statistikVon.get(f.id), meldungenVon.get(f.id), f.eingereichtVon === null ? null : nameVon.get(f.eingereichtVon) ?? null,
+  ));
 }
 
-function alsAdminFrage(f: Frage, optionen: Option[], statistik?: { beantwortet: number; richtig: number }, meldungen = 0): AdminFrage {
+function alsAdminFrage(
+  f: Frage, optionen: Option[], statistik?: { beantwortet: number; richtig: number }, meldungen = 0, eingereichtVon: string | null = null,
+): AdminFrage {
   const falsch = optionen.filter((o) => !o.istRichtig).map((o) => o.text);
   return {
     id: f.id,
@@ -85,7 +93,28 @@ function alsAdminFrage(f: Frage, optionen: Option[], statistik?: { beantwortet: 
     status: f.status,
     statistik: { beantwortet: statistik?.beantwortet ?? 0, richtig: statistik?.richtig ?? 0 },
     meldungen,
+    eingereichtVon,
+    rueckmeldung: f.rueckmeldung,
   };
+}
+
+/**
+ * Nach einer Statusänderung: freigegebene Fragen ohne Code bekommen einen festen Code
+ * (Community-Fragen, für CSV-Export und -Import), und wer die Frage eingereicht hat,
+ * erfährt per Push von Freigabe oder Ablehnung. Liefert die Nachrichten – erst nach
+ * dem Commit mit spaeterSenden verschicken.
+ */
+async function nachStatuswechsel(tx: Tx, vorher: { id: number; status: FrageStatus }): Promise<Versand[]> {
+  const [f] = await tx.select().from(questions).where(eq(questions.id, vorher.id));
+  if (!f) return [];
+  if (f.status === 'freigegeben' && f.code === null) {
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`fragen-code-${f.kategorie}`}))`);
+    await tx.update(questions).set({ code: await naechsterCode(tx, f.kategorie) }).where(eq(questions.id, f.id));
+  }
+  if (f.eingereichtVon === null || f.status === vorher.status) return [];
+  if (f.status === 'freigegeben') return [{ an: f.eingereichtVon, nachricht: nachricht.frageFreigegeben(f.frageText, f.rueckmeldung) }];
+  if (f.status === 'abgelehnt') return [{ an: f.eingereichtVon, nachricht: nachricht.frageAbgelehnt(f.frageText, f.rueckmeldung) }];
+  return [];
 }
 
 const felderAus = (e: FrageBearbeiten) => ({
@@ -209,8 +238,9 @@ adminRoute.put('/fragen/:id', async (c) => {
   if (!eingabe.success) return c.json(ungueltig(eingabe.error), 400);
   const e = eingabe.data;
 
+  let versand: Versand[] = [];
   const frage = await db.transaction(async (tx) => {
-    const [vorhanden] = await tx.select({ id: questions.id }).from(questions).where(eq(questions.id, id)).for('update');
+    const [vorhanden] = await tx.select({ id: questions.id, status: questions.status }).from(questions).where(eq(questions.id, id)).for('update');
     if (!vorhanden) return null;
     await tx.update(questions).set(felderAus(e)).where(eq(questions.id, id));
     const optionen = await tx.select().from(answerOptions).where(eq(answerOptions.questionId, id)).orderBy(asc(answerOptions.id));
@@ -219,23 +249,35 @@ adminRoute.put('/fragen/:id', async (c) => {
     for (const [i, option] of optionen.filter((o) => !o.istRichtig).entries()) {
       await tx.update(answerOptions).set({ text: e.falsch[i]! }).where(eq(answerOptions.id, option.id));
     }
+    versand = await nachStatuswechsel(tx, vorhanden);
     const [geladen] = await ladeFragen(tx, eq(questions.id, id));
     return geladen!;
   });
   if (!frage) return c.json(fehler('Frage nicht gefunden'), 404);
+  spaeterSenden(versand);
   return c.json(frage satisfies AdminFrage);
 });
 
-// Schnell freigeben / ablehnen / zurück auf Entwurf
+// Schnell freigeben / ablehnen / zurück auf Entwurf – bei eingereichten Fragen mit Rückmeldung an den Einreicher
 adminRoute.post('/fragen/:id/status', async (c) => {
   const id = parseId(c.req.param('id'));
   if (!id) return c.json(fehler('Frage nicht gefunden'), 404);
   const eingabe = statusSetzenSchema.safeParse(await c.req.json().catch(() => null));
   if (!eingabe.success) return c.json(ungueltig(eingabe.error), 400);
-  const geaendert = await db.update(questions).set({ status: eingabe.data.status }).where(eq(questions.id, id)).returning({ id: questions.id });
-  if (!geaendert.length) return c.json(fehler('Frage nicht gefunden'), 404);
-  const [frage] = await ladeFragen(db, eq(questions.id, id));
-  return c.json(frage! satisfies AdminFrage);
+  const { status, rueckmeldung } = eingabe.data;
+
+  let versand: Versand[] = [];
+  const frage = await db.transaction(async (tx) => {
+    const [vorher] = await tx.select({ id: questions.id, status: questions.status }).from(questions).where(eq(questions.id, id)).for('update');
+    if (!vorher) return null;
+    await tx.update(questions).set({ status, ...(rueckmeldung !== null ? { rueckmeldung } : {}) }).where(eq(questions.id, id));
+    versand = await nachStatuswechsel(tx, vorher);
+    const [geladen] = await ladeFragen(tx, eq(questions.id, id));
+    return geladen!;
+  });
+  if (!frage) return c.json(fehler('Frage nicht gefunden'), 404);
+  spaeterSenden(versand);
+  return c.json(frage satisfies AdminFrage);
 });
 
 // Offene Meldungen einer Frage, mit der Antwort, die der Spieler zuletzt gegeben hat

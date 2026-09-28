@@ -12,3 +12,4 @@ export * from './push';
 export * from './ueben';
 export * from './admin';
 export * from './meldungen';
+export * from './community';

@@ -54,7 +54,7 @@ export default defineConfig({
 				VAPID_PRIVATE_KEY: 'WJKsrfl_-VAoMB6boMd_rLULHd5d1KvGdP8nzDMCm8M',
 				VAPID_SUBJECT: 'mailto:e2e@halmduell.invalid',
 				// Admin-Portal (e2e/admin.spec.ts)
-				ADMIN_USERNAMES: 'redaktion,moderation'
+				ADMIN_USERNAMES: 'redaktion,moderation,pruefung'
 			}
 		},
 		{

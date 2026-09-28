@@ -73,6 +73,9 @@ export const questions = pgTable('questions', {
   erklaerung: text('erklaerung'),
   status: varchar('status', { length: 20 }).$type<FrageStatus>().notNull().default('freigegeben'), // für Community-Einreichung
   eingereichtVon: integer('eingereicht_von').references(() => users.id, { onDelete: 'set null' }),
+  // Community-Fragen: Zeitpunkt der Einreichung und Rückmeldung des Admins an den Einreicher
+  eingereichtAt: zeitstempel('eingereicht_at'),
+  rueckmeldung: text('rueckmeldung'),
 }, (t) => [
   check('questions_kategorie_check', erlaubteWerte(t.kategorie, FRAGEN_KATEGORIEN)),
   check('questions_typ_check', erlaubteWerte(t.typ, FRAGE_TYPEN)),
@@ -81,6 +84,8 @@ export const questions = pgTable('questions', {
   check('questions_bild_check', sql`${t.typ} <> 'bild' or ${t.bildUrl} is not null`),
   // Fragenauswahl fürs Duell: freigegebene Fragen je Kategorie
   index('questions_kategorie_status_idx').on(t.kategorie, t.status),
+  // „Meine Fragen“
+  index('questions_eingereicht_von_idx').on(t.eingereichtVon),
 ]);
 
 export const answerOptions = pgTable('answer_options', {

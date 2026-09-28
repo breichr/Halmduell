@@ -80,6 +80,11 @@
 <Statistik statistik={data.statistik} />
 <AbzeichenUebersicht liste={data.abzeichen} />
 
+<a class="karte admin-link fragen-link" href="/fragen/eigene">
+	<strong>Eigene Fragen</strong>
+	<span class="hinweis">Fragen einreichen und sehen, welche schon im Spiel sind</span>
+</a>
+
 <h2 class="abschnitt-titel konto">Konto</h2>
 
 {#if data.user.istAdmin}
@@ -181,6 +186,9 @@
 	}
 	.admin-link .hinweis {
 		font-size: 0.9rem;
+	}
+	.fragen-link {
+		border-left-color: var(--hellgruen);
 	}
 	.installieren {
 		margin-top: 1.1rem;
