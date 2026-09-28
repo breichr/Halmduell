@@ -125,7 +125,7 @@
 {#if data.duelle.length === 0}
 	<div class="karte leer">
 		<p><strong>Noch keine Duelle.</strong></p>
-		<p class="hinweis">Schick einen Einladungslink per WhatsApp & Co. – oder fordere jemanden per Benutzername heraus.</p>
+		<p class="hinweis">Spiel gegen einen zufälligen Gegner, schick einen Einladungslink per WhatsApp & Co. – oder fordere jemanden per Benutzername heraus.</p>
 	</div>
 {/if}
 

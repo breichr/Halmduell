@@ -38,7 +38,7 @@
 		ergebnis ? ergebnis.titel
 		: duel.duBistDran ? 'Du bist dran!'
 		: duel.gegner ? `${gegnerName} ist am Zug`
-		: 'Warte auf einen Gegner'
+		: duel.zufall ? 'Gegner wird gesucht' : 'Warte auf einen Gegner'
 	);
 
 	// B spielt nach A: solange das Duell läuft, hat der Gegner nur dann schon gespielt,
@@ -99,7 +99,7 @@
 		</p>
 	{:else if laufend && duel.zugBis}
 		<p class="untertitel">
-			{duel.duBistDran ? 'Du bist dran' : duel.gegner ? `${gegnerName} ist dran` : 'Wartet auf einen Gegner'} · {restzeit(duel.zugBis)}
+			{duel.duBistDran ? 'Du bist dran' : duel.gegner ? `${gegnerName} ist dran` : duel.zufall ? 'Gegner wird gesucht' : 'Wartet auf einen Gegner'} · {restzeit(duel.zugBis)}
 		</p>
 	{/if}
 </header>
@@ -198,14 +198,14 @@
 	{#if laufend}
 		{#if aufgebenOffen}
 			<div class="karte bestaetigen" role="alertdialog" aria-labelledby="aufgeben-titel">
-				<p id="aufgeben-titel"><strong>Wirklich aufgeben?</strong> {duel.gegner ? `${gegnerName} gewinnt dann das Duell.` : 'Die Einladung wird zurückgezogen.'}</p>
+				<p id="aufgeben-titel"><strong>Wirklich aufgeben?</strong> {duel.gegner ? `${gegnerName} gewinnt dann das Duell.` : duel.zufall ? 'Die Suche nach einem Gegner wird beendet.' : 'Die Einladung wird zurückgezogen.'}</p>
 				<div class="aktionen">
 					<button class="knopf zweitrangig klein" onclick={() => (aufgebenOffen = false)}>Abbrechen</button>
 					<button class="knopf gefahr klein" onclick={aufgeben}>Aufgeben</button>
 				</div>
 			</div>
 		{:else}
-			<button class="knopf gefahr breit" onclick={() => (aufgebenOffen = true)}>{duel.gegner ? 'Aufgeben' : 'Einladung zurückziehen'}</button>
+			<button class="knopf gefahr breit" onclick={() => (aufgebenOffen = true)}>{duel.gegner ? 'Aufgeben' : duel.zufall ? 'Suche abbrechen' : 'Einladung zurückziehen'}</button>
 		{/if}
 	{/if}
 	<button class="knopf zweitrangig breit" onclick={() => goto('/')}>Zur Übersicht</button>

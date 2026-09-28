@@ -73,6 +73,7 @@ export function baueUebersicht(
     gegner,
     duBistDran: istAmZug(duel, userId),
     einladungsCode: ichBinA ? duel.einladungsCode : null,
+    zufall: duel.zufall,
     meinePunkte: meine.filter((a) => a.istRichtig).length,
     gegnerPunkte: gegnerSichtbar.filter((a) => a.istRichtig).length,
     ratingAenderung: ichBinA ? duel.ratingAenderungA : duel.ratingAenderungB,

@@ -43,6 +43,7 @@ test('zwei Spieler: Einladung per Link, beide spielen, Ergebnis', async ({ brows
 	// Neues Duell mit Einladungslink
 	await anna.getByRole('link', { name: /Neues Duell starten/ }).click();
 	await anna.getByRole('radio', { name: 'Gemischt' }).check();
+	await anna.getByRole('radio', { name: /Einladungslink/ }).check();
 	await anna.getByRole('button', { name: 'Link erstellen & losspielen' }).click();
 	const link = await anna.getByTestId('einladungslink').textContent();
 	expect(link).toMatch(/\/einladung\/[A-Z2-9]{8}$/);

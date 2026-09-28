@@ -3,7 +3,10 @@ import { and, asc, desc, eq, inArray, isNotNull, isNull, or, sql } from 'drizzle
 import {
   ANSTUPSEN_SPERRE_MS,
   ANTWORTZEIT_MS,
+  EINLADUNG_FRIST_MS,
   FRAGEN_PRO_DUELL,
+  OFFENE_ZUFALLSDUELLE_MAX,
+  aktuelleSaison,
   antwortSchema,
   beitretenSchema,
   feldFehler,
@@ -34,6 +37,7 @@ import {
   zugBis,
 } from '../services/duell';
 import { abzeichenAusDuell } from '../services/abzeichen';
+import { START_RATING } from '../services/elo';
 import { nachricht } from '../services/benachrichtigungen';
 import { beendeVorzeitig } from '../services/duell-ende';
 import { hatPushAbo, pushAktiv, spaeterSenden, type Versand } from '../services/push';
@@ -110,6 +114,33 @@ async function waehleFragen(tx: Tx, kategorie: NeuesDuell['kategorie'], spielerI
   return zeilen.map((z) => z.id);
 }
 
+/**
+ * Wartendes Zufallsduell für den Spieler suchen und sperren: gleiche Kategorie,
+ * Runde von A schon gespielt, nicht abgelaufen, kein laufendes Duell mit A.
+ * Bevorzugt ähnliches Gesamt-Rating, dann das älteste.
+ */
+async function findeZufallsduell(tx: Tx, kategorie: NeuesDuell['kategorie'], ich: number): Promise<Duell | null> {
+  const saison = aktuelleSaison();
+  const [eigenes] = await tx.execute<{ rating: number }>(sql`
+    select rating from ratings where user_id = ${ich} and kategorie = 'gesamt' and saison = ${saison}`);
+  const meinRating = eigenes?.rating ?? START_RATING;
+  const [treffer] = await tx.execute<{ id: number }>(sql`
+    select d.id from duels d
+    left join ratings r on r.user_id = d.spieler_a_id and r.kategorie = 'gesamt' and r.saison = ${saison}
+    where d.zufall and d.spieler_b_id is null and d.status = 'wartet_b' and d.kategorie = ${kategorie}
+      and d.spieler_a_id <> ${ich}
+      and d.erstellt_at > now() - ${EINLADUNG_FRIST_MS} * interval '1 millisecond'
+      and not exists (
+        select 1 from duels l where l.status in ('wartet_a', 'wartet_b')
+          and ((l.spieler_a_id = d.spieler_a_id and l.spieler_b_id = ${ich}) or (l.spieler_a_id = ${ich} and l.spieler_b_id = d.spieler_a_id)))
+    order by abs(coalesce(r.rating, ${START_RATING}) - ${meinRating}), d.erstellt_at, d.id
+    limit 1
+    for update of d skip locked`);
+  if (!treffer) return null;
+  const [duel] = await tx.select().from(duels).where(eq(duels.id, treffer.id));
+  return duel ?? null;
+}
+
 export const duelsRoute = new Hono<AuthEnv>();
 
 duelsRoute.use(requireAuth);
@@ -138,16 +169,33 @@ duelsRoute.get('/', async (c) => {
   return c.json(uebersicht.sort(sortiereFuerDashboard) satisfies DuellUebersicht[]);
 });
 
-// Neues Duell: gegen einen User (per Name) oder offen mit Einladungscode
+// Neues Duell: gegen einen User (per Name), offen mit Einladungscode oder gegen einen Zufallsgegner
 duelsRoute.post('/', async (c) => {
   const eingabe = neuesDuellSchema.safeParse(await leseJson(c.req.raw));
   if (!eingabe.success) {
     return c.json({ error: 'Ungültige Eingabe', felder: feldFehler(eingabe.error) } satisfies ApiFehler, 400);
   }
-  const { kategorie, gegner } = eingabe.data;
+  const { kategorie, gegner, zufall } = eingabe.data;
   const ich = c.var.userId;
 
   return db.transaction(async (tx) => {
+    if (zufall) {
+      // wartet schon jemand? Dann als B beitreten – dessen Runde ist gespielt, ich bin sofort dran
+      const wartend = await findeZufallsduell(tx, kategorie, ich);
+      if (wartend) {
+        const [aktualisiert] = await tx.update(duels).set({ spielerBId: ich, zugSeit: new Date() })
+          .where(eq(duels.id, wartend.id)).returning();
+        const spieler = await ladeSpieler(tx, [wartend.spielerAId]);
+        const antworten = await tx.select().from(duelAnswers).where(eq(duelAnswers.duelId, wartend.id));
+        return c.json(baueUebersicht(aktualisiert!, ich, spieler.get(wartend.spielerAId) ?? null, antworten) satisfies DuellUebersicht);
+      }
+      const [offen] = await tx.select({ n: sql<number>`count(*)::int` }).from(duels)
+        .where(and(eq(duels.spielerAId, ich), eq(duels.zufall, true), isNull(duels.spielerBId), inArray(duels.status, ['wartet_a', 'wartet_b'])));
+      if ((offen?.n ?? 0) >= OFFENE_ZUFALLSDUELLE_MAX) {
+        return c.json(fehler(`Du suchst schon in ${OFFENE_ZUFALLSDUELLE_MAX} Duellen einen Gegner – warte, bis sich jemand findet.`), 429);
+      }
+    }
+
     let gegnerSpieler: DuellSpieler | null = null;
     if (gegner) {
       const [gefunden] = await tx.select({ id: users.id, username: users.username }).from(users)
@@ -164,7 +212,8 @@ duelsRoute.post('/', async (c) => {
       spielerAId: ich,
       spielerBId: gegnerSpieler?.id ?? null,
       kategorie,
-      einladungsCode: gegnerSpieler ? null : erzeugeEinladungsCode(),
+      einladungsCode: gegnerSpieler || zufall ? null : erzeugeEinladungsCode(),
+      zufall: zufall ?? false,
     }).returning();
     await tx.insert(duelQuestions).values(
       fragen.map((questionId, i) => ({ duelId: duel!.id, questionId, reihenfolge: i + 1 })),

@@ -1,0 +1,2 @@
+ALTER TABLE "duels" ADD COLUMN "zufall" boolean DEFAULT false NOT NULL;--> statement-breakpoint
+CREATE INDEX "duels_zufall_pool_idx" ON "duels" USING btree ("kategorie","erstellt_at") WHERE "duels"."zufall" and "duels"."spieler_b_id" is null;

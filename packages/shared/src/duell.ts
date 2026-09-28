@@ -8,8 +8,10 @@ export const ANTWORTZEIT_MS = 15_000;
 export const EINLADUNGSCODE_LAENGE = 8;
 /** Wer nicht innerhalb dieser Frist seinen Zug spielt, verliert das Duell */
 export const ZUG_FRIST_MS = 3 * 24 * 60 * 60 * 1000;
-/** Nicht angenommene Einladungen verfallen danach ohne Wertung */
+/** Nicht angenommene Einladungen (und Zufallsduelle ohne Gegner) verfallen danach ohne Wertung */
 export const EINLADUNG_FRIST_MS = 7 * 24 * 60 * 60 * 1000;
+/** So viele Zufallsduelle darf ein Spieler gleichzeitig ohne Gegner offen haben */
+export const OFFENE_ZUFALLSDUELLE_MAX = 3;
 
 // --- Requests ---
 
@@ -17,7 +19,9 @@ export const neuesDuellSchema = z.object({
   kategorie: z.enum(DUELL_KATEGORIEN),
   /** Benutzername des Gegners; ohne Gegner wird ein Einladungscode erzeugt */
   gegner: z.string().trim().min(1).max(50).optional(),
-});
+  /** zufälliger Gegner: einem wartenden Duell beitreten oder selbst eins eröffnen */
+  zufall: z.boolean().optional(),
+}).refine((d) => !(d.zufall && d.gegner), { message: 'Entweder Gegner oder Zufall', path: ['gegner'] });
 export type NeuesDuell = z.infer<typeof neuesDuellSchema>;
 
 export const beitretenSchema = z.object({
@@ -47,6 +51,8 @@ export interface DuellUebersicht {
   duBistDran: boolean;
   /** nur für den Ersteller, solange noch niemand beigetreten ist */
   einladungsCode: string | null;
+  /** Duell gegen einen zufälligen Gegner (ohne Gegner: Suche läuft noch) */
+  zufall: boolean;
   meinePunkte: number;
   /** nur Punkte aus Fragen, die ich selbst schon beantwortet habe */
   gegnerPunkte: number;

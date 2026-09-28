@@ -49,9 +49,8 @@ Attribution wird automatisch im Quiz eingeblendet ("Bild: Name, CC-BY-SA").
 
 1. **Dashboard**: laufende Duelle (Gegner-Avatar, Status "Du bist dran" /
    "Wartet auf Gegner"), Button "Neues Duell starten", Punktestand/Liga.
-2. **Duell starten**: Gegner wählen (Freund per Code/Link einladen, primärer
-   Einstiegspunkt; Zufallsgegner optional später), Kategorie wählen,
-   Schwierigkeitsgrad optional.
+2. **Duell starten**: Kategorie und Gegner wählen – zufälliger Gegner
+   (vorausgewählt), Einladungslink oder Benutzername.
 3. **Frage-Screen**: Fortschrittsanzeige, Timer-Kreis, bei Bilderfragen Bild
    groß oben + 4 Antwortkacheln, bei Wissensfragen Fragetext + 4 Kacheln.
    Sofortiges Feedback (richtig/falsch) mit kurzer Erklärung.
@@ -111,6 +110,7 @@ plus `eingereicht_von`).
 
 ## Freundesliste
 
-Da das Spiel ohnehin asynchron ist, laufen die meisten Duelle vermutlich
-gegen Freunde/Bekannte statt gegen Fremde über Matchmaking – "Freund
-einladen" ist daher prominenter platziert als "Zufallsgegner suchen".
+Da das Spiel ohnehin asynchron ist, laufen viele Duelle vermutlich gegen
+Freunde/Bekannte. Damit neue Spieler auch ohne Freunde in der App sofort
+spielen können, ist „Zufälliger Gegner“ beim neuen Duell vorausgewählt;
+Einladungslink und Benutzername stehen direkt darunter.
