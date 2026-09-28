@@ -52,8 +52,10 @@ test('Frage nach dem Duell melden, Admin arbeitet die Meldung ab', async ({ brow
 	await expect(meldung).toContainText('Die richtige Antwort stimmt nicht');
 	await expect(meldung).toContainText('Laut Pflanzenschutzdienst ist es anders.');
 	await expect(meldung).toContainText(anna.username);
+	await admin.seite.getByLabel(/Antwort an die Melder/).fill('Danke, ist korrigiert.');
 	await admin.seite.getByRole('button', { name: 'Erledigt' }).click();
 	await expect(admin.seite.getByTestId('meldung')).toHaveCount(0);
+	await expect(admin.seite.getByRole('status')).toContainText('1 Meldung erledigt');
 
 	await admin.seite.goto('/admin?status=gemeldet');
 	await expect(admin.seite.getByText('Keine Fragen für diesen Filter.')).toBeVisible();

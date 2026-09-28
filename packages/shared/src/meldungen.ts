@@ -16,8 +16,24 @@ export const meldenSchema = z.object({
 });
 export type Melden = z.infer<typeof meldenSchema>;
 
-/** POST /api/admin/fragen/:id/meldungen – alle offenen Meldungen einer Frage abschließen */
-export const meldungenAbschliessenSchema = z.object({ status: z.enum(['erledigt', 'verworfen']) });
+/**
+ * POST /api/admin/fragen/:id/meldungen – alle offenen Meldungen einer Frage abschließen.
+ * Die Melder bekommen eine Push-Nachricht, optional mit einer kurzen Antwort.
+ */
+export const meldungenAbschliessenSchema = z.object({
+  status: z.enum(['erledigt', 'verworfen']),
+  antwort: z.preprocess(
+    (w) => (typeof w === 'string' && w.trim() === '' ? null : w),
+    z.string().trim().max(300, 'höchstens 300 Zeichen').nullable().default(null),
+  ),
+});
+
+/** Antwort von POST /api/admin/fragen/:id/meldungen */
+export interface MeldungenAbgeschlossen {
+  abgeschlossen: number;
+  /** so viele Melder haben eine Push-Nachricht bekommen (Gerät mit Benachrichtigungen) */
+  benachrichtigt: number;
+}
 
 // --- Responses ---
 

@@ -1,5 +1,10 @@
 import { KATEGORIE_NAMEN, type DuellAusgang, type DuellKategorie, type PushNachricht } from '@halmduell/shared';
 
+/** Fragetext für die Benachrichtigung kürzen */
+function kurz(text: string, max = 60): string {
+  return text.length <= max ? text : `${text.slice(0, max - 1).trimEnd()}…`;
+}
+
 // Texte aller Push-Benachrichtigungen an einem Ort. Ein Tag je Duell sorgt dafür,
 // dass auf dem Gerät immer nur die neueste Nachricht zu einem Duell steht.
 
@@ -61,6 +66,20 @@ export const nachricht = {
     text: `${von} möchte mit dir befreundet sein.`,
     url: '/freunde',
     tag: 'freunde',
+  }),
+
+  meldungErledigt: (frage: string, antwort: string | null, duelId: number | null): PushNachricht => ({
+    titel: 'Danke für deine Meldung!',
+    text: `Wir haben „${kurz(frage)}“ überarbeitet.${antwort ? ` ${antwort}` : ''}`,
+    url: duelId ? duellUrl(duelId) : '/',
+    tag: 'meldungen',
+  }),
+
+  meldungVerworfen: (frage: string, antwort: string | null, duelId: number | null): PushNachricht => ({
+    titel: 'Deine Meldung wurde geprüft',
+    text: `„${kurz(frage)}“ bleibt so, wie sie ist.${antwort ? ` ${antwort}` : ''}`,
+    url: duelId ? duellUrl(duelId) : '/',
+    tag: 'meldungen',
   }),
 
   anfrageAngenommen: (von: string): PushNachricht => ({

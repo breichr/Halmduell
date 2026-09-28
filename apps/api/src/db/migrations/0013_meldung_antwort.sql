@@ -1,0 +1,1 @@
+ALTER TABLE "frage_meldungen" ADD COLUMN "antwort" text;

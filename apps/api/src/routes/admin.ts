@@ -16,6 +16,7 @@ import {
   type ApiFehler,
   type FrageBearbeiten,
   type FragenKategorie,
+  type MeldungenAbgeschlossen,
 } from '@halmduell/shared';
 import { db } from '../db/client';
 import { answerOptions, duelAnswers, frageMeldungen, questions, users } from '../db/schema';
@@ -23,6 +24,8 @@ import type { Tx } from '../db/types';
 import { schreibeFragenCsv, type FragenZeile } from '../fragen/csv';
 import { requireAuth, type AuthEnv } from '../middleware/auth';
 import { requireAdmin } from '../services/admin';
+import { nachricht } from '../services/benachrichtigungen';
+import { hatPushAbo, pushAktiv, spaeterSenden } from '../services/push';
 import { CommonsFehler, commonsBild } from '../services/commons';
 
 /** Admin-Portal: Fragen prüfen, bearbeiten, freigeben. Die Datenbank ist maßgeblich. */
@@ -254,17 +257,35 @@ adminRoute.get('/fragen/:id/meldungen', async (c) => {
   return c.json(zeilen.map((m) => ({ ...m, erstelltAt: m.erstelltAt.toISOString() })) satisfies AdminMeldung[]);
 });
 
-// Alle offenen Meldungen einer Frage abschließen: erledigt (Frage korrigiert) oder verworfen
+/**
+ * Alle offenen Meldungen einer Frage abschließen: erledigt (Frage korrigiert) oder verworfen.
+ * Jeder Melder bekommt eine Push-Nachricht; Antippen öffnet sein letztes Duell mit der Frage.
+ */
 adminRoute.post('/fragen/:id/meldungen', async (c) => {
   const id = parseId(c.req.param('id'));
   if (!id) return c.json(fehler('Frage nicht gefunden'), 404);
   const eingabe = meldungenAbschliessenSchema.safeParse(await c.req.json().catch(() => null));
   if (!eingabe.success) return c.json(ungueltig(eingabe.error), 400);
+  const { status, antwort } = eingabe.data;
+
+  const [frage] = await db.select({ text: questions.frageText }).from(questions).where(eq(questions.id, id));
+  if (!frage) return c.json(fehler('Frage nicht gefunden'), 404);
   const geschlossen = await db.update(frageMeldungen)
-    .set({ status: eingabe.data.status, abgeschlossenAt: new Date(), abgeschlossenVon: c.var.userId })
+    .set({ status, antwort, abgeschlossenAt: new Date(), abgeschlossenVon: c.var.userId })
     .where(and(eq(frageMeldungen.questionId, id), eq(frageMeldungen.status, 'offen')))
-    .returning({ id: frageMeldungen.id });
-  return c.json({ abgeschlossen: geschlossen.length });
+    .returning({ userId: frageMeldungen.userId });
+
+  const melder = [...new Set(geschlossen.map((m) => m.userId))];
+  const letzteDuelle = melder.length === 0 ? [] : await db.execute<{ user_id: number; duel_id: number }>(sql`
+    select distinct on (user_id) user_id, duel_id from ${duelAnswers}
+    where question_id = ${id} and user_id in (${sql.join(melder.map((u) => sql`${u}`), sql`, `)})
+    order by user_id, gestellt_at desc`);
+  const duellVon = new Map([...letzteDuelle].map((z) => [z.user_id, z.duel_id]));
+  const text = status === 'erledigt' ? nachricht.meldungErledigt : nachricht.meldungVerworfen;
+  spaeterSenden(melder.map((an) => ({ an, nachricht: text(frage.text, antwort, duellVon.get(an) ?? null) })));
+
+  const mitAbo = pushAktiv() ? await Promise.all(melder.map(hatPushAbo)) : [];
+  return c.json({ abgeschlossen: geschlossen.length, benachrichtigt: mitAbo.filter(Boolean).length } satisfies MeldungenAbgeschlossen);
 });
 
 // Commons-Link → Bild-URL, Urheber und Lizenz (für Bildfragen)

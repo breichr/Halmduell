@@ -253,12 +253,16 @@ auswählen (Antwort falsch, Frage unklar, anderes), optional eine Anmerkung.
   Bearbeiten-Seite stehen die Meldungen mit Anmerkung und der Antwort des
   Spielers. Frage korrigieren, dann alle offenen Meldungen „Erledigt“ oder
   „Verwerfen“ – danach kann dieselbe Frage erneut gemeldet werden.
+- Beim Abschließen bekommt jeder Melder eine Push-Nachricht („Danke für deine
+  Meldung!“ bzw. „Deine Meldung wurde geprüft“) mit dem Anfang der Frage und
+  optional einer kurzen Antwort des Admins (max. 300 Zeichen, wird gespeichert).
+  Antippen öffnet das letzte Duell des Spielers mit dieser Frage.
 
 | Endpunkt | Zweck |
 |---|---|
 | `POST /api/fragen/:id/melden` | `{ grund, kommentar? }` → 204; 403 ohne eigene Antwort, 429 über dem Tageslimit |
 | `GET /api/admin/fragen/:id/meldungen` | offene Meldungen einer Frage |
-| `POST /api/admin/fragen/:id/meldungen` | `{ status: 'erledigt' \| 'verworfen' }` schließt alle offenen Meldungen der Frage |
+| `POST /api/admin/fragen/:id/meldungen` | `{ status: 'erledigt' \| 'verworfen', antwort? }` schließt alle offenen Meldungen der Frage und benachrichtigt die Melder → `{ abgeschlossen, benachrichtigt }` |
 
 Tabelle `frage_meldungen`; `DuellDetails.fragen[].frage.gemeldet` zeigt eine
 eigene offene Meldung an.
@@ -384,7 +388,6 @@ Abzeichen, Fehler üben, Fragen melden, Benachrichtigungen, Admin-Portal für Fr
   ≥ 6 freigegebene Fragen – Landtechnik und Viehzucht haben noch keine
 - Admin-Portal erweitern: eingereichte Community-Fragen moderieren,
   Admins im Portal verwalten statt per `ADMIN_USERNAMES`
-- Fragen melden: Melder benachrichtigen, wenn ihre Meldung erledigt ist
 
 Bewusst später:
 
