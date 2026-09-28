@@ -1,6 +1,6 @@
 import { afterAll, beforeEach, describe, expect, test } from 'bun:test';
 import { sql } from 'drizzle-orm';
-import { MELDUNGEN_PRO_TAG, type AdminFrage, type AdminFragenListe, type AdminMeldung, type DuellDetails } from '@halmduell/shared';
+import { MELDUNGEN_PRO_TAG, type PushNachricht, type AdminFrage, type AdminFragenListe, type AdminMeldung, type DuellDetails } from '@halmduell/shared';
 import { anfrage, antwortIds, erstelleFragen, leereDatenbank, mitDatenbank, neuerUser, sqlAusfuehren } from './helpers';
 
 type User = Awaited<ReturnType<typeof neuerUser>>;
@@ -97,7 +97,7 @@ describe.skipIf(!mitDatenbank)('Fragen melden', () => {
 
     expect((await anfrage(`/admin/fragen/${fragen[0]}/meldungen`, { method: 'POST', cookie: admin.cookie, body: { status: 'offen' } })).status).toBe(400);
     const res = await anfrage(`/admin/fragen/${fragen[0]}/meldungen`, { method: 'POST', cookie: admin.cookie, body: { status: 'erledigt' } });
-    expect(res.json).toEqual({ abgeschlossen: 2 });
+    expect(res.json).toEqual({ abgeschlossen: 2, benachrichtigt: 0 }); // Push ist in diesem Test aus
     expect(((await anfrage(`/admin/fragen/${fragen[0]}`, { cookie: admin.cookie })).json as AdminFrage).meldungen).toBe(0);
     expect(((await anfrage('/admin/fragen?gemeldet=1', { cookie: admin.cookie })).json as AdminFragenListe).gemeldet).toBe(1);
 
@@ -105,5 +105,57 @@ describe.skipIf(!mitDatenbank)('Fragen melden', () => {
     expect((await melden(anna, fragen[0]!)).status).toBe(204);
     const [z] = await sqlAusfuehren(sql`select count(*)::int as n from frage_meldungen where question_id = ${fragen[0]!}`) as unknown as { n: number }[];
     expect(z!.n).toBe(3);
+  });
+
+  test('Abschließen benachrichtigt die Melder per Push, mit Antwort und Link zum Duell', async () => {
+    const push = await import('../src/services/push');
+    const gesendet: { endpoint: string; nachricht: PushNachricht }[] = [];
+    push.setzePushSender(async (a, payload) => {
+      gesendet.push({ endpoint: a.endpoint, nachricht: JSON.parse(payload) });
+      return 201;
+    });
+    try {
+      for (const u of [anna, ben]) {
+        await anfrage('/push/abo', { method: 'POST', cookie: u.cookie, body: { endpoint: `https://push.example/${u.username}`, keys: { p256dh: 'B', auth: 'A' } } });
+      }
+      await sqlAusfuehren(sql`update questions set frage_text = ${'Welche Kultur gehört nicht zum Getreide, obwohl sie oft in der Fruchtfolge mit Weizen steht?'} where id = ${fragen[0]!}`);
+      const duelAnna = await duellMit(anna, ben, [{ frage: fragen[0]!, richtig: false }]);
+      const duelBen = await duellMit(ben, anna, [{ frage: fragen[0]!, richtig: true }, { frage: fragen[1]!, richtig: true }]);
+      await melden(anna, fragen[0]!);
+      await melden(ben, fragen[0]!, { grund: 'frage_unklar' });
+      await melden(ben, fragen[1]!);
+
+      const res = await anfrage(`/admin/fragen/${fragen[0]}/meldungen`, {
+        method: 'POST', cookie: admin.cookie, body: { status: 'verworfen', antwort: '  Raps ist ein Kreuzblütler.  ' },
+      });
+      expect(res.json).toEqual({ abgeschlossen: 2, benachrichtigt: 2 });
+      await push.allePushesVersendet();
+      const an = (u: User) => gesendet.find((g) => g.endpoint.endsWith(u.username))?.nachricht;
+      expect(an(anna)).toEqual({
+        titel: 'Deine Meldung wurde geprüft',
+        text: '„Welche Kultur gehört nicht zum Getreide, obwohl sie oft in…“ bleibt so, wie sie ist. Raps ist ein Kreuzblütler.',
+        url: `/duell/${duelAnna}`,
+        tag: 'meldungen',
+      });
+      expect(an(ben)?.url).toBe(`/duell/${duelBen}`);
+      expect(gesendet).toHaveLength(2);
+      const [z] = await sqlAusfuehren(sql`select antwort from frage_meldungen where user_id = ${anna.id}`) as unknown as { antwort: string }[];
+      expect(z!.antwort).toBe('Raps ist ein Kreuzblütler.');
+
+      // „erledigt“ ohne Antwort; Bens zweite Meldung ist davon unberührt geblieben
+      gesendet.length = 0;
+      await anfrage(`/admin/fragen/${fragen[1]}/meldungen`, { method: 'POST', cookie: admin.cookie, body: { status: 'erledigt' } });
+      await push.allePushesVersendet();
+      expect(gesendet.map((g) => g.nachricht.titel)).toEqual(['Danke für deine Meldung!']);
+      expect(gesendet[0]!.nachricht.text).toMatch(/überarbeitet\.$/);
+
+      // nichts mehr offen → niemand wird benachrichtigt
+      expect((await anfrage(`/admin/fragen/${fragen[1]}/meldungen`, { method: 'POST', cookie: admin.cookie, body: { status: 'erledigt' } })).json)
+        .toEqual({ abgeschlossen: 0, benachrichtigt: 0 });
+      expect((await anfrage('/admin/fragen/999999/meldungen', { method: 'POST', cookie: admin.cookie, body: { status: 'erledigt' } })).status).toBe(404);
+    } finally {
+      await push.allePushesVersendet();
+      push.setzePushSender(null);
+    }
   });
 });

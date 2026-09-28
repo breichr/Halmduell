@@ -19,7 +19,7 @@ CHECK-Constraint in der Datenbank abgesichert.
 | `friendships` | `user_id`, `friend_id` | Freundschaft, `status` (`angefragt`, `bestaetigt`) |
 | `achievements` | `id` | Abzeichen, eindeutiger `key` (z. B. `schaedling_experte`) |
 | `user_achievements` | `user_id`, `achievement_id` | erreichte Abzeichen mit Zeitpunkt |
-| `frage_meldungen` | `id` | Meldung eines Spielers zu einer Frage: `grund` (`antwort_falsch`, `frage_unklar`, `sonstiges`), `kommentar`, `status` (`offen`, `erledigt`, `verworfen`), `abgeschlossen_at`/`_von`; je Spieler und Frage höchstens eine offene |
+| `frage_meldungen` | `id` | Meldung eines Spielers zu einer Frage: `grund` (`antwort_falsch`, `frage_unklar`, `sonstiges`), `kommentar`, `status` (`offen`, `erledigt`, `verworfen`), `abgeschlossen_at`/`_von`, `antwort` (Rückmeldung des Admins an die Melder); je Spieler und Frage höchstens eine offene |
 
 ## Regeln in der Datenbank
 

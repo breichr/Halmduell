@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto, invalidate } from '$app/navigation';
-	import { MELDUNG_GRUND_NAMEN, type AdminFrage, type FrageBearbeiten } from '@halmduell/shared';
+	import { MELDUNG_GRUND_NAMEN, type AdminFrage, type FrageBearbeiten, type MeldungenAbgeschlossen } from '@halmduell/shared';
 	import { api, ApiError } from '$lib/api';
 	import { hydriert } from '$lib/hydriert.svelte';
 	import FrageFormular from '$lib/components/admin/FrageFormular.svelte';
@@ -20,12 +20,17 @@
 
 	let schliesst = $state(false);
 	let meldungFehler = $state('');
+	let antwort = $state('');
+	let abgeschlossen = $state('');
 
 	async function meldungenAbschliessen(status: 'erledigt' | 'verworfen') {
 		schliesst = true;
 		meldungFehler = '';
 		try {
-			await api().post(`/admin/fragen/${f.id}/meldungen`, { status });
+			const r = await api().post<MeldungenAbgeschlossen>(`/admin/fragen/${f.id}/meldungen`, { status, antwort });
+			const was = `${r.abgeschlossen === 1 ? '1 Meldung' : `${r.abgeschlossen} Meldungen`} ${status === 'erledigt' ? 'erledigt' : 'verworfen'}`;
+			abgeschlossen = `${was} – ${r.benachrichtigt === 1 ? '1 Spieler' : `${r.benachrichtigt} Spieler`} per Push benachrichtigt.`;
+			antwort = '';
 			await Promise.all([invalidate('app:admin-frage'), invalidate('app:admin')]);
 		} catch (e) {
 			meldungFehler = e instanceof ApiError ? e.message : 'Das hat nicht geklappt';
@@ -62,13 +67,19 @@
 			{/each}
 		</ul>
 		{#if meldungFehler}<p class="fehlermeldung" role="alert">{meldungFehler}</p>{/if}
-		<p class="hinweis">Frage unten korrigieren (oder ablehnen), dann als erledigt markieren. Unbegründete Meldungen verwerfen.</p>
+		<p class="hinweis">Frage unten korrigieren (oder ablehnen), dann als erledigt markieren. Unbegründete Meldungen verwerfen. Die Melder bekommen eine Push-Nachricht.</p>
+		<label class="antwort">
+			<span>Antwort an die Melder <small>(optional, steht in der Nachricht)</small></span>
+			<textarea bind:value={antwort} rows="2" maxlength="300" placeholder="z. B. Laut Sortenliste stimmt die Antwort."></textarea>
+		</label>
 		<div class="aktionen">
 			<button class="knopf klein" disabled={!js.bereit || schliesst} onclick={() => meldungenAbschliessen('erledigt')}>Erledigt</button>
 			<button class="knopf klein zweitrangig" disabled={!js.bereit || schliesst} onclick={() => meldungenAbschliessen('verworfen')}>Verwerfen</button>
 		</div>
 	</section>
 {/if}
+
+{#if abgeschlossen}<p class="erfolg abgeschlossen" role="status">{abgeschlossen}</p>{/if}
 
 {#key f.id}
 	<FrageFormular frage={f} {speichern} />
@@ -110,6 +121,29 @@
 	}
 	.meldungen .hinweis {
 		margin: 0;
+	}
+	.antwort {
+		display: grid;
+		gap: 0.3rem;
+		font-weight: 800;
+		font-size: 0.9rem;
+	}
+	.antwort small {
+		font-weight: 600;
+		color: var(--text-2);
+	}
+	.antwort textarea {
+		font: inherit;
+		font-weight: 400;
+		padding: 0.5rem 0.6rem;
+		border: 2px solid var(--kante);
+		border-radius: var(--radius-klein);
+		background: var(--flaeche);
+		color: var(--text);
+		resize: vertical;
+	}
+	.abgeschlossen {
+		margin-bottom: 1rem;
 	}
 	.aktionen {
 		display: flex;

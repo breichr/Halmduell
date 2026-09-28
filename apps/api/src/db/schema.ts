@@ -257,6 +257,8 @@ export const frageMeldungen = pgTable('frage_meldungen', {
   erstelltAt: zeitstempel('erstellt_at').notNull().defaultNow(),
   abgeschlossenAt: zeitstempel('abgeschlossen_at'),
   abgeschlossenVon: integer('abgeschlossen_von').references(() => users.id, { onDelete: 'set null' }),
+  // kurze Antwort des Admins an die Melder (steht auch in der Push-Nachricht)
+  antwort: text('antwort'),
 }, (t) => [
   check('frage_meldungen_grund_check', erlaubteWerte(t.grund, MELDUNG_GRUENDE)),
   check('frage_meldungen_status_check', erlaubteWerte(t.status, MELDUNG_STATUS)),
