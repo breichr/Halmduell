@@ -23,6 +23,7 @@
 	const GRUEN = '#62C46A';
 	const DUNKEL = '#3E9B4F';
 	const HELL = '#A8E0A0';
+	const TIEF = '#2F7D3B'; // Gliedmaßen auf der abgewandten Seite
 
 	const augen = $derived(
 		pose === 'jubeln' ? 'froh' : pose === 'schlafen' ? 'zu' : pose === 'traurig' ? 'traurig' : pose === 'denken' ? 'oben' : 'offen'
@@ -76,15 +77,21 @@
 	{/if}
 
 	<g class="figur">
-		<!-- Sprungbein (hinten): kräftiger Schenkel, Unterschenkel zum Blatt -->
-		{@render glied('M38 63 L35 102 L43 104', 3)}
-		<path d="M58 93 C49 89 39 79 36 68 C34.5 61 40.5 58.5 44 63 C50 71 56 81 62 89 Z" fill={DUNKEL} stroke={K} stroke-width="2.2" stroke-linejoin="round" />
-		<path d="M42 69 L47 67.5 M46 75 L51 73 M51 81 L55.5 79" stroke={HELL} stroke-width="1.6" stroke-linecap="round" />
+		<!-- hinteres Sprungbein (fernere Seite): versetzt und dunkler, hinter dem Körper -->
+		<g transform="translate(9 -3)">
+			{@render glied('M38 63 L36 104 L43 106', 3, TIEF)}
+			<path d="M58 93 C49 89 39 79 36 68 C34.5 61 40.5 58.5 44 63 C50 71 56 81 62 89 Z" fill={TIEF} stroke={K} stroke-width="2.2" stroke-linejoin="round" />
+		</g>
 
 		<!-- Körper mit Flügel -->
 		<ellipse cx="62" cy="88" rx="21" ry="13" transform="rotate(-14 62 88)" fill={GRUEN} stroke={K} stroke-width="2.2" />
 		<path d="M50 96 L51 100 M57 95 L58 99.5 M64 93.5 L65 98" stroke={DUNKEL} stroke-width="1.8" stroke-linecap="round" />
 		<path d="M44 86 C52 74 70 69 82 71 C74 79 60 87 44 89 Z" fill={HELL} stroke={K} stroke-width="1.8" stroke-linejoin="round" />
+
+		<!-- vorderes Sprungbein: kräftiger Schenkel am Körper, Unterschenkel zum Blatt -->
+		{@render glied('M38 63 L35 102 L43 104', 3)}
+		<path d="M58 93 C49 89 39 79 36 68 C34.5 61 40.5 58.5 44 63 C50 71 56 81 62 89 Z" fill={DUNKEL} stroke={K} stroke-width="2.2" stroke-linejoin="round" />
+		<path d="M42 69 L47 67.5 M46 75 L51 73 M51 81 L55.5 79" stroke={HELL} stroke-width="1.6" stroke-linecap="round" />
 
 		<!-- Beine, die auf dem Blatt stehen -->
 		{@render glied('M60 98 L58 104', 2.6)}
