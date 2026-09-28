@@ -9,7 +9,7 @@ CHECK-Constraint in der Datenbank abgesichert.
 
 | Tabelle | Schlüssel | Inhalt |
 |---|---|---|
-| `users` | `id` | Spieler, `username` eindeutig (ohne Groß-/Kleinschreibung), `passwort_hash`, `wiederherstellungs_hash`, `session_version` |
+| `users` | `id` | Spieler, `username` eindeutig (ohne Groß-/Kleinschreibung), `passwort_hash`, `wiederherstellungs_hash`, `session_version`, `ist_admin` (im Portal ernannt; feste Admins zusätzlich per `ADMIN_USERNAMES`) |
 | `questions` | `id` | Frage mit `kategorie` (`landtechnik`, `pflanzenbau`, `viehzucht`), `typ` (`bild`/`text`), Bild-URL + Attribution, `schwierigkeit` 1–5, `erklaerung`, `status` (`entwurf`, `eingereicht`, `freigegeben`, `abgelehnt`), `eingereicht_von` |
 | `answer_options` | `id` | Antwortoptionen je Frage, `ist_richtig` |
 | `duels` | `id` | Duell zwischen `spieler_a_id` und `spieler_b_id` (NULL bis zum Beitritt per `einladungs_code`), `kategorie` (zusätzlich `gemischt`), `status` (`wartet_a`, `wartet_b`, `abgeschlossen`), `zug_seit` (Beginn des aktuellen Zugs, für die 3-Tage-Frist), `aufgegeben_von`, `gewertet_at` + `rating_aenderung_a/b` nach dem ELO-Update; Status zusätzlich `abgebrochen` (ohne Wertung) |

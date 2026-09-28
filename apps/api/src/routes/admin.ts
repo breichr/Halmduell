@@ -3,11 +3,13 @@ import { and, asc, desc, eq, ilike, inArray, isNotNull, or, sql, type SQL } from
 import {
   FRAGEN_KATEGORIEN,
   adminFragenFilterSchema,
+  adminHinzufuegenSchema,
   commonsSchema,
   feldFehler,
   frageBearbeitenSchema,
   meldungenAbschliessenSchema,
   statusSetzenSchema,
+  type AdminEintrag,
   type AdminFrage,
   type AdminFragenListe,
   type AdminKategorieStand,
@@ -23,7 +25,7 @@ import { answerOptions, duelAnswers, frageMeldungen, questions, users } from '..
 import type { Tx } from '../db/types';
 import { schreibeFragenCsv, type FragenZeile } from '../fragen/csv';
 import { requireAuth, type AuthEnv } from '../middleware/auth';
-import { requireAdmin } from '../services/admin';
+import { istAdmin, istFesterAdmin, requireAdmin } from '../services/admin';
 import { nachricht } from '../services/benachrichtigungen';
 import { hatPushAbo, pushAktiv, spaeterSenden } from '../services/push';
 import { CommonsFehler, commonsBild } from '../services/commons';
@@ -298,4 +300,38 @@ adminRoute.post('/commons', async (c) => {
     if (e instanceof CommonsFehler) return c.json(fehler(e.message), e.status);
     throw e;
   }
+});
+
+// --- Admins verwalten: im Portal ernannte + feste aus ADMIN_USERNAMES ---
+
+adminRoute.get('/admins', async (c) => {
+  const fest = (process.env.ADMIN_USERNAMES ?? '').split(',').map((n) => n.trim().toLowerCase()).filter(Boolean);
+  const zeilen = await db.select({ id: users.id, username: users.username }).from(users)
+    .where(or(eq(users.istAdmin, true), fest.length ? inArray(sql`lower(${users.username})`, fest) : sql`false`))
+    .orderBy(sql`lower(${users.username})`);
+  return c.json(zeilen.map((u) => ({ ...u, fest: istFesterAdmin(u.username), ich: u.id === c.var.userId })) satisfies AdminEintrag[]);
+});
+
+adminRoute.post('/admins', async (c) => {
+  const eingabe = adminHinzufuegenSchema.safeParse(await c.req.json().catch(() => null));
+  if (!eingabe.success) return c.json(ungueltig(eingabe.error), 400);
+  const [user] = await db.select({ id: users.id, username: users.username, istAdmin: users.istAdmin }).from(users)
+    .where(eq(sql`lower(${users.username})`, eingabe.data.username.toLowerCase()));
+  if (!user) return c.json(fehler('Spieler nicht gefunden'), 404);
+  if (istAdmin(user)) return c.json(fehler(`${user.username} ist schon Admin`), 409);
+  await db.update(users).set({ istAdmin: true }).where(eq(users.id, user.id));
+  return c.json({ id: user.id, username: user.username, fest: false, ich: false } satisfies AdminEintrag, 201);
+});
+
+adminRoute.delete('/admins/:id', async (c) => {
+  const id = parseId(c.req.param('id'));
+  if (!id) return c.json(fehler('Admin nicht gefunden'), 404);
+  if (id === c.var.userId) return c.json(fehler('Du kannst dich nicht selbst entfernen'), 400);
+  const [user] = await db.select({ username: users.username, istAdmin: users.istAdmin }).from(users).where(eq(users.id, id));
+  if (!user || !istAdmin(user)) return c.json(fehler('Admin nicht gefunden'), 404);
+  if (istFesterAdmin(user.username)) {
+    return c.json(fehler(`${user.username} ist über ADMIN_USERNAMES festgelegt und lässt sich nur dort entfernen`), 400);
+  }
+  await db.update(users).set({ istAdmin: false }).where(eq(users.id, id));
+  return c.body(null, 204);
 });

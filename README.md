@@ -281,9 +281,13 @@ von `fragen/fragen.csv`.
   gepflegt sind. Zum Sichern oder Versionieren den Export herunterladen und
   bei Bedarf als `fragen/fragen.csv` committen. Einmalig alles aus der Datei
   übernehmen: `bun run fragen:import -- --ueberschreiben`.
-- **Admins:** `ADMIN_USERNAMES=anna,ben` beim API-Service (Groß-/Kleinschreibung
-  egal); wirkt nach dem Neustart. Alle `/api/admin/*`-Endpunkte antworten
-  sonst mit 403.
+- **Admins:** unter „Admins verwalten“ (`/admin/admins`) per Benutzername
+  ernennen und wieder entfernen; wirkt sofort. Zusätzlich gibt es feste Admins
+  über `ADMIN_USERNAMES=anna,ben` beim API-Service (Groß-/Kleinschreibung egal,
+  wirkt nach dem Neustart) – mindestens einer wird für den ersten Zugang
+  gebraucht. Feste Admins lassen sich im Portal nicht entfernen, und niemand
+  kann sich selbst entfernen, damit sich niemand aussperrt. Alle
+  `/api/admin/*`-Endpunkte antworten Nicht-Admins mit 403.
 - Bearbeiten ändert die Antwortoptionen an Ort und Stelle (gespielte Duelle
   bleiben gültig); bei inhaltlich anderer Frage besser eine neue anlegen und
   die alte ablehnen.
@@ -295,6 +299,9 @@ von `fragen/fragen.csv`.
 | `POST /api/admin/fragen` | neue Frage |
 | `POST /api/admin/fragen/:id/status` | `{ status }` freigeben, ablehnen, Entwurf |
 | `GET /api/admin/fragen.csv` | Export aller Fragen |
+| `GET /api/admin/admins` | alle Admins, je mit `fest` (ADMIN_USERNAMES) und `ich` |
+| `POST /api/admin/admins` | `{ username }` → Spieler zum Admin machen |
+| `DELETE /api/admin/admins/:id` | Admin-Rechte entziehen (nicht sich selbst, nicht feste Admins) |
 | `POST /api/admin/commons` | `{ link }` zu einer Datei auf Wikimedia Commons → Bild-URL (1024 px), Urheber, Lizenz, Dateiseite |
 
 **Bildfragen:** Im Formular „Bildfrage“ anhaken und den Link zur Datei auf
@@ -342,7 +349,7 @@ selbst braucht keine Domain.
 | Service | Dockerfile | Umgebungsvariablen |
 |---|---|---|
 | PostgreSQL | Coolify-Datenbank | – |
-| API | `Dockerfile.api` | `DATABASE_URL` (Internal URL der Datenbank), `JWT_SECRET` (geheim, `openssl rand -base64 48`), `TRUST_PROXY=true`, `ADMIN_USERNAMES` (Admin-Portal, kommagetrennt), optional `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT` (Web Push, siehe unten) |
+| API | `Dockerfile.api` | `DATABASE_URL` (Internal URL der Datenbank), `JWT_SECRET` (geheim, `openssl rand -base64 48`), `TRUST_PROXY=true`, `ADMIN_USERNAMES` (feste Admins, kommagetrennt – weitere im Portal ernennen), optional `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT` (Web Push, siehe unten) |
 | Web | `Dockerfile.web` | `API_URL=http://halmduell-api:3000`, `ORIGIN` (öffentliche URL, z. B. `https://halmduell.example`) |
 
 Beim API-Service unter **Configuration → General** das Feld **Domains** leer
@@ -386,8 +393,7 @@ Abzeichen, Fehler üben, Fragen melden, Benachrichtigungen, Admin-Portal für Fr
   freigegebene Beispielfragen, dazu 184 Entwürfe (davon 34 Bildfragen):
   Landtechnik 28, Pflanzenbau 130, Viehzucht 26. Kategorie-Duelle brauchen je
   ≥ 6 freigegebene Fragen – Landtechnik und Viehzucht haben noch keine
-- Admin-Portal erweitern: eingereichte Community-Fragen moderieren,
-  Admins im Portal verwalten statt per `ADMIN_USERNAMES`
+- Admin-Portal erweitern: eingereichte Community-Fragen moderieren
 
 Bewusst später:
 
