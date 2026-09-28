@@ -99,6 +99,13 @@
       "when": 1790597888742,
       "tag": "0013_meldung_antwort",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1790598641403,
+      "tag": "0014_admins",
+      "breakpoints": true
     }
   ]
 }

@@ -77,4 +77,22 @@ test('Admin-Portal: Entwürfe prüfen, bearbeiten, freigeben, neue Frage, CSV', 
 	const text = await csv.text();
 	expect(text).toContain('code;kategorie;typ;frage;richtig');
 	expect(text).toContain('landtechnik-026;landtechnik;text;Wie viele Quadratmeter hat ein Ar?');
+
+	// Admins verwalten: normalen Spieler ernennen, er sieht das Portal, dann wieder entfernen
+	await admin.seite.goto('/admin');
+	await admin.seite.getByRole('link', { name: 'Admins verwalten' }).click();
+	await expect(admin.seite.getByTestId('admin-eintrag').filter({ hasText: 'redaktion' })).toContainText('fest über ADMIN_USERNAMES');
+	await admin.seite.getByLabel(/Spieler zum Admin machen/).fill(normal.username);
+	await admin.seite.getByRole('button', { name: 'Zum Admin machen' }).click();
+	await expect(admin.seite.getByRole('status')).toHaveText(`${normal.username} ist jetzt Admin.`);
+	await expect(admin.seite.getByTestId('admin-eintrag').filter({ hasText: normal.username })).toContainText('im Portal ernannt');
+
+	await normal.seite.goto('/admin');
+	await expect(normal.seite.getByRole('heading', { name: 'Admin-Portal', level: 1 })).toBeVisible();
+
+	admin.seite.once('dialog', (d) => d.accept());
+	await admin.seite.getByRole('button', { name: `${normal.username} die Admin-Rechte entziehen` }).click();
+	await expect(admin.seite.getByRole('status')).toHaveText(`${normal.username} ist kein Admin mehr.`);
+	await expect(admin.seite.getByTestId('admin-eintrag').filter({ hasText: normal.username })).toHaveCount(0);
+	expect((await normal.context.request.get('/api/admin/fragen')).status()).toBe(403);
 });

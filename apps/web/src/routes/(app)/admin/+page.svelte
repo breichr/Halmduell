@@ -54,6 +54,7 @@
 	<div class="knoepfe">
 		<a class="knopf klein" href="/admin/fragen/neu">＋ Neue Frage</a>
 		<a class="knopf klein zweitrangig" href="/api/admin/fragen.csv" download>CSV exportieren</a>
+		<a class="knopf klein zweitrangig" href="/admin/admins">Admins verwalten</a>
 	</div>
 </header>
 

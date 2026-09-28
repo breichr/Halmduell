@@ -95,3 +95,18 @@ export interface AdminFragenListe {
   /** Fragen mit offenen Meldungen (unabhängig vom Filter) */
   gemeldet: number;
 }
+
+// --- Admins verwalten ---
+
+/** POST /api/admin/admins – Spieler per Benutzername zum Admin machen */
+export const adminHinzufuegenSchema = z.object({ username: z.string().trim().min(1, 'fehlt').max(50) });
+
+/** Eintrag in GET /api/admin/admins */
+export interface AdminEintrag {
+  id: number;
+  username: string;
+  /** fest per ADMIN_USERNAMES – im Portal nicht entfernbar */
+  fest: boolean;
+  /** das bin ich (kann sich nicht selbst entfernen) */
+  ich: boolean;
+}

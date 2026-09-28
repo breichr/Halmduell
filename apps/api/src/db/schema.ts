@@ -53,6 +53,8 @@ export const users = pgTable('users', {
   createdAt: zeitstempel('created_at').notNull().defaultNow(),
   // zuletzt in der App aktiv (höchstens alle paar Minuten aktualisiert) – nur für Freunde sichtbar
   zuletztAktivAt: zeitstempel('zuletzt_aktiv_at'),
+  // im Admin-Portal vergebene Admin-Rechte (zusätzlich zu ADMIN_USERNAMES)
+  istAdmin: boolean('ist_admin').notNull().default(false),
 }, (t) => [
   // "Anna" und "anna" sind derselbe Name
   uniqueIndex('users_username_lower_idx').on(sql`lower(${t.username})`),
